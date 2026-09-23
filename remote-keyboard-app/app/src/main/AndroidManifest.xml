@@ -4,11 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
@@ -19,12 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RemoteKeyboard">
 
-        <!-- Google AdMob App ID (Test ID para desarrollo y revisión) -->
+        <!-- Google AdMob App ID (Test ID para desarrollo y revisión de tienda) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
 
-        <!-- Pantalla de Configuración / Dashboard -->
+        <!-- Pantalla Principal de Configuración y Prueba -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -35,13 +32,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Servicio en Primer Plano para mantener el Servidor Activo -->
-        <service
-            android:name=".service.KeyboardServerService"
-            android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
-
-        <!-- Servicio de Teclado del Sistema (IME) -->
+        <!-- Servicio de Teclado del Sistema (Input Method Service) -->
         <service
             android:name=".RemoteInputMethodService"
             android:label="@string/keyboard_name"
