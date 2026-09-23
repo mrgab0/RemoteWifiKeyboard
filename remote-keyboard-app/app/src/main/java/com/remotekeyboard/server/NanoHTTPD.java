@@ -2,10 +2,11 @@ package com.remotekeyboard.server;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * NanoHTTPD v2.3.1 (Embedded Light HTTP Server)
+ * NanoHTTPD Ultra-Light & Robust Embedded HTTP Server
  */
 public abstract class NanoHTTPD {
 
@@ -30,44 +31,45 @@ public abstract class NanoHTTPD {
         myThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                do {
+                while (!myServerSocket.isClosed()) {
                     try {
-                        final Socket finalAccept = myServerSocket.accept();
+                        final Socket socket = myServerSocket.accept();
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 try {
-                                    InputStream inputStream = finalAccept.getInputStream();
-                                    OutputStream outputStream = finalAccept.getOutputStream();
-                                    HTTPSession session = new HTTPSession(inputStream, outputStream);
+                                    InputStream is = socket.getInputStream();
+                                    OutputStream os = socket.getOutputStream();
+                                    HTTPSession session = new HTTPSession(is, os);
                                     session.execute();
-                                } catch (Exception e) {
-                                    // Ignore closed stream
+                                } catch (Exception ignored) {
+                                } finally {
+                                    try {
+                                        socket.close();
+                                    } catch (Exception ignored) {}
                                 }
                             }
                         }).start();
                     } catch (IOException e) {
                         break;
                     }
-                } while (!myServerSocket.isClosed());
+                }
             }
         });
         myThread.setDaemon(true);
-        myThread.setName("NanoHTTPD Main Listener");
+        myThread.setName("NanoHTTPD Listener");
         myThread.start();
     }
 
     public void stop() {
         try {
-            if (myServerSocket != null) {
+            if (myServerSocket != null && !myServerSocket.isClosed()) {
                 myServerSocket.close();
             }
             if (myThread != null) {
-                myThread.join();
+                myThread.interrupt();
             }
-        } catch (Exception e) {
-            // Ignored
-        }
+        } catch (Exception ignored) {}
     }
 
     public abstract Response serve(IHTTPSession session);
@@ -76,9 +78,7 @@ public abstract class NanoHTTPD {
         String getUri();
         Method getMethod();
         Map<String, String> getHeaders();
-        InputStream getInputStream();
-        Map<String, String> getParms();
-        void parseBody(Map<String, String> files) throws IOException;
+        String getBody();
     }
 
     public enum Method {
@@ -104,11 +104,11 @@ public abstract class NanoHTTPD {
             }
         }
 
-        private Status status;
-        private String mimeType;
-        private InputStream data;
+        private final Status status;
+        private final String mimeType;
+        private final byte[] data;
 
-        public Response(Status status, String mimeType, InputStream data) {
+        public Response(Status status, String mimeType, byte[] data) {
             this.status = status;
             this.mimeType = mimeType;
             this.data = data;
@@ -117,11 +117,7 @@ public abstract class NanoHTTPD {
         public Response(Status status, String mimeType, String txt) {
             this.status = status;
             this.mimeType = mimeType;
-            try {
-                this.data = txt != null ? new ByteArrayInputStream(txt.getBytes("UTF-8")) : null;
-            } catch (UnsupportedEncodingException uee) {
-                this.data = null;
-            }
+            this.data = (txt != null) ? txt.getBytes(StandardCharsets.UTF_8) : new byte[0];
         }
 
         public static Response newFixedLengthResponse(Status status, String mimeType, String message) {
@@ -132,39 +128,35 @@ public abstract class NanoHTTPD {
             return newFixedLengthResponse(Status.OK, "text/html; charset=UTF-8", message);
         }
 
-        protected void send(OutputStream outputStream) {
+        public void send(OutputStream outputStream) {
             try {
-                String mime = mimeType == null ? "text/plain" : mimeType;
-                PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8")), false);
-                pw.append("HTTP/1.1 ").append(status.getDescription()).append(" \r\n");
+                String mime = mimeType == null ? "text/plain; charset=UTF-8" : mimeType;
+                PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+                pw.append("HTTP/1.1 ").append(status.getDescription()).append("\r\n");
                 pw.append("Content-Type: ").append(mime).append("\r\n");
-                pw.append("Connection: close\r\n");
+                pw.append("Content-Length: ").append(String.valueOf(data != null ? data.length : 0)).append("\r\n");
                 pw.append("Access-Control-Allow-Origin: *\r\n");
-                pw.append("Access-Control-Allow-Headers: Content-Type\r\n");
+                pw.append("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n");
+                pw.append("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With\r\n");
+                pw.append("Connection: close\r\n");
                 pw.append("\r\n");
                 pw.flush();
 
-                if (data != null) {
-                    byte[] buff = new byte[8192];
-                    int read;
-                    while ((read = data.read(buff)) > 0) {
-                        outputStream.write(buff, 0, read);
-                    }
+                if (data != null && data.length > 0) {
+                    outputStream.write(data);
                     outputStream.flush();
                 }
-            } catch (IOException ioe) {
-                // Closed
-            }
+            } catch (IOException ignored) {}
         }
     }
 
     protected class HTTPSession implements IHTTPSession {
         private final InputStream inputStream;
         private final OutputStream outputStream;
-        private String uri;
-        private Method method;
-        private Map<String, String> headers = new HashMap<String, String>();
-        private Map<String, String> parms = new HashMap<String, String>();
+        private String uri = "/";
+        private Method method = Method.GET;
+        private final Map<String, String> headers = new HashMap<String, String>();
+        private String body = "";
 
         public HTTPSession(InputStream inputStream, OutputStream outputStream) {
             this.inputStream = inputStream;
@@ -172,28 +164,70 @@ public abstract class NanoHTTPD {
         }
 
         public void execute() throws IOException {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-            String line = reader.readLine();
-            if (line == null) return;
+            ByteArrayOutputStream headerBuffer = new ByteArrayOutputStream();
+            int b;
+            int stage = 0;
 
-            StringTokenizer st = new StringTokenizer(line);
-            if (!st.hasMoreTokens()) return;
+            // Leer byte por byte hasta encontrar exactamente \r\n\r\n
+            while ((b = inputStream.read()) != -1) {
+                headerBuffer.write(b);
+                if (b == '\r' && (stage == 0 || stage == 2)) {
+                    stage++;
+                } else if (b == '\n' && (stage == 1 || stage == 3)) {
+                    stage++;
+                    if (stage == 4) break;
+                } else {
+                    stage = (b == '\r') ? 1 : 0;
+                }
+            }
 
-            String methodStr = st.nextToken();
+            if (stage != 4) return;
+
+            String headerText = new String(headerBuffer.toByteArray(), StandardCharsets.UTF_8);
+            String[] lines = headerText.split("\r\n");
+            if (lines.length == 0) return;
+
+            String[] requestLine = lines[0].split("\\s+");
+            if (requestLine.length < 2) return;
+
             try {
-                this.method = Method.valueOf(methodStr);
+                this.method = Method.valueOf(requestLine[0].toUpperCase(Locale.ROOT));
             } catch (Exception e) {
                 this.method = Method.GET;
             }
+            this.uri = requestLine[1];
 
-            if (!st.hasMoreTokens()) return;
-            this.uri = st.nextToken();
-
-            while ((line = reader.readLine()) != null && !line.trim().isEmpty()) {
+            for (int i = 1; i < lines.length; i++) {
+                String line = lines[i];
                 int p = line.indexOf(':');
-                if (p >= 0) {
-                    headers.put(line.substring(0, p).trim().toLowerCase(), line.substring(p + 1).trim());
+                if (p > 0) {
+                    headers.put(line.substring(0, p).trim().toLowerCase(Locale.ROOT), line.substring(p + 1).trim());
                 }
+            }
+
+            // Manejo de pre-flight CORS OPTIONS inmediato
+            if (Method.OPTIONS.equals(this.method)) {
+                Response r = Response.newFixedLengthResponse(Response.Status.OK, "text/plain", "OK");
+                r.send(outputStream);
+                return;
+            }
+
+            // Leer exactamente Content-Length bytes del body
+            String contentLengthStr = headers.get("content-length");
+            if (contentLengthStr != null) {
+                try {
+                    int length = Integer.parseInt(contentLengthStr.trim());
+                    if (length > 0) {
+                        byte[] bodyBytes = new byte[length];
+                        int totalRead = 0;
+                        while (totalRead < length) {
+                            int read = inputStream.read(bodyBytes, totalRead, length - totalRead);
+                            if (read == -1) break;
+                            totalRead += read;
+                        }
+                        this.body = new String(bodyBytes, 0, totalRead, StandardCharsets.UTF_8);
+                    }
+                } catch (Exception ignored) {}
             }
 
             Response r = serve(this);
@@ -209,28 +243,6 @@ public abstract class NanoHTTPD {
         @Override
         public Map<String, String> getHeaders() { return headers; }
         @Override
-        public InputStream getInputStream() { return inputStream; }
-        @Override
-        public Map<String, String> getParms() { return parms; }
-        @Override
-        public void parseBody(Map<String, String> files) throws IOException {
-            String contentLengthStr = headers.get("content-length");
-            if (contentLengthStr != null) {
-                try {
-                    int length = Integer.parseInt(contentLengthStr);
-                    char[] buf = new char[length];
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-                    int total = 0;
-                    while (total < length) {
-                        int read = reader.read(buf, total, length - total);
-                        if (read == -1) break;
-                        total += read;
-                    }
-                    files.put("postData", new String(buf, 0, total));
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
-        }
+        public String getBody() { return body; }
     }
 }

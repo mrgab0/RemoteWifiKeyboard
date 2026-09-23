@@ -15,7 +15,6 @@ import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -24,6 +23,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.remotekeyboard.server.RemoteWebServerManager;
 
 import org.json.JSONObject;
 
@@ -112,13 +113,16 @@ public class MainActivity extends Activity {
             prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
+            // Iniciar servidor local inmediatamente para que el PC pueda conectarse
+            RemoteWebServerManager.ensureServerStarted(this);
+
             initViews();
             setupMonetization();
             setupLiveTyping();
             setupKeyButtons();
             setupImeMode();
 
-            // Cargar IP guardada o auto-descubrir
+            // Cargar IP guardada o auto-descubrir PC
             String savedIp = prefs.getString(KEY_SAVED_PC_IP, null);
             if (savedIp != null && !savedIp.isEmpty()) {
                 currentPcIp = savedIp;
@@ -476,7 +480,6 @@ public class MainActivity extends Activity {
                         });
                     }
 
-                    // Timeout después de 3 segundos si no se encuentra
                     mainHandler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
@@ -661,6 +664,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        RemoteWebServerManager.ensureServerStarted(this);
         updateReverseModeUrl();
         if (currentPcIp != null) {
             checkPcConnection(currentPcIp, false);

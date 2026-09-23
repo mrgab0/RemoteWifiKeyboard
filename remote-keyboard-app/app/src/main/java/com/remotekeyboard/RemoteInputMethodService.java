@@ -20,20 +20,18 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.remotekeyboard.server.RemoteWebServer;
+import com.remotekeyboard.server.RemoteWebServerManager;
 
 public class RemoteInputMethodService extends InputMethodService {
 
     private static final String TAG = "RemoteIME";
     private static RemoteInputMethodService instance;
-    private RemoteWebServer webServer;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final int PORT = 8080;
 
     private TextView tvLiveFeedback;
     private Vibrator vibrator;
 
-    public static RemoteInputMethodService getInstance() {
+    public static synchronized RemoteInputMethodService getInstance() {
         return instance;
     }
 
@@ -44,24 +42,7 @@ public class RemoteInputMethodService extends InputMethodService {
         try {
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         } catch (Exception ignored) {}
-        startServerInBackground();
-    }
-
-    private synchronized void startServerInBackground() {
-        if (webServer == null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        webServer = new RemoteWebServer(getApplicationContext(), RemoteInputMethodService.this, PORT);
-                        webServer.start();
-                        Log.i(TAG, "Servidor NanoHTTPD iniciado en puerto " + PORT);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error iniciando servidor en IME: ", e);
-                    }
-                }
-            }).start();
-        }
+        RemoteWebServerManager.ensureServerStarted(this);
     }
 
     @Override
@@ -111,7 +92,7 @@ public class RemoteInputMethodService extends InputMethodService {
         });
 
         Button btnSettings = new Button(this);
-        btnSettings.setText("⚙️ Configuración");
+        btnSettings.setText("⚙️ Panel de Control");
         btnSettings.setTextColor(Color.WHITE);
         btnSettings.setBackgroundColor(Color.parseColor("#1E2337"));
         btnSettings.setTextSize(11);
@@ -141,18 +122,20 @@ public class RemoteInputMethodService extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         super.onStartInput(attribute, restarting);
-        startServerInBackground();
+        instance = this;
+        RemoteWebServerManager.ensureServerStarted(this);
+    }
+
+    @Override
+    public void onStartInputView(EditorInfo info, boolean restarting) {
+        super.onStartInputView(info, restarting);
+        instance = this;
+        RemoteWebServerManager.ensureServerStarted(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (webServer != null) {
-            try {
-                webServer.stop();
-            } catch (Exception ignored) {}
-            webServer = null;
-        }
         instance = null;
     }
 
@@ -160,15 +143,16 @@ public class RemoteInputMethodService extends InputMethodService {
         try {
             if (vibrator != null && vibrator.hasVibrator()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE));
+                    vibrator.vibrate(VibrationEffect.createOneShot(15, VibrationEffect.DEFAULT_AMPLITUDE));
                 } else {
-                    vibrator.vibrate(12);
+                    vibrator.vibrate(15);
                 }
             }
         } catch (Exception ignored) {}
     }
 
     public void typeText(final String text) {
+        if (text == null) return;
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -176,10 +160,13 @@ public class RemoteInputMethodService extends InputMethodService {
                 if (tvLiveFeedback != null) {
                     tvLiveFeedback.setText("🟢 Recibido: " + (text.length() > 25 ? text.substring(0, 25) + "..." : text));
                 }
+
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) {
                     ic.commitText(text, 1);
+                    Log.d(TAG, "Texto inyectado via commitText: " + text);
                 } else {
+                    Log.w(TAG, "InputConnection es null, intentando enviar KeyEvent");
                     for (char c : text.toCharArray()) {
                         sendDownUpKeyEvents(KeyEvent.getDeadChar(0, c));
                     }
@@ -189,6 +176,7 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
     public void sendSpecialKey(final String key) {
+        if (key == null) return;
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
