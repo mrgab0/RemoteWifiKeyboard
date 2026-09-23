@@ -1,0 +1,49 @@
+{
+  "name": "remote-wifi-keyboard-desktop",
+  "version": "1.0.0",
+  "description": "Aplicación de escritorio para Windows 10 y 11 para usar tu teclado físico en dispositivos Android por Wi-Fi",
+  "main": "main.js",
+  "author": "Gabo",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable",
+    "build:msix": "electron-builder --win appx"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.remotekeyboard.desktop",
+    "productName": "Remote WiFi Keyboard",
+    "copyright": "Copyright © 2026 Gabo",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable",
+        "appx"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "appx": {
+      "identityName": "RemoteWiFiKeyboard",
+      "publisher": "CN=Gabo",
+      "publisherDisplayName": "Gabo",
+      "applicationId": "RemoteWiFiKeyboard"
+    }
+  }
+}

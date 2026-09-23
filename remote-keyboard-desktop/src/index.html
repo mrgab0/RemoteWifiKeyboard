@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote WiFi Keyboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Custom Title Bar for Windows 10/11 -->
+    <div class="titlebar">
+        <div class="titlebar-drag">
+            <div class="app-icon">⌨️</div>
+            <span class="app-title">Remote WiFi Keyboard</span>
+        </div>
+        <div class="titlebar-controls">
+            <button id="btnMinimize" class="control-btn" title="Minimizar">&#xE921;</button>
+            <button id="btnHide" class="control-btn" title="Ocultar a la bandeja (Ctrl+Alt+K)">&#xE72D;</button>
+            <button id="btnClose" class="control-btn close-btn" title="Cerrar">&#xE8BB;</button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+
+        <!-- Connection Bar -->
+        <div class="connection-card">
+            <div class="connection-left">
+                <div id="statusDot" class="status-dot disconnected"></div>
+                <div class="connection-info">
+                    <span id="statusText" class="status-text">Buscando teléfono en la red Wi-Fi...</span>
+                    <span id="deviceIpDisplay" class="device-ip">Desconectado</span>
+                </div>
+            </div>
+            <div class="connection-actions">
+                <button id="btnScan" class="action-btn">🔍 Auto-Detectar</button>
+                <button id="btnManualIp" class="action-btn secondary">✏️ Cambiar IP</button>
+            </div>
+        </div>
+
+        <!-- Realtime Typing Area -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">⚡ Modo Escritura en Tiempo Real</span>
+                <span class="badge">Activo</span>
+            </div>
+            <div class="input-wrapper">
+                <input
+                    type="text"
+                    id="realtimeInput"
+                    placeholder="Haz clic aquí y escribe con tu teclado físico..."
+                    autofocus
+                    autocomplete="off"
+                />
+            </div>
+            <div class="card-footer">
+                <span>Atajos soportados: <code>Enter</code> <code>Backspace</code> <code>Tab</code> <code>Flechas</code></span>
+            </div>
+        </div>
+
+        <!-- Paragraph / Multi-line Area -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📋 Enviar Párrafo o Texto Largo</span>
+                <span class="shortcut-hint">Ctrl + Enter para enviar</span>
+            </div>
+            <textarea
+                id="paragraphInput"
+                rows="3"
+                placeholder="Pega aquí párrafos largos, código o enlaces para enviarlos al teléfono de un solo golpe..."
+            ></textarea>
+            <div class="card-buttons">
+                <button id="btnClear" class="btn secondary">Limpiar</button>
+                <button id="btnSend" class="btn primary">Enviar al Teléfono 🚀</button>
+            </div>
+        </div>
+
+        <!-- Quick Action Keys -->
+        <div class="quick-keys-grid">
+            <button class="key-button" data-key="ENTER"><span>⏎</span> Enter</button>
+            <button class="key-button" data-key="BACKSPACE"><span>⌫</span> Borrar</button>
+            <button class="key-button" data-key="TAB"><span>⇥</span> Tab</button>
+            <button class="key-button" data-key="SELECT_ALL"><span>🔲</span> Todo</button>
+            <button class="key-button" data-key="ARROW_LEFT"><span>◀</span> Izquierda</button>
+            <button class="key-button" data-key="ARROW_RIGHT"><span>▶</span> Derecha</button>
+        </div>
+
+    </div>
+
+    <!-- Manual IP Modal -->
+    <div id="ipModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Configurar IP del Teléfono</h3>
+            <p>Introduce la IP que muestra la app en tu teléfono Android:</p>
+            <input type="text" id="manualIpInput" placeholder="Ej: 192.168.1.105" />
+            <div class="modal-buttons">
+                <button id="btnCancelModal" class="btn secondary">Cancelar</button>
+                <button id="btnSaveModal" class="btn primary">Guardar y Conectar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

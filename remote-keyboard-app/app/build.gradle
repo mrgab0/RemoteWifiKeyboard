@@ -1,0 +1,46 @@
+plugins {
+    id("com.android.application")
+}
+
+android {
+    namespace = "com.remotekeyboard"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.remotekeyboard"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("../release.keystore")
+            storePassword "remotekeyboard123"
+            keyAlias "remotekeyboard"
+            keyPassword "remotekeyboard123"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:23.0.0'
+    implementation 'com.android.billingclient:billing:6.2.0'
+}

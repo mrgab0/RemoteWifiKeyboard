@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote WiFi Keyboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .key-btn {
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+        .key-btn:active {
+            transform: scale(0.95);
+            background-color: #FF7088;
+        }
+    </style>
+</head>
+<body class="bg-[#0F1015] text-gray-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-[#161821]/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#FF97A4] flex items-center justify-center text-black font-black text-lg shadow-lg shadow-[#FF97A4]/20">
+                ⌨️
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-white tracking-tight leading-none">Remote WiFi Keyboard</h1>
+                <p class="text-xs text-gray-400 mt-0.5">Escribe desde tu PC a tu Android en tiempo real</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span id="statusIndicator" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Conectado
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container mx-auto px-4 py-8 max-w-2xl space-y-6 flex-1">
+
+        <!-- Real-time Typing Card -->
+        <div class="bg-[#181A24] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-[#FF97A4] flex items-center gap-2">
+                    <span>⚡ Modo Tiempo Real</span>
+                </h2>
+                <span class="text-xs text-gray-400">Todo lo que teclees aquí se escribe en el teléfono</span>
+            </div>
+
+            <div class="relative">
+                <input
+                    type="text"
+                    id="realtimeInput"
+                    placeholder="Haz clic aquí y empieza a escribir..."
+                    autofocus
+                    autocomplete="off"
+                    class="w-full bg-[#0F1015] border border-gray-700 focus:border-[#FF97A4] focus:ring-2 focus:ring-[#FF97A4]/20 rounded-2xl px-5 py-4 text-lg text-white font-medium placeholder-gray-500 outline-none transition-all shadow-inner"
+                />
+            </div>
+            <p class="text-[11px] text-gray-400">
+                Soporta <kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-200 border border-gray-700">Enter</kbd>, 
+                <kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-200 border border-gray-700">Backspace</kbd>, 
+                <kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-200 border border-gray-700">Tab</kbd>, y flechas directas.
+            </p>
+        </div>
+
+        <!-- Multi-line Paragraph & Code Paste Card -->
+        <div class="bg-[#181A24] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-300">
+                    📋 Enviar Texto Largo / Párrafo / Código
+                </h2>
+                <span class="text-xs text-gray-400">Ctrl + Enter para enviar</span>
+            </div>
+
+            <textarea
+                id="paragraphInput"
+                rows="4"
+                placeholder="Pega aquí un mensaje largo, enlace, código o notas para enviarlo completo al teléfono..."
+                class="w-full bg-[#0F1015] border border-gray-700 focus:border-[#FF97A4] focus:ring-2 focus:ring-[#FF97A4]/20 rounded-2xl p-4 text-sm text-gray-100 placeholder-gray-500 outline-none transition-all shadow-inner resize-y"
+            ></textarea>
+
+            <div class="flex items-center justify-between gap-3">
+                <button
+                    id="btnClearParagraph"
+                    class="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-gray-800/60 hover:bg-gray-800 transition"
+                >
+                    Limpiar
+                </button>
+                <button
+                    id="btnSendParagraph"
+                    class="flex-1 bg-[#FF97A4] hover:bg-[#B0004A] text-black hover:text-white font-black py-3 px-6 rounded-xl text-sm transition-all shadow-lg shadow-[#FF97A4]/20 flex items-center justify-center gap-2"
+                >
+                    <span>Enviar al Teléfono 🚀</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Action Keys -->
+        <div class="bg-[#181A24] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-wider text-gray-400">Teclas y Acciones Rápidas</h3>
+            
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+                <button onclick="sendSpecialKey('ENTER')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">⏎</span>
+                    <span>Enter</span>
+                </button>
+
+                <button onclick="sendSpecialKey('BACKSPACE')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">⌫</span>
+                    <span>Borrar</span>
+                </button>
+
+                <button onclick="sendSpecialKey('TAB')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">⇥</span>
+                    <span>Tab</span>
+                </button>
+
+                <button onclick="sendSpecialKey('SELECT_ALL')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">🔲</span>
+                    <span>Selec. Todo</span>
+                </button>
+
+                <button onclick="sendSpecialKey('ARROW_LEFT')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">◀</span>
+                    <span>Izquierda</span>
+                </button>
+
+                <button onclick="sendSpecialKey('ARROW_RIGHT')" class="key-btn bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs border border-gray-700 flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm">▶</span>
+                    <span>Derecha</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-xs text-gray-500 border-t border-gray-800/60">
+        Remote WiFi Keyboard • Conexión Directa Local
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        const realtimeInput = document.getElementById('realtimeInput');
+        const paragraphInput = document.getElementById('paragraphInput');
+        const btnSendParagraph = document.getElementById('btnSendParagraph');
+        const btnClearParagraph = document.getElementById('btnClearParagraph');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        // Fast API calls
+        async function sendApi(endpoint, data) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                return res.ok;
+            } catch (err) {
+                console.error("API error:", err);
+                return false;
+            }
+        }
+
+        async function sendText(text) {
+            if (!text) return;
+            return sendApi('/api/type', { text: text });
+        }
+
+        async function sendSpecialKey(key) {
+            return sendApi('/api/key', { key: key });
+        }
+
+        // Realtime Input Handler
+        realtimeInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                await sendSpecialKey('ENTER');
+                realtimeInput.value = '';
+            } else if (e.key === 'Backspace' && realtimeInput.value.length === 0) {
+                e.preventDefault();
+                await sendSpecialKey('BACKSPACE');
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                await sendSpecialKey('TAB');
+            } else if (e.key === 'ArrowLeft' && realtimeInput.selectionStart === 0) {
+                e.preventDefault();
+                await sendSpecialKey('ARROW_LEFT');
+            } else if (e.key === 'ArrowRight' && realtimeInput.selectionEnd === realtimeInput.value.length) {
+                e.preventDefault();
+                await sendSpecialKey('ARROW_RIGHT');
+            }
+        });
+
+        realtimeInput.addEventListener('input', async (e) => {
+            if (realtimeInput.value.length > 0) {
+                const text = realtimeInput.value;
+                realtimeInput.value = '';
+                await sendText(text);
+            }
+        });
+
+        // Paragraph Input Handler
+        btnSendParagraph.addEventListener('click', async () => {
+            const text = paragraphInput.value;
+            if (!text.trim()) return;
+            btnSendParagraph.disabled = true;
+            btnSendParagraph.innerText = "Enviando...";
+            await sendText(text);
+            paragraphInput.value = '';
+            btnSendParagraph.disabled = false;
+            btnSendParagraph.innerText = "Enviar al Teléfono 🚀";
+            realtimeInput.focus();
+        });
+
+        btnClearParagraph.addEventListener('click', () => {
+            paragraphInput.value = '';
+        });
+
+        paragraphInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                btnSendParagraph.click();
+            }
+        });
+
+        // Ping Status
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/ping');
+                if (res.ok) {
+                    statusIndicator.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60";
+                    statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Conectado';
+                }
+            } catch (e) {
+                statusIndicator.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800/60";
+                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Desconectado';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

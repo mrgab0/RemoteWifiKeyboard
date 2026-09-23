@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Remote WiFi Keyboard</string>
+    <string name="keyboard_name">Remote WiFi Keyboard</string>
+    <string name="status_server_running">Servidor Web Activo</string>
+    <string name="status_server_stopped">Servidor Detenido</string>
+    <string name="btn_enable_ime">1. Habilitar en Ajustes de Teclado</string>
+    <string name="btn_select_ime">2. Seleccionar como Teclado Activo</string>
+    <string name="desc_instructions">Abre la siguiente dirección en el navegador web de tu PC para empezar a escribir en tiempo real:</string>
+</resources>

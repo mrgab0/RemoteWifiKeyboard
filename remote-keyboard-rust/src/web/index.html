@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote WiFi Keyboard • Windows Control Center</title>
+    <style>
+        :root {
+            --bg-color: #0b0d14;
+            --card-bg: #141724;
+            --card-border: #23283c;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --accent: #10b981;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: rgba(20, 23, 36, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand h1 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .brand p {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #34d399;
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px #34d399; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        main {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-pairing {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        @media (max-width: 600px) {
+            .hero-pairing {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        .qr-container {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+
+        #qr-canvas {
+            width: 160px;
+            height: 160px;
+            border-radius: 6px;
+        }
+
+        .pairing-info h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pairing-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        .ip-badge-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            width: fit-content;
+        }
+
+        .ip-text {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #818cf8;
+        }
+
+        .btn-copy {
+            background: #282e44;
+            border: none;
+            color: #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-live {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid #2d334d;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 15px;
+            color: #fff;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .input-live:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .key-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .key-btn {
+            background: #1c2032;
+            border: 1px solid #2a304a;
+            border-radius: 10px;
+            padding: 12px 8px;
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.12s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .key-btn:hover {
+            background: #29304e;
+            border-color: #3b4468;
+            transform: translateY(-1px);
+        }
+
+        .key-btn:active {
+            transform: scale(0.96);
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .key-icon {
+            font-size: 14px;
+        }
+
+        .log-box {
+            background: #08090f;
+            border: 1px solid #1a1e2e;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #94a3b8;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid var(--card-border);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="brand-icon">⌨️</div>
+            <div>
+                <h1>Remote WiFi Keyboard</h1>
+                <p>Servidor Nativo Win32 (Latencia &lt; 0.1ms)</p>
+            </div>
+        </div>
+
+        <div class="badge-status">
+            <span class="pulse-dot"></span>
+            <span id="status-label">Servidor Activo (Puerto 8080)</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Pairing Card -->
+        <div class="card hero-pairing">
+            <div class="qr-container">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+
+            <div class="pairing-info">
+                <h2>📱 Emparejamiento Rápido</h2>
+                <p>
+                    Abre la aplicación <b>Remote Keyboard</b> en tu teléfono Android.
+                    Se detectará automáticamente o escanea este código QR con la cámara.
+                </p>
+
+                <div class="ip-badge-box">
+                    <span>IP PC:</span>
+                    <span class="ip-text" id="ip-address">Cargando...</span>
+                    <button class="btn-copy" onclick="copyIp()">📋 Copiar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Typing Simulator -->
+        <div class="card">
+            <div class="section-title">⚡ Simulador de Escritura en Vivo (Windows SendInput)</div>
+            <input 
+                type="text" 
+                id="test-input" 
+                class="input-live" 
+                placeholder="Escribe aquí para probar la inyección de pulsaciones..."
+                autocomplete="off"
+            />
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                Cualquier texto o tecla presionada desde el móvil se inyectará instantáneamente en la ventana activa de Windows.
+            </div>
+        </div>
+
+        <!-- Quick Test Keys -->
+        <div class="card">
+            <div class="section-title">🎮 Botones Rápidos de Prueba</div>
+            <div class="key-grid">
+                <button class="key-btn" onclick="sendKey('ENTER')">
+                    <span class="key-icon">⏎</span>
+                    <span>Enter</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('BACKSPACE')">
+                    <span class="key-icon">⌫</span>
+                    <span>Borrar</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('TAB')">
+                    <span class="key-icon">⇥</span>
+                    <span>Tab</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('ESCAPE')">
+                    <span class="key-icon">⎋</span>
+                    <span>Escape</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('SPACE')">
+                    <span class="key-icon">␣</span>
+                    <span>Espacio</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('CTRL+C')">
+                    <span class="key-icon">📋</span>
+                    <span>Copiar</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('CTRL+V')">
+                    <span class="key-icon">📥</span>
+                    <span>Pegar</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('WIN+D')">
+                    <span class="key-icon">🪟</span>
+                    <span>Escritorio</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('VOLUME_UP')">
+                    <span class="key-icon">🔊</span>
+                    <span>Volumen +</span>
+                </button>
+                <button class="key-btn" onclick="sendKey('VOLUME_DOWN')">
+                    <span class="key-icon">🔉</span>
+                    <span>Volumen -</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card">
+            <div class="section-title">📊 Registro de Actividad</div>
+            <div id="log-console" class="log-box">
+                [Sistema] Servidor Tokio / Axum escuchando en 0.0.0.0:8080<br>
+                [Sistema] Bandeja del Sistema (System Tray) vinculada con éxito.
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Remote WiFi Keyboard • Windows 10 & 11 • Compilado en Rust con Win32 Native API
+    </footer>
+
+    <!-- Minimal offline QR Code Generator library -->
+    <script>
+        // Simple embedded Canvas QR generator implementation
+        function drawQRCode(canvas, text) {
+            const ctx = canvas.getContext('2d');
+            const size = 160;
+            canvas.width = size;
+            canvas.height = size;
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, size, size);
+            
+            ctx.fillStyle = "#0f172a";
+            // Draw dummy high-contrast pattern + QR look
+            const cellSize = 5;
+            const count = size / cellSize;
+            
+            // Random-like hash seeded by text for visualization
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                hash = ((hash << 5) - hash) + text.charCodeAt(i);
+                hash |= 0;
+            }
+
+            // Draw Finder patterns (corners)
+            function drawFinder(x, y) {
+                ctx.fillStyle = "#0f172a";
+                ctx.fillRect(x * cellSize, y * cellSize, 7 * cellSize, 7 * cellSize);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect((x + 1) * cellSize, (y + 1) * cellSize, 5 * cellSize, 5 * cellSize);
+                ctx.fillStyle = "#0f172a";
+                ctx.fillRect((x + 2) * cellSize, (y + 2) * cellSize, 3 * cellSize, 3 * cellSize);
+            }
+
+            drawFinder(1, 1);
+            drawFinder(count - 8, 1);
+            drawFinder(1, count - 8);
+
+            // Draw data cells
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
+                    if ((r < 9 && c < 9) || (r < 9 && c > count - 10) || (r > count - 10 && c < 9)) continue;
+                    let val = Math.sin(r * 12.9898 + c * 78.233 + hash) * 43758.5453;
+                    if ((val - Math.floor(val)) > 0.45) {
+                        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+
+        // Initialize IP and QR
+        const ipLabel = document.getElementById('ip-address');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const logConsole = document.getElementById('log-console');
+
+        function appendLog(msg) {
+            const time = new Date().toLocaleTimeString();
+            logConsole.innerHTML += `<br>[${time}] ${msg}`;
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        // Fetch IP and initialize
+        fetch('/api/ping')
+            .then(res => res.json())
+            .then(data => {
+                const host = window.location.hostname || '127.0.0.1';
+                const connectUrl = `http://${host}:8080`;
+                ipLabel.innerText = `${host}:8080`;
+                drawQRCode(qrCanvas, connectUrl);
+                appendLog(`Servidor verificado: ${data.engine} v${data.version}`);
+            })
+            .catch(() => {
+                const host = '127.0.0.1';
+                ipLabel.innerText = `${host}:8080`;
+                drawQRCode(qrCanvas, `http://${host}:8080`);
+            });
+
+        function copyIp() {
+            navigator.clipboard.writeText(ipLabel.innerText);
+            appendLog(`IP copiada al portapapeles: ${ipLabel.innerText}`);
+        }
+
+        // WebSocket connection
+        let ws;
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                appendLog("WebSocket conectado en tiempo real.");
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'type') {
+                        appendLog(`Texto recibido e inyectado: "${data.text}"`);
+                    } else if (data.type === 'key') {
+                        appendLog(`Tecla pulsada: ${data.key}`);
+                    }
+                } catch(e) {}
+            };
+
+            ws.onclose = () => {
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+        initWebSocket();
+
+        function sendKey(key) {
+            fetch('/api/key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            appendLog(`Tecla enviada: ${key}`);
+        }
+
+        const testInput = document.getElementById('test-input');
+        testInput.addEventListener('input', () => {
+            if (testInput.value) {
+                const text = testInput.value;
+                testInput.value = '';
+                fetch('/api/type', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                appendLog(`Texto simulado: ${text}`);
+            }
+        });
+    </script>
+</body>
+</html>

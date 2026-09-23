@@ -1,0 +1,26 @@
+[package]
+name = "remote-keyboard-rust"
+version = "1.0.0"
+edition = "2021"
+authors = ["Gabo"]
+description = "Servidor nativo en Rust ultra-ligero para Remote WiFi Keyboard (Windows 10 & 11)"
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+local-ip-address = "0.6"
+futures-util = "0.3"
+tray-icon = "0.25.1"
+tao = "0.37.0"
+wry = "0.57.0"
+windows-sys = { version = "0.61.2", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_LibraryLoader"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
