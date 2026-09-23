@@ -10,8 +10,8 @@ android {
         applicationId = "com.remotekeyboard"
         minSdk = 21
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     signingConfigs {
@@ -20,6 +20,10 @@ android {
             storePassword "remotekeyboard123"
             keyAlias "remotekeyboard"
             keyPassword "remotekeyboard123"
+            v1SigningEnabled true
+            v2SigningEnabled true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
