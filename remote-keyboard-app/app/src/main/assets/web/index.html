@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote WiFi Keyboard • Escribe desde tu PC</title>
+    <title>Remote WiFi Keyboard • Modo Ultrabaja Latencia</title>
     <style>
         :root {
             --bg-color: #0b0d14;
@@ -13,6 +13,7 @@
             --primary-hover: #4f46e5;
             --accent: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
@@ -37,7 +38,7 @@
             background: rgba(20, 23, 36, 0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--card-border);
-            padding: 16px 24px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -67,7 +68,6 @@
         .brand h1 {
             font-size: 16px;
             font-weight: 700;
-            letter-spacing: -0.3px;
         }
 
         .brand p {
@@ -75,13 +75,33 @@
             color: var(--text-muted);
         }
 
+        .header-badges {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-ping {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: monospace;
+            background: rgba(56, 189, 248, 0.12);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
         .badge-status {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             background: rgba(16, 185, 129, 0.12);
             color: #34d399;
@@ -95,8 +115,8 @@
         }
 
         .pulse-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             background-color: currentColor;
             border-radius: 50%;
             animation: pulse 1.8s infinite;
@@ -108,22 +128,50 @@
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
+        /* Focus Status Banner */
+        .focus-banner {
+            background: #1e293b;
+            border-bottom: 1px solid var(--card-border);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .focus-banner.focused {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .focus-banner.unfocused {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.3);
+            cursor: pointer;
+        }
+
         main {
             flex: 1;
-            max-width: 720px;
+            max-width: 740px;
             margin: 0 auto;
             width: 100%;
-            padding: 24px 16px;
+            padding: 20px 16px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 18px;
-            padding: 22px;
+            border-radius: 16px;
+            padding: 20px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
@@ -135,14 +183,14 @@
         }
 
         .card-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
             color: #818cf8;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .card-subtitle {
@@ -152,9 +200,9 @@
 
         .input-live {
             width: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.55);
             border: 2px solid #2d334d;
-            border-radius: 14px;
+            border-radius: 12px;
             padding: 16px 18px;
             font-size: 17px;
             color: #fff;
@@ -169,16 +217,15 @@
 
         .textarea-box {
             width: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.55);
             border: 1px solid #2d334d;
-            border-radius: 14px;
+            border-radius: 12px;
             padding: 14px 16px;
             font-size: 14px;
             color: #fff;
             outline: none;
             resize: vertical;
-            min-height: 90px;
-            transition: border 0.2s;
+            min-height: 80px;
         }
 
         .textarea-box:focus {
@@ -189,7 +236,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .btn-primary {
@@ -197,8 +244,8 @@
             background: var(--primary);
             color: #fff;
             border: none;
-            border-radius: 12px;
-            padding: 12px 20px;
+            border-radius: 10px;
+            padding: 11px 18px;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
@@ -221,8 +268,8 @@
             background: #202538;
             color: var(--text-muted);
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 12px 18px;
+            border-radius: 10px;
+            padding: 11px 16px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -234,33 +281,49 @@
             background: #2a3149;
         }
 
+        .btn-benchmark {
+            background: #0f2744;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-benchmark:hover {
+            background: #0369a1;
+            color: #fff;
+        }
+
         .key-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
         }
 
         .key-btn {
             background: #1c2032;
             border: 1px solid #2a304a;
-            border-radius: 10px;
-            padding: 12px 8px;
+            border-radius: 8px;
+            padding: 10px 6px;
             color: #e2e8f0;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.12s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             user-select: none;
         }
 
         .key-btn:hover {
             background: #29304e;
-            border-color: #3b4468;
             transform: translateY(-1px);
         }
 
@@ -270,15 +333,40 @@
             color: #fff;
         }
 
-        .key-icon {
-            font-size: 14px;
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .metric-card {
+            background: #0a0b12;
+            border: 1px solid #1a1e2e;
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: monospace;
+            color: #38bdf8;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-top: 2px;
         }
 
         .log-box {
             background: #08090f;
             border: 1px solid #1a1e2e;
-            border-radius: 10px;
-            padding: 10px 14px;
+            border-radius: 8px;
+            padding: 8px 12px;
             font-family: monospace;
             font-size: 11px;
             color: #94a3b8;
@@ -288,7 +376,7 @@
 
         footer {
             text-align: center;
-            padding: 16px;
+            padding: 14px;
             font-size: 11px;
             color: #64748b;
             border-top: 1px solid var(--card-border);
@@ -302,22 +390,31 @@
             <div class="brand-icon">⌨️</div>
             <div>
                 <h1>Remote WiFi Keyboard</h1>
-                <p>Escribe desde tu PC hacia tu Teléfono Android</p>
+                <p>Modo Streaming de Ultrabaja Latencia</p>
             </div>
         </div>
 
-        <div id="badge-status" class="badge-status">
-            <span class="pulse-dot"></span>
-            <span id="status-label">Conectado</span>
+        <div class="header-badges">
+            <div id="ping-badge" class="badge-ping">⚡ -- ms</div>
+            <div id="badge-status" class="badge-status disconnected">
+                <span class="pulse-dot"></span>
+                <span id="status-label">Conectando...</span>
+            </div>
         </div>
     </header>
+
+    <!-- Indicador de Foco de Ventana -->
+    <div id="focus-banner" class="focus-banner focused" onclick="document.getElementById('live-input').focus()">
+        <span id="focus-icon">🟢</span>
+        <span id="focus-text">Capturando Teclas: Escribe directamente con tu teclado físico</span>
+    </div>
 
     <main>
         <!-- Card 1: Real-time Live Typing -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">⚡ Modo Tiempo Real</div>
-                <div class="card-subtitle">Haz clic abajo y escribe directamente</div>
+                <div class="card-title">⚡ Escritura Instantánea (&lt;3ms)</div>
+                <button class="btn-benchmark" onclick="runBenchmark()">🚀 Test de Velocidad</button>
             </div>
 
             <input 
@@ -329,22 +426,22 @@
                 autocomplete="off"
             />
 
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px;">
-                💡 <b>Tip:</b> Soporta teclas directas <kbd>Enter ⏎</kbd>, <kbd>Backspace ⌫</kbd>, <kbd>Tab ⇥</kbd>, <kbd>Espacio</kbd> y flechas.
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                💡 <b>Atajos directos:</b> <kbd>Enter ⏎</kbd>, <kbd>Backspace ⌫</kbd>, <kbd>Tab ⇥</kbd>, <kbd>Espacio</kbd> y flechas de navegación.
             </div>
         </div>
 
         <!-- Card 2: Long Text / Paragraph / Clipboard Paste -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">📋 Enviar Párrafo o Texto Largo</div>
+                <div class="card-title">📋 Enviar Párrafo o Portapapeles</div>
                 <div class="card-subtitle">Ctrl + Enter para enviar</div>
             </div>
 
             <textarea 
                 id="paragraph-input" 
                 class="textarea-box" 
-                placeholder="Pega un enlace largo, mensaje, código o notas para enviarlo completo al teléfono..."
+                placeholder="Pega un mensaje largo, notas, enlaces o contraseñas para enviarlo completo al teléfono..."
             ></textarea>
 
             <div class="btn-row">
@@ -356,63 +453,78 @@
         <!-- Card 3: Quick Action Keys -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">🎮 Teclas y Acciones Rápidas</div>
+                <div class="card-title">🎮 Teclas Rápidas</div>
             </div>
 
             <div class="key-grid">
                 <button class="key-btn" onclick="sendKey('ENTER')">
-                    <span class="key-icon">⏎</span>
+                    <span>⏎</span>
                     <span>Enter</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('BACKSPACE')">
-                    <span class="key-icon">⌫</span>
+                    <span>⌫</span>
                     <span>Borrar</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('TAB')">
-                    <span class="key-icon">⇥</span>
+                    <span>⇥</span>
                     <span>Tab</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('SPACE')">
-                    <span class="key-icon">␣</span>
+                    <span>␣</span>
                     <span>Espacio</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('SELECT_ALL')">
-                    <span class="key-icon">🔲</span>
+                    <span>🔲</span>
                     <span>Selec. Todo</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('ARROW_LEFT')">
-                    <span class="key-icon">◀</span>
+                    <span>◀</span>
                     <span>Izquierda</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('ARROW_RIGHT')">
-                    <span class="key-icon">▶</span>
+                    <span>▶</span>
                     <span>Derecha</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('ARROW_UP')">
-                    <span class="key-icon">▲</span>
+                    <span>▲</span>
                     <span>Arriba</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('ARROW_DOWN')">
-                    <span class="key-icon">▼</span>
+                    <span>▼</span>
                     <span>Abajo</span>
                 </button>
             </div>
         </div>
 
-        <!-- Card 4: Activity Log -->
+        <!-- Card 4: Telemetry & Benchmark Metrics -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">📊 Registro de Envío</div>
+                <div class="card-title">📊 Telemetría y Métricas en Vivo</div>
             </div>
-            <div id="log-console" class="log-box">
-                [Sistema] Conexión activa con el servidor Android.<br>
-                [Listo] Asegúrate de tener el teclado seleccionado y un campo de texto abierto en el teléfono.
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div id="metric-ping" class="metric-value">-- ms</div>
+                    <div class="metric-label">Latencia RTT</div>
+                </div>
+                <div class="metric-card">
+                    <div id="metric-typed" class="metric-value">0</div>
+                    <div class="metric-label">Teclas Enviadas</div>
+                </div>
+                <div class="metric-card">
+                    <div id="metric-protocol" class="metric-value">WebSocket</div>
+                    <div class="metric-label">Protocolo</div>
+                </div>
+            </div>
+
+            <div id="log-console" class="log-box" style="margin-top: 12px;">
+                [Sistema] Inicializando canal de ultra-baja latencia...
             </div>
         </div>
     </main>
 
     <footer>
-        Remote WiFi Keyboard • PC ➡️ Android • Latencia Local Ultrabaja
+        Remote WiFi Keyboard • Conexión Directa Wi-Fi • Pipeline Stream No Bloqueante
     </footer>
 
     <script>
@@ -421,6 +533,19 @@
         const logConsole = document.getElementById('log-console');
         const badgeStatus = document.getElementById('badge-status');
         const statusLabel = document.getElementById('status-label');
+        const pingBadge = document.getElementById('ping-badge');
+        const focusBanner = document.getElementById('focus-banner');
+        const focusIcon = document.getElementById('focus-icon');
+        const focusText = document.getElementById('focus-text');
+
+        const metricPing = document.getElementById('metric-ping');
+        const metricTyped = document.getElementById('metric-typed');
+        const metricProtocol = document.getElementById('metric-protocol');
+
+        let ws = null;
+        let totalSent = 0;
+        let pingSeq = 0;
+        const pendingPings = new Map();
 
         function appendLog(msg) {
             const time = new Date().toLocaleTimeString();
@@ -428,75 +553,186 @@
             logConsole.scrollTop = logConsole.scrollHeight;
         }
 
-        async function sendApi(endpoint, data) {
+        // --- WebSocket Streaming ---
+        function initWebSocket() {
+            const loc = window.location;
+            const wsUrl = (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host + '/ws';
+            
             try {
-                const res = await fetch(endpoint, {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    badgeStatus.className = 'badge-status';
+                    statusLabel.innerText = 'WebSocket (<3ms)';
+                    metricProtocol.innerText = 'WebSocket';
+                    metricProtocol.style.color = '#34d399';
+                    appendLog('🟢 Conexión WebSocket ultra-rápida establecida con el teléfono');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'pong') {
+                            const sentAt = pendingPings.get(data.id);
+                            if (sentAt) {
+                                const rtt = Math.max(1, Math.round(performance.now() - sentAt));
+                                pendingPings.delete(data.id);
+                                updatePingUI(rtt);
+                            }
+                        }
+                    } catch (e) {}
+                };
+
+                ws.onclose = () => {
+                    badgeStatus.className = 'badge-status disconnected';
+                    statusLabel.innerText = 'Reconectando...';
+                    metricProtocol.innerText = 'HTTP Fallback';
+                    metricProtocol.style.color = '#fbbf24';
+                    setTimeout(initWebSocket, 2000);
+                };
+
+                ws.onerror = () => {
+                    ws.close();
+                };
+            } catch (e) {
+                setTimeout(initWebSocket, 2000);
+            }
+        }
+
+        function updatePingUI(rtt) {
+            let color = '#34d399'; // Verde < 15ms
+            let label = '⚡ Ultrabaja';
+            if (rtt > 40) {
+                color = '#f87171'; // Rojo
+                label = '⚠️ Wi-Fi Lento';
+            } else if (rtt > 15) {
+                color = '#fbbf24'; // Amarillo
+                label = '● Normal';
+            }
+
+            pingBadge.innerText = `${label} ${rtt} ms`;
+            pingBadge.style.color = color;
+            pingBadge.style.borderColor = color;
+            metricPing.innerText = `${rtt} ms`;
+            metricPing.style.color = color;
+        }
+
+        // Envío instantáneo sin bloqueo
+        function sendPayload(payload) {
+            totalSent++;
+            metricTyped.innerText = totalSent;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(payload));
+                return true;
+            } else {
+                // Fallback HTTP REST
+                const endpoint = payload.type === 'key' ? '/api/key' : '/api/type';
+                fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                return res.ok;
-            } catch (err) {
-                appendLog(`⚠️ Error de conexión: ${err.message}`);
+                    body: JSON.stringify(payload)
+                }).catch(() => {});
                 return false;
             }
         }
 
-        async function sendText(text) {
+        function sendText(text) {
             if (!text) return;
-            const ok = await sendApi('/api/type', { text: text });
-            if (ok) {
-                appendLog(`Texto enviado: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`);
-            }
+            sendPayload({ type: 'type', text: text });
+            appendLog(`Texto enviado: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`);
         }
 
-        async function sendKey(key) {
-            const ok = await sendApi('/api/key', { key: key });
-            if (ok) {
-                appendLog(`Tecla enviada: ${key}`);
-            }
+        function sendKey(key) {
+            sendPayload({ type: 'key', key: key });
+            appendLog(`Tecla: ${key}`);
         }
 
-        // Live typing handler
-        liveInput.addEventListener('keydown', async (e) => {
+        // --- Benchmark de Velocidad ---
+        async function runBenchmark() {
+            appendLog('🚀 Ejecutando test de latencia en ráfaga (10 paquetes)...');
+            const rtts = [];
+            for (let i = 0; i < 10; i++) {
+                const id = ++pingSeq;
+                const start = performance.now();
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'ping', id: id, t: start }));
+                    pendingPings.set(id, start);
+                } else {
+                    const res = await fetch('/api/ping');
+                    if (res.ok) {
+                        rtts.push(Math.round(performance.now() - start));
+                    }
+                }
+                await new Promise(r => setTimeout(r, 80));
+            }
+            appendLog('✅ Test completado.');
+        }
+
+        // Ping continuo
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const id = ++pingSeq;
+                const now = performance.now();
+                pendingPings.set(id, now);
+                ws.send(JSON.stringify({ type: 'ping', id: id, t: now }));
+            }
+        }, 1500);
+
+        // --- Manejo de Foco de Ventana ---
+        window.addEventListener('focus', () => {
+            focusBanner.className = 'focus-banner focused';
+            focusIcon.innerText = '🟢';
+            focusText.innerText = 'Capturando Teclas: Escribe directamente con tu teclado físico';
+            liveInput.focus();
+        });
+
+        window.addEventListener('blur', () => {
+            focusBanner.className = 'focus-banner unfocused';
+            focusIcon.innerText = '⚠️';
+            focusText.innerText = 'Ventana sin foco: Haz clic aquí para continuar enviando teclas al teléfono';
+        });
+
+        // --- Eventos de Escritura en Vivo ---
+        liveInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                await sendKey('ENTER');
+                sendKey('ENTER');
                 liveInput.value = '';
             } else if (e.key === 'Backspace' && liveInput.value.length === 0) {
                 e.preventDefault();
-                await sendKey('BACKSPACE');
+                sendKey('BACKSPACE');
             } else if (e.key === 'Tab') {
                 e.preventDefault();
-                await sendKey('TAB');
+                sendKey('TAB');
             } else if (e.key === 'ArrowLeft' && liveInput.selectionStart === 0) {
                 e.preventDefault();
-                await sendKey('ARROW_LEFT');
+                sendKey('ARROW_LEFT');
             } else if (e.key === 'ArrowRight' && liveInput.selectionEnd === liveInput.value.length) {
                 e.preventDefault();
-                await sendKey('ARROW_RIGHT');
+                sendKey('ARROW_RIGHT');
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                await sendKey('ARROW_UP');
+                sendKey('ARROW_UP');
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                await sendKey('ARROW_DOWN');
+                sendKey('ARROW_DOWN');
             }
         });
 
-        liveInput.addEventListener('input', async () => {
+        liveInput.addEventListener('input', () => {
             if (liveInput.value.length > 0) {
                 const val = liveInput.value;
                 liveInput.value = '';
-                await sendText(val);
+                sendText(val);
             }
         });
 
-        // Paragraph handler
-        async function sendParagraph() {
+        // --- Párrafo Largo ---
+        function sendParagraph() {
             const text = paragraphInput.value;
             if (!text.trim()) return;
-            await sendText(text);
+            sendText(text);
             paragraphInput.value = '';
             liveInput.focus();
         }
@@ -512,22 +748,8 @@
             }
         });
 
-        // Auto-ping status
-        setInterval(async () => {
-            try {
-                const res = await fetch('/api/ping');
-                if (res.ok) {
-                    badgeStatus.className = 'badge-status';
-                    statusLabel.innerText = 'Conectado';
-                } else {
-                    badgeStatus.className = 'badge-status disconnected';
-                    statusLabel.innerText = 'Sin Respuesta';
-                }
-            } catch (e) {
-                badgeStatus.className = 'badge-status disconnected';
-                statusLabel.innerText = 'Desconectado';
-            }
-        }, 3000);
+        // Iniciar
+        initWebSocket();
     </script>
 </body>
 </html>

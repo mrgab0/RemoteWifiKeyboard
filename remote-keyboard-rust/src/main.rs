@@ -54,31 +54,28 @@ struct PingResponse {
 }
 
 fn create_tray_icon() -> Icon {
-    // Generar un icono 32x32 con diseño de teclado moderno en memoria
     let width = 32;
     let height = 32;
     let mut rgba = Vec::with_capacity((width * height * 4) as usize);
 
     for y in 0..height {
         for x in 0..width {
-            // Marco redondeado con degradado índigo (#6366f1)
             let is_border = x == 2 || x == 29 || y == 4 || y == 27;
             let is_inside = x > 2 && x < 29 && y > 4 && y < 27;
             
-            // Dibujar teclas simuladas
             let is_key1 = (x >= 6 && x <= 11) && (y >= 8 && y <= 13);
             let is_key2 = (x >= 14 && x <= 19) && (y >= 8 && y <= 13);
             let is_key3 = (x >= 22 && x <= 27) && (y >= 8 && y <= 13);
             let is_space = (x >= 8 && x <= 24) && (y >= 18 && y <= 23);
 
             if is_key1 || is_key2 || is_key3 || is_space {
-                rgba.extend_from_slice(&[255, 255, 255, 255]); // Blanco brillante
+                rgba.extend_from_slice(&[255, 255, 255, 255]);
             } else if is_inside {
-                rgba.extend_from_slice(&[99, 102, 241, 230]); // Púrpura/Indigo
+                rgba.extend_from_slice(&[99, 102, 241, 230]);
             } else if is_border {
-                rgba.extend_from_slice(&[139, 92, 246, 255]); // Violeta
+                rgba.extend_from_slice(&[139, 92, 246, 255]);
             } else {
-                rgba.extend_from_slice(&[0, 0, 0, 0]); // Transparente
+                rgba.extend_from_slice(&[0, 0, 0, 0]);
             }
         }
     }
@@ -123,17 +120,17 @@ fn start_background_server(tx: broadcast::Sender<String>) {
 fn main() {
     let (tx, _rx) = broadcast::channel(100);
 
-    // 1. Iniciar el servidor web/websocket de ultra-baja latencia en segundo plano
+    // 1. Iniciar el servidor web/websocket en segundo plano
     start_background_server(tx.clone());
 
     // 2. Iniciar el bucle de eventos nativo de Windows (Tao + Wry + Tray)
     let event_loop = EventLoopBuilder::new().build();
 
-    // Crear ventana gráfica de configuración
+    // Crear ventana gráfica
     let window = WindowBuilder::new()
         .with_title("Remote WiFi Keyboard • Windows Control Center")
-        .with_inner_size(LogicalSize::new(760.0, 680.0))
-        .with_min_inner_size(LogicalSize::new(500.0, 520.0))
+        .with_inner_size(LogicalSize::new(720.0, 640.0))
+        .with_min_inner_size(LogicalSize::new(480.0, 480.0))
         .with_visible(true)
         .build(&event_loop)
         .expect("No se pudo crear la ventana de Windows");
@@ -146,10 +143,12 @@ fn main() {
     // 3. Crear el icono y menú de la bandeja del sistema (System Tray)
     let tray_menu = Menu::new();
     let show_item = MenuItem::new("📱 Abrir Panel de Control", true, None);
+    let on_top_item = MenuItem::new("📌 Fijar Siempre Visible (On Top)", true, None);
     let separator = PredefinedMenuItem::separator();
     let quit_item = MenuItem::new("❌ Salir", true, None);
 
     let _ = tray_menu.append(&show_item);
+    let _ = tray_menu.append(&on_top_item);
     let _ = tray_menu.append(&separator);
     let _ = tray_menu.append(&quit_item);
 
@@ -161,10 +160,12 @@ fn main() {
         .expect("No se pudo crear el icono en la bandeja");
 
     let show_id = show_item.id().clone();
+    let on_top_id = on_top_item.id().clone();
     let quit_id = quit_item.id().clone();
 
     let menu_channel = MenuEvent::receiver();
     let tray_channel = TrayIconEvent::receiver();
+    let mut is_on_top = false;
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -174,6 +175,9 @@ fn main() {
             if menu_event.id == show_id {
                 window.set_visible(true);
                 window.set_focus();
+            } else if menu_event.id == on_top_id {
+                is_on_top = !is_on_top;
+                window.set_always_on_top(is_on_top);
             } else if menu_event.id == quit_id {
                 *control_flow = ControlFlow::Exit;
             }
@@ -182,7 +186,6 @@ fn main() {
         // Escuchar clics e interacción en el icono de la bandeja
         if let Ok(tray_event) = tray_channel.try_recv() {
             match tray_event {
-                // Solo alternar con clic izquierdo al soltar el botón (evita interferir con el menú contextual derecho)
                 TrayIconEvent::Click {
                     button: MouseButton::Left,
                     button_state: MouseButtonState::Up,
@@ -194,7 +197,6 @@ fn main() {
                         window.set_focus();
                     }
                 }
-                // Doble clic izquierdo también muestra y enfoca la ventana
                 TrayIconEvent::DoubleClick {
                     button: MouseButton::Left,
                     ..
@@ -209,7 +211,6 @@ fn main() {
         // Manejar eventos de la ventana
         if let Event::WindowEvent { event, .. } = event {
             match event {
-                // Al presionar la 'X' de cerrar, solo ocultamos a la bandeja
                 WindowEvent::CloseRequested => {
                     window.set_visible(false);
                 }
@@ -229,7 +230,7 @@ async fn handle_ping() -> Json<PingResponse> {
     Json(PingResponse {
         status: "ok".to_string(),
         engine: "Rust Win32 Native".to_string(),
-        version: "1.0.0".to_string(),
+        version: "1.0.4".to_string(),
     })
 }
 
@@ -237,7 +238,6 @@ async fn handle_type(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<TypePayload>,
 ) -> Json<serde_json::Value> {
-    // ⚡ Inyección nativa directa de texto en Windows
     keyboard::type_text(&payload.text);
 
     let msg = serde_json::json!({
@@ -254,7 +254,6 @@ async fn handle_key(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<KeyPayload>,
 ) -> Json<serde_json::Value> {
-    // ⚡ Inyección nativa directa de teclas/atajos en Windows
     keyboard::handle_key_command(&payload.key);
 
     let msg = serde_json::json!({

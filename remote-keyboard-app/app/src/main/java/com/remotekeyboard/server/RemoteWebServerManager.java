@@ -14,11 +14,15 @@ public class RemoteWebServerManager {
             try {
                 serverInstance = new RemoteWebServer(context, SERVER_PORT);
                 serverInstance.start();
-                Log.i(TAG, "Servidor web HTTP iniciado exitosamente en puerto " + SERVER_PORT);
+                Log.i(TAG, "Servidor web HTTP & WebSocket iniciado exitosamente en puerto " + SERVER_PORT);
             } catch (Exception e) {
                 Log.e(TAG, "Error al iniciar el servidor web: ", e);
             }
         }
+    }
+
+    public static synchronized RemoteWebServer getServerInstance() {
+        return serverInstance;
     }
 
     public static synchronized void stopServer() {

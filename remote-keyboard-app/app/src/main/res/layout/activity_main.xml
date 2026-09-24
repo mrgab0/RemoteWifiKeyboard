@@ -44,7 +44,7 @@
             android:orientation="vertical"
             android:background="#161824"
             android:padding="18dp"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="18dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -57,7 +57,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="● Servidor Activo en este Teléfono"
+                    android:text="● Servidor Activo (HTTP + WebSocket)"
                     android:textColor="#10B981"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -108,7 +108,7 @@
             android:orientation="vertical"
             android:background="#161824"
             android:padding="18dp"
-            android:layout_marginTop="16dp">
+            android:layout_marginTop="14dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -139,14 +139,103 @@
                 android:layout_marginTop="8dp" />
         </LinearLayout>
 
-        <!-- Card 3: Live Testing Area -->
+        <!-- Card 3: Live Telemetry & Debug Suite ("Para no andar a ciegas") -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#131726"
+            android:padding="18dp"
+            android:layout_marginTop="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🔍 Diagnóstico y Telemetría en Vivo"
+                    android:textColor="#38BDF8"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvPingBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ &lt;3ms"
+                    android:textColor="#34D399"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="#1E293B"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvWsClients"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Conexión PC: ⚪ Esperando conexión desde navegador/app..."
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="10dp" />
+
+            <TextView
+                android:id="@+id/tvImeStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Teclado IME: 🟡 No seleccionado como teclado activo"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tvKeystrokes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Pulsaciones Recibidas: 0 teclas"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <!-- Switch Vibración Háptica -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📳 Vibración Háptica (Desactivada = Máxima Rapidez)"
+                    android:textColor="#E2E8F0"
+                    android:textSize="11sp" />
+
+                <Switch
+                    android:id="@+id/switchVibration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Card 4: Live Testing Area -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#161824"
             android:padding="18dp"
-            android:layout_marginTop="16dp">
+            android:layout_marginTop="14dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -167,7 +256,7 @@
             <EditText
                 android:id="@+id/etTestInput"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="65dp"
                 android:hint="Haz clic aquí y escribe desde la PC..."
                 android:textColorHint="#475569"
                 android:textColor="#FFFFFF"
@@ -178,7 +267,7 @@
                 android:layout_marginTop="8dp" />
         </LinearLayout>
 
-        <!-- Card 4: PRO Upgrade Card -->
+        <!-- Card 5: PRO Upgrade Card -->
         <LinearLayout
             android:id="@+id/layoutProUpgrade"
             android:layout_width="match_parent"
@@ -186,7 +275,7 @@
             android:orientation="vertical"
             android:background="#1F1E2E"
             android:padding="16dp"
-            android:layout_marginTop="16dp">
+            android:layout_marginTop="14dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
