@@ -602,10 +602,13 @@
                     statusLabel.innerText = 'Reconectando...';
                     metricProtocol.innerText = 'HTTP Fallback';
                     metricProtocol.style.color = '#fbbf24';
+                    setTimeout(connectWebSocket, 2500);
                 };
 
                 ws.onerror = () => {
-                    if (ws) ws.close();
+                    if (ws) {
+                        try { ws.close(); } catch (e) {}
+                    }
                 };
             } catch (e) {
                 appendLog(`⚠️ Error iniciando WebSocket con ${host}`);
