@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote WiFi Keyboard • Windows Control Center</title>
+    <title>Remote WiFi Keyboard • Windows Client</title>
     <style>
         :root {
             --bg-color: #0b0d14;
             --card-bg: #141724;
             --card-border: #23283c;
             --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.3);
+            --primary-hover: #4f46e5;
             --accent: #10b981;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }
 
         * {
@@ -30,14 +31,14 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            justify-content: space-between;
         }
 
         header {
-            background: rgba(20, 23, 36, 0.85);
+            background: rgba(20, 23, 36, 0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--card-border);
-            padding: 16px 24px;
+            padding: 14px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -53,21 +54,20 @@
         }
 
         .brand-icon {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 12px var(--primary-glow);
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .brand h1 {
             font-size: 15px;
             font-weight: 700;
-            letter-spacing: -0.3px;
         }
 
         .brand p {
@@ -79,181 +79,183 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
+            padding: 5px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             background: rgba(16, 185, 129, 0.12);
             color: #34d399;
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
+        .badge-status.disconnected {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
         .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #34d399;
+            width: 7px;
+            height: 7px;
+            background-color: currentColor;
             border-radius: 50%;
             animation: pulse 1.8s infinite;
         }
 
         @keyframes pulse {
             0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px #34d399; }
+            50% { transform: scale(1.3); opacity: 1; }
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
         main {
             flex: 1;
-            max-width: 800px;
+            max-width: 680px;
             margin: 0 auto;
             width: 100%;
-            padding: 24px 16px;
+            padding: 20px 16px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .hero-pairing {
-            display: grid;
-            grid-template-columns: 180px 1fr;
-            gap: 24px;
-            align-items: center;
-        }
-
-        @media (max-width: 600px) {
-            .hero-pairing {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-        }
-
-        .qr-container {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 10px;
+        .card-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            justify-content: space-between;
+            margin-bottom: 10px;
         }
 
-        #qr-canvas {
-            width: 160px;
-            height: 160px;
-            border-radius: 6px;
-        }
-
-        .pairing-info h2 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .pairing-info p {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 14px;
-        }
-
-        .ip-badge-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 8px 12px;
-            width: fit-content;
-        }
-
-        .ip-text {
-            font-family: monospace;
-            font-size: 14px;
-            font-weight: 700;
-            color: #818cf8;
-        }
-
-        .btn-copy {
-            background: #282e44;
-            border: none;
-            color: #e2e8f0;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-copy:hover {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .section-title {
+        .card-title {
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
+            color: #818cf8;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .input-live {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.45);
+        .ip-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ip-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
             border: 1px solid #2d334d;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 15px;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-family: monospace;
+            font-size: 14px;
             color: #fff;
             outline: none;
-            transition: border 0.2s;
+        }
+
+        .ip-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-scan {
+            background: #202538;
+            color: #e2e8f0;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-scan:hover {
+            background: #2a3149;
+        }
+
+        .input-live {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #2d334d;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s;
+            user-select: text;
         }
 
         .input-live:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .textarea-box {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d334d;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #fff;
+            outline: none;
+            resize: vertical;
+            min-height: 70px;
+            user-select: text;
         }
 
         .key-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
         }
 
         .key-btn {
             background: #1c2032;
             border: 1px solid #2a304a;
-            border-radius: 10px;
-            padding: 12px 8px;
+            border-radius: 8px;
+            padding: 10px 6px;
             color: #e2e8f0;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.12s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .key-btn:hover {
             background: #29304e;
-            border-color: #3b4468;
             transform: translateY(-1px);
         }
 
@@ -263,25 +265,21 @@
             color: #fff;
         }
 
-        .key-icon {
-            font-size: 14px;
-        }
-
         .log-box {
             background: #08090f;
             border: 1px solid #1a1e2e;
-            border-radius: 10px;
-            padding: 10px 14px;
+            border-radius: 8px;
+            padding: 8px 12px;
             font-family: monospace;
             font-size: 11px;
             color: #94a3b8;
-            max-height: 100px;
+            max-height: 70px;
             overflow-y: auto;
         }
 
         footer {
             text-align: center;
-            padding: 16px;
+            padding: 12px;
             font-size: 11px;
             color: #64748b;
             border-top: 1px solid var(--card-border);
@@ -295,168 +293,131 @@
             <div class="brand-icon">⌨️</div>
             <div>
                 <h1>Remote WiFi Keyboard</h1>
-                <p>Servidor Nativo Win32 (Latencia &lt; 0.1ms)</p>
+                <p>Cliente de Escritura Windows ➡️ Android</p>
             </div>
         </div>
 
-        <div class="badge-status">
+        <div id="badge-status" class="badge-status disconnected">
             <span class="pulse-dot"></span>
-            <span id="status-label">Servidor Activo (Puerto 8080)</span>
+            <span id="status-label">Buscando Teléfono...</span>
         </div>
     </header>
 
     <main>
-        <!-- Pairing Card -->
-        <div class="card hero-pairing">
-            <div class="qr-container">
-                <canvas id="qr-canvas"></canvas>
+        <!-- Card 1: Connection to Phone -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📱 Conexión con Teléfono Android</div>
             </div>
 
-            <div class="pairing-info">
-                <h2>📱 Emparejamiento Rápido</h2>
-                <p>
-                    Abre la aplicación <b>Remote Keyboard</b> en tu teléfono Android.
-                    Se detectará automáticamente o escanea este código QR con la cámara.
-                </p>
-
-                <div class="ip-badge-box">
-                    <span>IP PC:</span>
-                    <span class="ip-text" id="ip-address">Cargando...</span>
-                    <button class="btn-copy" onclick="copyIp()">📋 Copiar</button>
-                </div>
+            <div class="ip-input-row">
+                <input 
+                    type="text" 
+                    id="phone-ip" 
+                    class="ip-input" 
+                    placeholder="Ej. 192.168.1.105:8080" 
+                    value="192.168.1.105:8080"
+                />
+                <button class="btn-action" onclick="connectPhone()">Conectar</button>
+                <button class="btn-scan" onclick="autoScan()">🔍 Auto-Detectar</button>
             </div>
         </div>
 
-        <!-- Live Typing Simulator -->
+        <!-- Card 2: Live Real-time Typing -->
         <div class="card">
-            <div class="section-title">⚡ Simulador de Escritura en Vivo (Windows SendInput)</div>
+            <div class="card-header">
+                <div class="card-title">⚡ Escritura en Vivo (PC ➡️ Teléfono)</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Escribe aquí con tu teclado físico</div>
+            </div>
+
             <input 
                 type="text" 
-                id="test-input" 
+                id="live-input" 
                 class="input-live" 
-                placeholder="Escribe aquí para probar la inyección de pulsaciones..."
+                placeholder="Haz clic aquí y escribe con tu teclado..." 
+                autofocus
                 autocomplete="off"
             />
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
-                Cualquier texto o tecla presionada desde el móvil se inyectará instantáneamente en la ventana activa de Windows.
+        </div>
+
+        <!-- Card 3: Long Text & Clipboard -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📋 Enviar Párrafo o Portapapeles</div>
+            </div>
+
+            <textarea 
+                id="paragraph-input" 
+                class="textarea-box" 
+                placeholder="Pega texto largo, notas o enlaces para enviar completo al teléfono..."
+            ></textarea>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="btn-scan" onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
+                <button class="btn-action" style="flex: 1;" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
             </div>
         </div>
 
-        <!-- Quick Test Keys -->
+        <!-- Card 4: Quick Keys -->
         <div class="card">
-            <div class="section-title">🎮 Botones Rápidos de Prueba</div>
+            <div class="card-header">
+                <div class="card-title">🎮 Botones Rápidos</div>
+            </div>
+
             <div class="key-grid">
                 <button class="key-btn" onclick="sendKey('ENTER')">
-                    <span class="key-icon">⏎</span>
+                    <span>⏎</span>
                     <span>Enter</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('BACKSPACE')">
-                    <span class="key-icon">⌫</span>
+                    <span>⌫</span>
                     <span>Borrar</span>
                 </button>
                 <button class="key-btn" onclick="sendKey('TAB')">
-                    <span class="key-icon">⇥</span>
+                    <span>⇥</span>
                     <span>Tab</span>
                 </button>
-                <button class="key-btn" onclick="sendKey('ESCAPE')">
-                    <span class="key-icon">⎋</span>
-                    <span>Escape</span>
-                </button>
                 <button class="key-btn" onclick="sendKey('SPACE')">
-                    <span class="key-icon">␣</span>
+                    <span>␣</span>
                     <span>Espacio</span>
                 </button>
-                <button class="key-btn" onclick="sendKey('CTRL+C')">
-                    <span class="key-icon">📋</span>
-                    <span>Copiar</span>
+                <button class="key-btn" onclick="sendKey('SELECT_ALL')">
+                    <span>🔲</span>
+                    <span>Selec. Todo</span>
                 </button>
-                <button class="key-btn" onclick="sendKey('CTRL+V')">
-                    <span class="key-icon">📥</span>
-                    <span>Pegar</span>
+                <button class="key-btn" onclick="sendKey('ARROW_LEFT')">
+                    <span>◀</span>
+                    <span>Izquierda</span>
                 </button>
-                <button class="key-btn" onclick="sendKey('WIN+D')">
-                    <span class="key-icon">🪟</span>
-                    <span>Escritorio</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('VOLUME_UP')">
-                    <span class="key-icon">🔊</span>
-                    <span>Volumen +</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('VOLUME_DOWN')">
-                    <span class="key-icon">🔉</span>
-                    <span>Volumen -</span>
+                <button class="key-btn" onclick="sendKey('ARROW_RIGHT')">
+                    <span>▶</span>
+                    <span>Derecha</span>
                 </button>
             </div>
         </div>
 
-        <!-- Activity Log -->
+        <!-- Card 5: Log Console -->
         <div class="card">
-            <div class="section-title">📊 Registro de Actividad</div>
             <div id="log-console" class="log-box">
-                [Sistema] Servidor Tokio / Axum escuchando en 0.0.0.0:8080<br>
-                [Sistema] Bandeja del Sistema (System Tray) vinculada con éxito.
+                [Listo] Ingresa la IP de tu teléfono Android y presiona Conectar.
             </div>
         </div>
     </main>
 
     <footer>
-        Remote WiFi Keyboard • Windows 10 & 11 • Compilado en Rust con Win32 Native API
+        Remote WiFi Keyboard • Windows Native Client • Transmisión Directa Wi-Fi
     </footer>
 
-    <!-- Minimal offline QR Code Generator library -->
     <script>
-        // Simple embedded Canvas QR generator implementation
-        function drawQRCode(canvas, text) {
-            const ctx = canvas.getContext('2d');
-            const size = 160;
-            canvas.width = size;
-            canvas.height = size;
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, size, size);
-            
-            ctx.fillStyle = "#0f172a";
-            // Draw dummy high-contrast pattern + QR look
-            const cellSize = 5;
-            const count = size / cellSize;
-            
-            // Random-like hash seeded by text for visualization
-            let hash = 0;
-            for (let i = 0; i < text.length; i++) {
-                hash = ((hash << 5) - hash) + text.charCodeAt(i);
-                hash |= 0;
-            }
-
-            // Draw Finder patterns (corners)
-            function drawFinder(x, y) {
-                ctx.fillStyle = "#0f172a";
-                ctx.fillRect(x * cellSize, y * cellSize, 7 * cellSize, 7 * cellSize);
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect((x + 1) * cellSize, (y + 1) * cellSize, 5 * cellSize, 5 * cellSize);
-                ctx.fillStyle = "#0f172a";
-                ctx.fillRect((x + 2) * cellSize, (y + 2) * cellSize, 3 * cellSize, 3 * cellSize);
-            }
-
-            drawFinder(1, 1);
-            drawFinder(count - 8, 1);
-            drawFinder(1, count - 8);
-
-            // Draw data cells
-            for (let r = 0; r < count; r++) {
-                for (let c = 0; c < count; c++) {
-                    if ((r < 9 && c < 9) || (r < 9 && c > count - 10) || (r > count - 10 && c < 9)) continue;
-                    let val = Math.sin(r * 12.9898 + c * 78.233 + hash) * 43758.5453;
-                    if ((val - Math.floor(val)) > 0.45) {
-                        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-        }
-
-        // Initialize IP and QR
-        const ipLabel = document.getElementById('ip-address');
-        const qrCanvas = document.getElementById('qr-canvas');
+        const phoneIpInput = document.getElementById('phone-ip');
+        const liveInput = document.getElementById('live-input');
+        const paragraphInput = document.getElementById('paragraph-input');
         const logConsole = document.getElementById('log-console');
+        const badgeStatus = document.getElementById('badge-status');
+        const statusLabel = document.getElementById('status-label');
+
+        let targetIp = localStorage.getItem('last_phone_ip') || '192.168.1.105:8080';
+        phoneIpInput.value = targetIp;
 
         function appendLog(msg) {
             const time = new Date().toLocaleTimeString();
@@ -464,77 +425,151 @@
             logConsole.scrollTop = logConsole.scrollHeight;
         }
 
-        // Fetch IP and initialize
-        fetch('/api/ping')
-            .then(res => res.json())
-            .then(data => {
-                const host = window.location.hostname || '127.0.0.1';
-                const connectUrl = `http://${host}:8080`;
-                ipLabel.innerText = `${host}:8080`;
-                drawQRCode(qrCanvas, connectUrl);
-                appendLog(`Servidor verificado: ${data.engine} v${data.version}`);
-            })
-            .catch(() => {
-                const host = '127.0.0.1';
-                ipLabel.innerText = `${host}:8080`;
-                drawQRCode(qrCanvas, `http://${host}:8080`);
-            });
-
-        function copyIp() {
-            navigator.clipboard.writeText(ipLabel.innerText);
-            appendLog(`IP copiada al portapapeles: ${ipLabel.innerText}`);
+        function getBaseUrl() {
+            let ip = phoneIpInput.value.trim();
+            if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
+                ip = 'http://' + ip;
+            }
+            return ip;
         }
 
-        // WebSocket connection
-        let ws;
-        function initWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-                appendLog("WebSocket conectado en tiempo real.");
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'type') {
-                        appendLog(`Texto recibido e inyectado: "${data.text}"`);
-                    } else if (data.type === 'key') {
-                        appendLog(`Tecla pulsada: ${data.key}`);
-                    }
-                } catch(e) {}
-            };
-
-            ws.onclose = () => {
-                setTimeout(initWebSocket, 2000);
-            };
-        }
-        initWebSocket();
-
-        function sendKey(key) {
-            fetch('/api/key', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key })
-            });
-            appendLog(`Tecla enviada: ${key}`);
-        }
-
-        const testInput = document.getElementById('test-input');
-        testInput.addEventListener('input', () => {
-            if (testInput.value) {
-                const text = testInput.value;
-                testInput.value = '';
-                fetch('/api/type', {
+        async function sendApi(endpoint, data) {
+            try {
+                const baseUrl = getBaseUrl();
+                const res = await fetch(baseUrl + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
+                    body: JSON.stringify(data)
                 });
-                appendLog(`Texto simulado: ${text}`);
+                return res.ok;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        async function sendText(text) {
+            if (!text) return;
+            const ok = await sendApi('/api/type', { text });
+            if (ok) {
+                appendLog(`Texto enviado: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`);
+            } else {
+                appendLog(`⚠️ Error enviando a ${phoneIpInput.value}`);
+            }
+        }
+
+        async function sendKey(key) {
+            const ok = await sendApi('/api/key', { key });
+            if (ok) {
+                appendLog(`Tecla: ${key}`);
+            }
+        }
+
+        async function connectPhone() {
+            const baseUrl = getBaseUrl();
+            appendLog(`Probando conexión con ${baseUrl}...`);
+            try {
+                const res = await fetch(baseUrl + '/api/ping');
+                if (res.ok) {
+                    badgeStatus.className = 'badge-status';
+                    statusLabel.innerText = 'Conectado a Teléfono';
+                    localStorage.setItem('last_phone_ip', phoneIpInput.value.trim());
+                    appendLog(`🟢 Conectado con éxito a ${baseUrl}`);
+                    liveInput.focus();
+                } else {
+                    badgeStatus.className = 'badge-status disconnected';
+                    statusLabel.innerText = 'Sin Respuesta';
+                    appendLog(`🔴 Sin respuesta de ${baseUrl}`);
+                }
+            } catch (e) {
+                badgeStatus.className = 'badge-status disconnected';
+                statusLabel.innerText = 'Desconectado';
+                appendLog(`🔴 No se pudo conectar a ${baseUrl}`);
+            }
+        }
+
+        async function autoScan() {
+            appendLog("🔍 Escaneando red local en busca de tu teléfono Android...");
+            badgeStatus.className = 'badge-status disconnected';
+            statusLabel.innerText = 'Escaneando...';
+            
+            // Probar subredes comunes 192.168.1.X y 192.168.0.X
+            const subnets = ['192.168.1.', '192.168.0.', '192.168.100.'];
+            let found = false;
+
+            for (const sub of subnets) {
+                if (found) break;
+                const promises = [];
+                for (let i = 2; i <= 254; i++) {
+                    const testUrl = `http://${sub}${i}:8080/api/ping`;
+                    promises.push(
+                        fetch(testUrl, { signal: AbortSignal.timeout(600) })
+                            .then(r => r.ok ? `http://${sub}${i}:8080` : null)
+                            .catch(() => null)
+                    );
+                }
+                const results = await Promise.all(promises);
+                for (const r of results) {
+                    if (r) {
+                        found = true;
+                        phoneIpInput.value = r.replace('http://', '');
+                        connectPhone();
+                        break;
+                    }
+                }
+            }
+
+            if (!found) {
+                appendLog("⚠️ No se detectó automáticamente. Ingresa la IP que muestra la app de tu teléfono.");
+            }
+        }
+
+        // Live typing
+        liveInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                await sendKey('ENTER');
+                liveInput.value = '';
+            } else if (e.key === 'Backspace' && liveInput.value.length === 0) {
+                e.preventDefault();
+                await sendKey('BACKSPACE');
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                await sendKey('TAB');
+            } else if (e.key === 'ArrowLeft' && liveInput.selectionStart === 0) {
+                e.preventDefault();
+                await sendKey('ARROW_LEFT');
+            } else if (e.key === 'ArrowRight' && liveInput.selectionEnd === liveInput.value.length) {
+                e.preventDefault();
+                await sendKey('ARROW_RIGHT');
             }
         });
+
+        liveInput.addEventListener('input', async () => {
+            if (liveInput.value.length > 0) {
+                const val = liveInput.value;
+                liveInput.value = '';
+                await sendText(val);
+            }
+        });
+
+        // Paragraph
+        async function sendParagraph() {
+            const text = paragraphInput.value;
+            if (!text.trim()) return;
+            await sendText(text);
+            paragraphInput.value = '';
+            liveInput.focus();
+        }
+
+        paragraphInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                sendParagraph();
+            }
+        });
+
+        // Auto-connect on launch
+        setTimeout(connectPhone, 500);
     </script>
 </body>
 </html>

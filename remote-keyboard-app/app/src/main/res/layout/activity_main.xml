@@ -9,624 +9,184 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="20dp"
         android:gravity="center_horizontal">
 
         <!-- Header -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_keyboard" />
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:text="Remote WiFi Keyboard"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="8dp" />
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_keyboard" />
+        <TextView
+            android:id="@+id/tvAppSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Escribe desde tu PC a tu Android en tiempo real"
+            android:textSize="12sp"
+            android:textColor="#94A3B8"
+            android:layout_marginTop="2dp" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Remote WiFi Keyboard"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#FFFFFF" />
-
-                <TextView
-                    android:id="@+id/tvAppSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📱 Teclado y Controlador Remoto para PC"
-                    android:textSize="11sp"
-                    android:textColor="#94A3B8" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvStatusBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🟡 Conectando..."
-                android:textColor="#FBBF24"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:padding="6dp"
-                android:background="#1E293B" />
-        </LinearLayout>
-
-        <!-- Card 1: PC Connection & Auto-Discovery -->
+        <!-- Card 1: Server Status & Phone IP Address -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#161824"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
+            android:padding="18dp"
+            android:layout_marginTop="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="● Servidor Activo en este Teléfono"
+                    android:textColor="#10B981"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Puerto 8080"
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvPcStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Buscando PC en la red local WiFi..."
+                android:text="Abre esta dirección en el navegador o app de tu PC:"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="12dp" />
+
+            <TextView
+                android:id="@+id/tvUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="http://192.168.1.105:8080"
+                android:textColor="#818CF8"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"
+                android:textIsSelectable="true" />
+
+            <Button
+                android:id="@+id/btnCopyUrl"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:text="📋 Copiar Dirección URL"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                android:backgroundTint="#818CF8"
+                android:layout_marginTop="14dp" />
+        </LinearLayout>
+
+        <!-- Card 2: Guided Setup Steps -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#161824"
+            android:padding="18dp"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚙️ Configuración del Teclado"
                 android:textColor="#E2E8F0"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <Button
+                android:id="@+id/btnEnableIme"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="8dp">
+                android:layout_height="44dp"
+                android:text="1. Habilitar Teclado en Ajustes"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:backgroundTint="#2D323F"
+                android:layout_marginTop="12dp" />
 
-                <EditText
-                    android:id="@+id/etPcIp"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:hint="IP del PC (ej. 192.168.1.100)"
-                    android:textColorHint="#64748B"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:inputType="textUri"
-                    android:background="#0E1019"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp" />
-
-                <Button
-                    android:id="@+id/btnConnectPc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="42dp"
-                    android:text="Conectar"
-                    android:textSize="11sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#4F46E5"
-                    android:layout_marginStart="6dp" />
-
-                <Button
-                    android:id="@+id/btnScanPc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="42dp"
-                    android:text="🔍 Auto"
-                    android:textSize="11sp"
-                    android:textColor="#000000"
-                    android:backgroundTint="#818CF8"
-                    android:layout_marginStart="4dp" />
-            </LinearLayout>
+            <Button
+                android:id="@+id/btnSelectIme"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="2. Seleccionar como Teclado Activo"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:backgroundTint="#2D323F"
+                android:layout_marginTop="8dp" />
         </LinearLayout>
 
-        <!-- Card 2: Live Typing & Voice-to-Text Input -->
+        <!-- Card 3: Live Testing Area -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#161824"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
+            android:padding="18dp"
+            android:layout_marginTop="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="6dp">
+                android:text="🧪 Área de Prueba en Vivo:"
+                android:textColor="#818CF8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="⌨️ Escribir en PC en Tiempo Real"
-                    android:textColor="#818CF8"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <CheckBox
-                    android:id="@+id/cbLiveSend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="En vivo"
-                    android:textSize="11sp"
-                    android:textColor="#94A3B8"
-                    android:checked="true" />
-            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Toca el cuadro para abrir el teclado y escribe desde tu PC:"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:layout_marginTop="4dp" />
 
             <EditText
-                android:id="@+id/etLiveInput"
+                android:id="@+id/etTestInput"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:hint="Toca aquí para escribir o usar dictado por voz hacia tu PC..."
-                android:textColorHint="#64748B"
+                android:layout_height="70dp"
+                android:hint="Haz clic aquí y escribe desde la PC..."
+                android:textColorHint="#475569"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:gravity="top|start"
                 android:background="#0E1019"
-                android:padding="10dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp">
-
-                <Button
-                    android:id="@+id/btnSendAll"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:text="Enviar Texto 🚀"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#4F46E5" />
-
-                <Button
-                    android:id="@+id/btnVoice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="42dp"
-                    android:text="🎙️ Dictar"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#2563EB"
-                    android:layout_marginStart="6dp" />
-
-                <Button
-                    android:id="@+id/btnClear"
-                    android:layout_width="wrap_content"
-                    android:layout_height="42dp"
-                    android:text="🗑️"
-                    android:textSize="13sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#334155"
-                    android:layout_marginStart="6dp" />
-            </LinearLayout>
+                android:padding="12dp"
+                android:layout_marginTop="8dp" />
         </LinearLayout>
 
-        <!-- Card 3: Essential & Shortcut Keys Grid -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#161824"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚡ Teclas Rápidas de Windows"
-                android:textColor="#818CF8"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="10dp" />
-
-            <!-- Row 1: Enter, Backspace, Space, Tab -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
-
-                <Button
-                    android:id="@+id/btnKeyEnter"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1.2"
-                    android:text="Enter ↵"
-                    android:textSize="11sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#10B981" />
-
-                <Button
-                    android:id="@+id/btnKeyBackspace"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1.2"
-                    android:text="⌫ Borrar"
-                    android:textSize="11sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#EF4444"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnKeySpace"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:text="Espacio"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#334155"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnKeyTab"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="0.8"
-                    android:text="Tab ⇥"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#334155"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnKeyEsc"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="0.8"
-                    android:text="Esc"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#475569"
-                    android:layout_marginStart="4dp" />
-            </LinearLayout>
-
-            <!-- Row 2: Shortcuts Ctrl+C, Ctrl+V, Ctrl+Z, Ctrl+A -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
-
-                <Button
-                    android:id="@+id/btnCtrlC"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Ctrl+C"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B" />
-
-                <Button
-                    android:id="@+id/btnCtrlV"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Ctrl+V"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnCtrlZ"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Ctrl+Z"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnCtrlA"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Ctrl+A"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnCtrlS"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Ctrl+S"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-            </LinearLayout>
-
-            <!-- Row 3: Win+D, Alt+F4, Supr -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
-
-                <Button
-                    android:id="@+id/btnWinD"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="🪟 Escritorio"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B" />
-
-                <Button
-                    android:id="@+id/btnAltF4"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Alt+F4"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-
-                <Button
-                    android:id="@+id/btnKeyDel"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Supr ⌦"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="4dp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Card 4: Navigation D-Pad & Media Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#161824"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
-
-            <!-- D-Pad Directional Arrows -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🧭 Navegación"
-                    android:textColor="#818CF8"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="6dp" />
-
-                <Button
-                    android:id="@+id/btnArrowUp"
-                    android:layout_width="48dp"
-                    android:layout_height="40dp"
-                    android:text="▲"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#334155" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginBottom="2dp">
-
-                    <Button
-                        android:id="@+id/btnArrowLeft"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="◄"
-                        android:textSize="12sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#334155" />
-
-                    <Button
-                        android:id="@+id/btnKeyOk"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="OK"
-                        android:textSize="10sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#4F46E5"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginEnd="2dp" />
-
-                    <Button
-                        android:id="@+id/btnArrowRight"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="►"
-                        android:textSize="12sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#334155" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/btnArrowDown"
-                    android:layout_width="48dp"
-                    android:layout_height="40dp"
-                    android:text="▼"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#334155" />
-            </LinearLayout>
-
-            <!-- Media & Volume Controls -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:layout_marginStart="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🔊 Multimedia"
-                    android:textColor="#818CF8"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="6dp" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="4dp">
-
-                    <Button
-                        android:id="@+id/btnVolDown"
-                        android:layout_width="52dp"
-                        android:layout_height="40dp"
-                        android:text="Vol -"
-                        android:textSize="9sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#334155" />
-
-                    <Button
-                        android:id="@+id/btnVolMute"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="🔇"
-                        android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#334155"
-                        android:layout_marginStart="2dp" />
-
-                    <Button
-                        android:id="@+id/btnVolUp"
-                        android:layout_width="52dp"
-                        android:layout_height="40dp"
-                        android:text="Vol +"
-                        android:textSize="9sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#334155"
-                        android:layout_marginStart="2dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/btnMediaPrev"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="⏮"
-                        android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#1E293B" />
-
-                    <Button
-                        android:id="@+id/btnMediaPlay"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="⏯"
-                        android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#4F46E5"
-                        android:layout_marginStart="2dp" />
-
-                    <Button
-                        android:id="@+id/btnMediaNext"
-                        android:layout_width="48dp"
-                        android:layout_height="40dp"
-                        android:text="⏭"
-                        android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#1E293B"
-                        android:layout_marginStart="2dp" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Card 5: Reverse Mode (PC ➡️ Teléfono IME) Collapsible / Setup -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#161824"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔄 Modo Inverso: Escribir desde PC al Teléfono"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvUrl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="http://192.168.1.105:8080"
-                android:textColor="#818CF8"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp">
-
-                <Button
-                    android:id="@+id/btnEnableIme"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="1. Habilitar Teclado"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B" />
-
-                <Button
-                    android:id="@+id/btnSelectIme"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="2. Seleccionar Teclado"
-                    android:textSize="10sp"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#1E293B"
-                    android:layout_marginStart="6dp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Card 6: PRO Upgrade Card -->
+        <!-- Card 4: PRO Upgrade Card -->
         <LinearLayout
             android:id="@+id/layoutProUpgrade"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#1F1E2E"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
+            android:padding="16dp"
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -660,7 +220,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cero anuncios, Clipboard Sync automático y máxima velocidad."
+                android:text="Cero anuncios, velocidad ultra-rápida y soporte prioritario."
                 android:textColor="#B0BEC5"
                 android:textSize="11sp"
                 android:layout_marginTop="4dp" />
@@ -668,22 +228,23 @@
             <Button
                 android:id="@+id/btnBuyPro"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="42dp"
                 android:text="Desbloquear PRO por $7.99 USD 🚀"
                 android:textColor="#000000"
-                android:textSize="11sp"
+                android:textSize="12sp"
+                android:textStyle="bold"
                 android:backgroundTint="#FFD700"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="10dp" />
         </LinearLayout>
 
-        <!-- Card 7: Dynamic AdMob Banner -->
+        <!-- Dynamic AdMob Container -->
         <LinearLayout
             android:id="@+id/adContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:layout_marginBottom="10dp" />
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
 </ScrollView>
