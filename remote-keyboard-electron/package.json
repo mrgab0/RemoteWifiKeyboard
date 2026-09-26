@@ -1,0 +1,23 @@
+{
+  "name": "remote-wifi-keyboard",
+  "version": "1.0.0",
+  "description": "Remote WiFi Keyboard Windows Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.mrgab0.remotewifikeyboard",
+    "productName": "Remote WiFi Keyboard",
+    "win": {
+      "target": "portable"
+    }
+  }
+}

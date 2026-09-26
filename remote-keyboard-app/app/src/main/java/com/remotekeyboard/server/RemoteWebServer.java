@@ -56,21 +56,53 @@ public class RemoteWebServer extends NanoHTTPD {
             // ⚡ 1. Escritura instantánea de texto
             if ("type".equals(type)) {
                 String text = json.optString("text", "");
+                com.remotekeyboard.DebugLogger.log("WebSocket RX [TEXTO]: " + text);
                 if (!text.isEmpty()) {
                     RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
                     if (ime != null) {
                         ime.typeText(text);
+                    } else {
+                        com.remotekeyboard.DebugLogger.log("ERROR WS: RemoteInputMethodService es NULL");
                     }
                 }
             } 
             // ⚡ 2. Pulsación instantánea de tecla especial
             else if ("key".equals(type)) {
                 String key = json.optString("key", "");
+                com.remotekeyboard.DebugLogger.log("WebSocket RX [TECLA]: " + key);
                 if (!key.isEmpty()) {
                     RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
                     if (ime != null) {
                         ime.sendSpecialKey(key);
+                    } else {
+                        com.remotekeyboard.DebugLogger.log("ERROR WS: RemoteInputMethodService es NULL");
                     }
+                }
+            }
+            // ⚡ 3. Full Keyboard Event (raw down/up)
+            else if ("key_event".equals(type)) {
+                String action = json.optString("action", "");
+                String key = json.optString("key", "");
+                String code = json.optString("code", "");
+                long ts = json.optLong("timestamp", 0);
+                
+                int metaState = 0;
+                org.json.JSONArray mods = json.optJSONArray("modifiers");
+                if (mods != null) {
+                    for (int i = 0; i < mods.length(); i++) {
+                        String m = mods.optString(i, "");
+                        if ("CTRL".equals(m)) metaState |= android.view.KeyEvent.META_CTRL_ON;
+                        if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON;
+                        if ("ALT".equals(m)) metaState |= android.view.KeyEvent.META_ALT_ON;
+                        if ("META".equals(m)) metaState |= android.view.KeyEvent.META_META_ON;
+                    }
+                }
+
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
+                    ime.handleRawKeyEvent(action, key, code, metaState, ts);
+                } else {
+                    com.remotekeyboard.DebugLogger.log("ERROR WS: RemoteInputMethodService es NULL (RAW KEY)");
                 }
             }
             // ⚡ 3. Ping para cálculo de RTT y latencia en milisegundos en tiempo real
@@ -169,6 +201,45 @@ public class RemoteWebServer extends NanoHTTPD {
                 return Response.newFixedLengthResponse(Response.Status.OK, "application/json", "{\"status\":\"ok\"}");
             } catch (Exception e) {
                 Log.e(TAG, "Error procesando /api/key: ", e);
+                return Response.newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", e.getMessage());
+            }
+        }
+
+        // 4.5. Endpoint Raw Key Event (Fallback HTTP REST)
+        if ("/api/key_event".equals(uri) && Method.POST.equals(method)) {
+            totalPacketsReceived.incrementAndGet();
+            lastPacketTime.set(System.currentTimeMillis());
+            try {
+                String body = session.getBody();
+                if (body != null && !body.trim().isEmpty()) {
+                    JSONObject json = new JSONObject(body);
+                    String action = json.optString("action", "");
+                    String key = json.optString("key", "");
+                    String code = json.optString("code", "");
+                    long ts = json.optLong("timestamp", 0);
+                    
+                    int metaState = 0;
+                    org.json.JSONArray mods = json.optJSONArray("modifiers");
+                    if (mods != null) {
+                        for (int i = 0; i < mods.length(); i++) {
+                            String m = mods.optString(i, "");
+                            if ("CTRL".equals(m)) metaState |= android.view.KeyEvent.META_CTRL_ON;
+                            if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON;
+                            if ("ALT".equals(m)) metaState |= android.view.KeyEvent.META_ALT_ON;
+                            if ("META".equals(m)) metaState |= android.view.KeyEvent.META_META_ON;
+                        }
+                    }
+
+                    RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                    if (ime != null) {
+                        ime.handleRawKeyEvent(action, key, code, metaState, ts);
+                    } else {
+                        com.remotekeyboard.DebugLogger.log("ERROR REST: RemoteInputMethodService es NULL (RAW KEY)");
+                    }
+                }
+                return Response.newFixedLengthResponse(Response.Status.OK, "application/json", "{\"status\":\"ok\"}");
+            } catch (Exception e) {
+                Log.e(TAG, "Error procesando /api/key_event: ", e);
                 return Response.newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", e.getMessage());
             }
         }

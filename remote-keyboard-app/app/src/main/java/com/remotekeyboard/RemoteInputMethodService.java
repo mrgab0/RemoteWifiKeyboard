@@ -58,6 +58,8 @@ public class RemoteInputMethodService extends InputMethodService {
     @Override
     public void onCreate() {
         super.onCreate();
+        DebugLogger.init(this);
+        DebugLogger.log("RemoteInputMethodService onCreate iniciado.");
         instance = this;
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         try {
@@ -188,9 +190,19 @@ public class RemoteInputMethodService extends InputMethodService {
             }
         });
     }
+    private boolean isDevTierEnabled = true;
+
+    private void checkDevAndExecute(Runnable action) {
+        if (isDevTierEnabled) {
+            action.run();
+        } else {
+            // Toast.makeText(getApplicationContext(), "🌟 Actualiza a PRO", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     public void typeText(final String text) {
         if (text == null) return;
+        DebugLogger.log("typeText llamado con texto: [" + text + "]");
         totalKeysTyped.addAndGet(text.length());
         performHapticFeedbackAsync();
 
@@ -206,10 +218,13 @@ public class RemoteInputMethodService extends InputMethodService {
 
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) {
+                    DebugLogger.log("ic.commitText ejecutando para: [" + text + "]");
                     ic.commitText(text, 1);
                 } else {
-                    for (char c : text.toCharArray()) {
-                        sendDownUpKeyEvents(KeyEvent.getDeadChar(0, c));
+                    DebugLogger.log("ERROR: InputConnection (ic) es NULL. El usuario no está en un campo de texto.");
+                    if (tvLiveFeedback != null) {
+                        tvLiveFeedback.setText("⚠️ Error: Toca un campo de texto en Android primero");
+                        tvLiveFeedback.setTextColor(Color.parseColor("#FBBF24"));
                     }
                 }
             }
@@ -232,11 +247,15 @@ public class RemoteInputMethodService extends InputMethodService {
                 }
 
                 InputConnection ic = getCurrentInputConnection();
+                if (ic == null && tvLiveFeedback != null) {
+                    tvLiveFeedback.setText("⚠️ Sin Foco: Toca un campo de texto en Android");
+                    tvLiveFeedback.setTextColor(Color.parseColor("#FBBF24"));
+                }
+                
                 String upper = key.toUpperCase();
 
                 switch (upper) {
                     case "ENTER":
-                    case "RETURN":
                         if (ic != null) {
                             ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
                             ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
@@ -249,7 +268,12 @@ public class RemoteInputMethodService extends InputMethodService {
                     case "BACKSPACE":
                     case "BACK":
                         if (ic != null) {
-                            ic.deleteSurroundingText(1, 0);
+                            CharSequence selected = ic.getSelectedText(0);
+                            if (selected != null && selected.length() > 0) {
+                                ic.commitText("", 1); // Bugfix: Borrar selección actual
+                            } else {
+                                ic.deleteSurroundingText(1, 0); // Borrado de carácter
+                            }
                         } else {
                             sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
                         }
@@ -271,44 +295,96 @@ public class RemoteInputMethodService extends InputMethodService {
                         break;
                     case "ARROW_LEFT":
                     case "LEFT":
-                        if (ic != null) {
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_LEFT));
-                        } else {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_LEFT);
-                        }
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_LEFT));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_LEFT); }
+                        });
                         break;
                     case "ARROW_RIGHT":
                     case "RIGHT":
-                        if (ic != null) {
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT));
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT));
-                        } else {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_RIGHT);
-                        }
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_RIGHT); }
+                        });
                         break;
                     case "ARROW_UP":
                     case "UP":
-                        if (ic != null) {
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP));
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_UP));
-                        } else {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_UP);
-                        }
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_UP));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_UP); }
+                        });
                         break;
                     case "ARROW_DOWN":
                     case "DOWN":
-                        if (ic != null) {
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN));
-                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_DOWN));
-                        } else {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_DOWN);
-                        }
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_DOWN));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_DOWN); }
+                        });
                         break;
                     case "SELECT_ALL":
-                        if (ic != null) {
-                            ic.performContextMenuAction(android.R.id.selectAll);
-                        }
+                        checkDevAndExecute(() -> {
+                            if (ic != null) ic.performContextMenuAction(android.R.id.selectAll);
+                        });
+                        break;
+                    case "HOME":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MOVE_HOME));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_HOME); }
+                        });
+                        break;
+                    case "END":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_END));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MOVE_END));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_END); }
+                        });
+                        break;
+                    case "PAGE_UP":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_UP));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_PAGE_UP));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_PAGE_UP); }
+                        });
+                        break;
+                    case "PAGE_DOWN":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_DOWN));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_PAGE_DOWN));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_PAGE_DOWN); }
+                        });
+                        break;
+                    case "INSERT":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_INSERT));
+                                ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_INSERT));
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_INSERT); }
+                        });
+                        break;
+                    case "DELETE":
+                        checkDevAndExecute(() -> {
+                            if (ic != null) {
+                                CharSequence selected = ic.getSelectedText(0);
+                                if (selected != null && selected.length() > 0) {
+                                    ic.commitText("", 1); // Delete selection
+                                } else {
+                                    ic.deleteSurroundingText(0, 1); // Delete forward
+                                }
+                            } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_FORWARD_DEL); }
+                        });
                         break;
                     default:
                         if (key.length() == 1) {
@@ -318,5 +394,117 @@ public class RemoteInputMethodService extends InputMethodService {
                 }
             }
         });
+    }
+
+    public void handleRawKeyEvent(final String action, final String key, final String code, final int metaState, final long ts) {
+        final int androidAction = "keyup".equalsIgnoreCase(action) ? KeyEvent.ACTION_UP : KeyEvent.ACTION_DOWN;
+        final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
+        
+        DebugLogger.log("[" + ts + "] RECEIVE " + code + " " + action.toUpperCase());
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic == null) {
+                    DebugLogger.log("[" + ts + "] INPUT_CONNECTION = NULL. Aborting raw event.");
+                    return;
+                }
+
+                DebugLogger.log("[" + ts + "] INPUT_CONNECTION = AVAILABLE");
+
+                if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                    long eventTime = android.os.SystemClock.uptimeMillis();
+                    KeyEvent event = new KeyEvent(eventTime, eventTime, androidAction, keyCode, 0, metaState);
+                    
+                    DebugLogger.log("[" + ts + "] ACTION = ic.sendKeyEvent(" + KeyEvent.keyCodeToString(keyCode) + ", " + action + ")");
+                    ic.sendKeyEvent(event);
+                } else {
+                    DebugLogger.log("[" + ts + "] ACTION = UNKNOWN KEY CODE. Falling back to typeText.");
+                    if (androidAction == KeyEvent.ACTION_DOWN && key.length() == 1) {
+                        ic.commitText(key, 1);
+                    }
+                }
+            }
+        });
+    }
+
+    private int mapWebCodeToAndroidKeyCode(String code, String key) {
+        if (code == null) return KeyEvent.KEYCODE_UNKNOWN;
+        
+        switch (code) {
+            case "Enter": case "NumpadEnter": return KeyEvent.KEYCODE_ENTER;
+            case "Backspace": return KeyEvent.KEYCODE_DEL;
+            case "Tab": return KeyEvent.KEYCODE_TAB;
+            case "Space": return KeyEvent.KEYCODE_SPACE;
+            case "Escape": return KeyEvent.KEYCODE_ESCAPE;
+            case "ShiftLeft": return KeyEvent.KEYCODE_SHIFT_LEFT;
+            case "ShiftRight": return KeyEvent.KEYCODE_SHIFT_RIGHT;
+            case "ControlLeft": return KeyEvent.KEYCODE_CTRL_LEFT;
+            case "ControlRight": return KeyEvent.KEYCODE_CTRL_RIGHT;
+            case "AltLeft": return KeyEvent.KEYCODE_ALT_LEFT;
+            case "AltRight": return KeyEvent.KEYCODE_ALT_RIGHT;
+            case "MetaLeft": return KeyEvent.KEYCODE_META_LEFT;
+            case "MetaRight": return KeyEvent.KEYCODE_META_RIGHT;
+            case "ArrowUp": return KeyEvent.KEYCODE_DPAD_UP;
+            case "ArrowDown": return KeyEvent.KEYCODE_DPAD_DOWN;
+            case "ArrowLeft": return KeyEvent.KEYCODE_DPAD_LEFT;
+            case "ArrowRight": return KeyEvent.KEYCODE_DPAD_RIGHT;
+            case "F1": return KeyEvent.KEYCODE_F1;
+            case "F2": return KeyEvent.KEYCODE_F2;
+            case "F3": return KeyEvent.KEYCODE_F3;
+            case "F4": return KeyEvent.KEYCODE_F4;
+            case "F5": return KeyEvent.KEYCODE_F5;
+            case "F6": return KeyEvent.KEYCODE_F6;
+            case "F7": return KeyEvent.KEYCODE_F7;
+            case "F8": return KeyEvent.KEYCODE_F8;
+            case "F9": return KeyEvent.KEYCODE_F9;
+            case "F10": return KeyEvent.KEYCODE_F10;
+            case "F11": return KeyEvent.KEYCODE_F11;
+            case "F12": return KeyEvent.KEYCODE_F12;
+            case "Insert": return KeyEvent.KEYCODE_INSERT;
+            case "Delete": return KeyEvent.KEYCODE_FORWARD_DEL;
+            case "Home": return KeyEvent.KEYCODE_MOVE_HOME;
+            case "End": return KeyEvent.KEYCODE_MOVE_END;
+            case "PageUp": return KeyEvent.KEYCODE_PAGE_UP;
+            case "PageDown": return KeyEvent.KEYCODE_PAGE_DOWN;
+            case "CapsLock": return KeyEvent.KEYCODE_CAPS_LOCK;
+            case "NumLock": return KeyEvent.KEYCODE_NUM_LOCK;
+            case "ScrollLock": return KeyEvent.KEYCODE_SCROLL_LOCK;
+            case "Pause": return KeyEvent.KEYCODE_BREAK;
+            case "PrintScreen": return KeyEvent.KEYCODE_SYSRQ;
+        }
+
+        if (code.startsWith("Key") && code.length() == 4) {
+            char c = code.charAt(3);
+            if (c >= 'A' && c <= 'Z') return KeyEvent.KEYCODE_A + (c - 'A');
+        }
+        
+        if (code.startsWith("Digit") && code.length() == 6) {
+            char c = code.charAt(5);
+            if (c >= '0' && c <= '9') return KeyEvent.KEYCODE_0 + (c - '0');
+        }
+
+        if (code.startsWith("Numpad") && code.length() == 7) {
+            char c = code.charAt(6);
+            if (c >= '0' && c <= '9') return KeyEvent.KEYCODE_NUMPAD_0 + (c - '0');
+        }
+
+        // Simbolos especiales mapeo rápido
+        switch (code) {
+            case "Semicolon": return KeyEvent.KEYCODE_SEMICOLON;
+            case "Equal": return KeyEvent.KEYCODE_EQUALS;
+            case "Comma": return KeyEvent.KEYCODE_COMMA;
+            case "Minus": return KeyEvent.KEYCODE_MINUS;
+            case "Period": return KeyEvent.KEYCODE_PERIOD;
+            case "Slash": return KeyEvent.KEYCODE_SLASH;
+            case "Backquote": return KeyEvent.KEYCODE_GRAVE;
+            case "BracketLeft": return KeyEvent.KEYCODE_LEFT_BRACKET;
+            case "Backslash": return KeyEvent.KEYCODE_BACKSLASH;
+            case "BracketRight": return KeyEvent.KEYCODE_RIGHT_BRACKET;
+            case "Quote": return KeyEvent.KEYCODE_APOSTROPHE;
+        }
+
+        return KeyEvent.KEYCODE_UNKNOWN;
     }
 }

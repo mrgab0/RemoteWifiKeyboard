@@ -63,11 +63,15 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        DebugLogger.init(this);
+        DebugLogger.log("MainActivity onCreate iniciado.");
+
         // Protección global contra cierres inesperados
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable throwable) {
                 Log.e(TAG, "Uncaught Exception in MainActivity: ", throwable);
+                DebugLogger.log("CRASH en MainActivity: " + throwable.getMessage());
             }
         });
 
@@ -85,6 +89,7 @@ public class MainActivity extends Activity {
 
         } catch (Throwable t) {
             Log.e(TAG, "Error durante onCreate: ", t);
+            DebugLogger.log("Error en onCreate de MainActivity: " + t.getMessage());
         }
     }
 
@@ -239,7 +244,7 @@ public class MainActivity extends Activity {
         try {
             String ip = getDeviceIpAddress();
             if (ip != null) {
-                String fullUrl = "http://" + ip + ":8080";
+                String fullUrl = "http://" + ip + ":9999";
                 tvUrl.setText(fullUrl);
                 tvStatus.setText("● Servidor Activo (HTTP + WebSocket)");
                 tvStatus.setTextColor(0xFF10B981);

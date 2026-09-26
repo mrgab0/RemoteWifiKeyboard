@@ -345,6 +345,13 @@
                 <button class="btn-action" onclick="connectPhone()">Conectar</button>
                 <button class="btn-scan" onclick="autoScan()">🔍 Auto-Detectar</button>
             </div>
+            
+            <!-- Contenedor para Dispositivos Descubiertos (UDP) -->
+            <div id="discovery-container" style="margin-top: 12px; display: none;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 800;">DISPOSITIVOS DETECTADOS:</div>
+                <div id="discovery-list" style="display: flex; flex-direction: column; gap: 6px;">
+                </div>
+            </div>
         </div>
 
         <!-- Card 2: Live Real-time Typing -->
@@ -377,6 +384,7 @@
             ></textarea>
 
             <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button id="btn-dictate" class="btn-scan" onclick="toggleDictation()" style="flex: 0.5;">🎤 Dictar</button>
                 <button class="btn-scan" onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
                 <button class="btn-action" style="flex: 1;" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
             </div>
@@ -460,6 +468,46 @@
     </footer>
 
     <script>
+        const dgram = require('dgram');
+        const udpClient = dgram.createSocket('udp4');
+        const discoveryList = document.getElementById('discovery-list');
+        const discoveryContainer = document.getElementById('discovery-container');
+        const discoveredDevices = new Set();
+
+        udpClient.on('message', (msg, rinfo) => {
+            try {
+                const data = JSON.parse(msg.toString());
+                if (data.app === 'remote-keyboard') {
+                    const ip = rinfo.address;
+                    const port = data.port || 9999;
+                    const deviceName = data.device || 'Dispositivo Desconocido';
+                    const fullIp = `${ip}:${port}`;
+                    
+                    if (!discoveredDevices.has(fullIp)) {
+                        discoveredDevices.add(fullIp);
+                        discoveryContainer.style.display = 'block';
+                        
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-secondary';
+                        btn.style.width = '100%';
+                        btn.style.textAlign = 'left';
+                        btn.style.padding = '8px 12px';
+                        btn.style.fontSize = '12px';
+                        btn.innerText = `📱 Conectar con ${deviceName} (${ip})`;
+                        btn.onclick = () => {
+                            document.getElementById('phone-ip').value = fullIp;
+                            connectPhone();
+                        };
+                        discoveryList.appendChild(btn);
+                    }
+                }
+            } catch(e) { /* ignore invalid json */ }
+        });
+
+        try {
+            udpClient.bind(9998);
+        } catch(e) { console.error("Could not bind UDP", e); }
+
         const phoneIpInput = document.getElementById('phone-ip');
         const liveInput = document.getElementById('live-input');
         const paragraphInput = document.getElementById('paragraph-input');
@@ -697,6 +745,13 @@
                 sendKey('TAB');
             } else if (e.key === ' ') {
                 sendKey('SPACE');
+            } else if (['Home', 'End', 'PageUp', 'PageDown', 'Insert', 'Delete'].includes(e.key)) {
+                const navKeyMap = {
+                    'Home': 'HOME', 'End': 'END', 
+                    'PageUp': 'PAGE_UP', 'PageDown': 'PAGE_DOWN', 
+                    'Insert': 'INSERT', 'Delete': 'DELETE'
+                };
+                sendKey(navKeyMap[e.key]);
             } else if (e.key.startsWith('Arrow')) {
                 const arrKey = e.key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
                 sendKey(arrKey); // Ej: ARROW_UP
@@ -706,7 +761,70 @@
             }
         });
 
-        // Paragraph
+        // --- Párrafo Largo y Dictado por Voz ---
+        let recognition = null;
+        let isDictating = false;
+        const btnDictate = document.getElementById('btn-dictate');
+
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'es-ES';
+
+            recognition.onstart = () => {
+                isDictating = true;
+                btnDictate.style.background = '#fecaca'; // Rojo clarito
+                btnDictate.style.color = '#ef4444';
+                btnDictate.innerText = '🔴 Escuchando...';
+                appendLog('🎤 Dictado iniciado');
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    if (paragraphInput.value && !paragraphInput.value.endsWith(' ')) {
+                        paragraphInput.value += ' ';
+                    }
+                    paragraphInput.value += finalTranscript;
+                }
+            };
+
+            recognition.onerror = (e) => {
+                appendLog('⚠️ Error de dictado: ' + e.error);
+                stopDictation();
+            };
+
+            recognition.onend = () => {
+                stopDictation();
+            };
+        }
+
+        function toggleDictation() {
+            if (!recognition) {
+                alert("Tu sistema no soporta el reconocimiento de voz nativo.");
+                return;
+            }
+            if (isDictating) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function stopDictation() {
+            isDictating = false;
+            btnDictate.style.background = '#ffffff';
+            btnDictate.style.color = 'var(--text-main)';
+            btnDictate.innerText = '🎤 Dictar';
+        }
         function sendParagraph() {
             const text = paragraphInput.value;
             if (!text.trim()) return;
