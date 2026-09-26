@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^32.0.0",
+    "electron": "^39.8.10",
     "electron-builder": "^25.0.0",
     "electron-winstaller": "^5.4.4"
   },
