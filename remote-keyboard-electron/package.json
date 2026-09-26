@@ -11,7 +11,8 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^32.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "electron-winstaller": "^5.4.4"
   },
   "build": {
     "appId": "com.mrgab0.remotewifikeyboard",
@@ -19,5 +20,8 @@
     "win": {
       "target": "portable"
     }
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }
