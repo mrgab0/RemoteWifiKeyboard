@@ -5,6 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remote WiFi Keyboard • Windows Native Client</title>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --card-bg: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent: #000000;
+            --accent-hover: #333333;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --accent: #ffffff;
+                --accent-hover: #e2e8f0;
+            }
+            .key-btn {
+                background: #334155 !important;
+                color: #f8fafc !important;
+                border-color: #475569 !important;
+            }
+            .key-btn:active {
+                background: #475569 !important;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body.mini-active {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
@@ -26,102 +64,287 @@
         body.mini-active #mini-widget.status-pending { background: #ff9500; border: 4px solid #fff; }
         body.mini-active #mini-widget:active { transform: scale(0.95); }
 
-        :root {
-            --bg-color: #ffffff;
-            --card-bg: #ffffff;
-            --card-border: #000000;
-            --primary: #000000;
-            --primary-hover: #333333;
-            --accent: #000000;
-            --danger: #000000;
-            --warning: #000000;
-            --text-main: #000000;
-            --text-muted: #000000;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: var(--font);
             background-color: var(--bg-color);
             color: var(--text-main);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            font-weight: 800;
+            height: 100vh;
+            overflow: hidden;
         }
 
         header {
-            background: #ffffff;
-            border-bottom: 3px solid var(--card-border);
-            padding: 12px 20px;
+            padding: 16px 24px;
+            border-bottom: 2px solid var(--accent);
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            align-items: center;
+            flex-shrink: 0;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .brand-icon {
-            width: 34px;
-            height: 34px;
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-        }
-
-        .brand h1 {
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 900;
-            color: #000000;
         }
 
-        .brand p {
-            font-size: 12px;
+        h1 {
+            font-size: 18px;
             font-weight: 800;
-            color: #000000;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
         .header-badges {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge-ping {
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-status::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .badge-status.connected {
+            background: #dcfce7;
+            color: #166534;
+            border: 2px solid #166534;
+        }
+        .badge-status.connected::before { background: #166534; }
+
+        .badge-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #991b1b;
+        }
+        .badge-status.disconnected::before { background: #991b1b; }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 4px 4px 0px var(--accent);
+            transition: transform 0.1s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .badge-ping, .badge-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 900;
-            font-family: monospace;
-            background: #ffffff;
-            color: #000000;
-            border: 2px solid #000000;
+        .input-group {
+            display: flex;
+            gap: 12px;
         }
 
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: monospace;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background: var(--card-bg);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(2px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Área de escritura en vivo */
+        .live-area {
+            position: relative;
+        }
+
+        #live-input {
+            width: 100%;
+            height: 60px;
+            font-size: 20px;
+            padding: 16px;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-weight: bold;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #live-input:focus {
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .focus-banner {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            border: 2px solid var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .focus-banner.focused {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .focus-banner.unfocused {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Párrafo */
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: var(--font);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            resize: none;
+            margin-bottom: 12px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+        }
+        textarea:focus { border-color: var(--accent); }
+
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+        }
+
+        .key-btn {
+            padding: 12px 8px;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .key-icon {
+            font-size: 16px;
+        }
+
+        .terminal {
+            background: #0f172a;
+            color: #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 120px;
+            overflow-y: auto;
+            border: 3px solid var(--accent);
+        }
+
+        .terminal-line { margin-bottom: 4px; }
+        .terminal-time { color: #64748b; margin-right: 8px; }
+
         .pulse-dot {
-            width: 8px;
-            height: 8px;
+            display: inline-block;
+            width: 8px; height: 8px;
             background-color: #000000;
             border-radius: 50%;
             animation: pulse 1.5s infinite;
@@ -133,192 +356,10 @@
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        .focus-banner {
-            background: #ffffff;
-            border-bottom: 3px solid var(--card-border);
-            padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 900;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            color: #000000;
-            cursor: pointer;
-        }
-
-        main {
-            flex: 1;
-            max-width: 680px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 16px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 3px solid var(--card-border);
-            border-radius: 14px;
-            padding: 16px;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #000000;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .ip-input-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .ip-input, .input-live, .textarea-box {
-            background: #ffffff;
-            border: 3px solid #000000;
-            color: #000000;
-            outline: none;
-            user-select: text;
-            font-weight: 900;
-        }
-
-        .ip-input {
-            flex: 1;
-            border-radius: 10px;
-            padding: 9px 12px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-
-        .input-live {
-            width: 100%;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 18px;
-        }
-
-        .textarea-box {
-            width: 100%;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .ip-input:focus, .input-live:focus, .textarea-box:focus {
-            border-color: #000000;
-            background: #f0f0f0;
-        }
-
-        .btn-action, .btn-scan, .key-btn {
-            border: 3px solid #000000;
-            cursor: pointer;
-            font-weight: 900;
-            color: #000000;
-            background: #ffffff;
-            border-radius: 10px;
-        }
-
-        .btn-action {
-            padding: 9px 14px;
-            font-size: 13px;
-        }
-
-        .btn-scan {
-            padding: 9px 12px;
-            font-size: 13px;
-        }
-
-        .btn-action:hover, .btn-scan:hover, .key-btn:hover {
-            background: #000000;
-            color: #ffffff;
-        }
-
-        .key-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .key-btn {
-            padding: 10px 4px;
-            font-size: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .metrics-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .metric-card {
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .metric-value {
-            font-size: 16px;
-            font-weight: 900;
-            font-family: monospace;
-            color: #000000;
-        }
-
-        .metric-label {
-            font-size: 10px;
-            font-weight: 900;
-            color: #000000;
-            text-transform: uppercase;
-        }
-
-        .log-box {
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-family: monospace;
-            font-size: 12px;
-            font-weight: 800;
-            color: #000000;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        footer {
-            text-align: center;
-            padding: 12px;
-            font-size: 12px;
-            font-weight: 900;
-            color: #000000;
-            border-top: 3px solid #000000;
-            background: #ffffff;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -327,338 +368,199 @@
         <span id="mini-widget-text">Sin Foco</span>
     </div>
 
-
     <header>
         <div class="brand">
             <div class="brand-icon">⌨️</div>
             <div>
                 <h1>Remote WiFi Keyboard</h1>
-                <p>Cliente Windows ➡️ Android</p>
+                <p>Cliente Windows ➔ Android</p>
             </div>
         </div>
 
         <div class="header-badges">
-
             <button id="btn-mini-mode" onclick="enableMiniMode()" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
                 <span style="font-size:16px;">🗗</span> Mini Widget
             </button>
-
-            <div id="ping-badge" class="badge-ping">⚡ -- ms</div>
-            <div id="badge-status" class="badge-status disconnected">
-                <span class="pulse-dot"></span>
-                <span id="status-label">Buscando...</span>
-            </div>
+            <div class="badge-ping" id="ping-badge">⏳ -- ms</div>
+            <div class="badge-status disconnected" id="status-badge">Desconectado</div>
         </div>
     </header>
 
-    <!-- Focus Banner -->
-    <div id="focus-banner" class="focus-banner focused" onclick="document.getElementById('live-input').focus()">
-        <span id="focus-icon">🟢</span>
-        <span id="focus-text">Capturando Teclas Físicas</span>
+    <div class="main-container">
+        <!-- Panel de Conexión -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📱 CONEXIÓN CON TELÉFONO</div>
+                <button onclick="runBenchmark()" style="font-size: 11px; padding: 4px 8px;">🚀 Test Ping</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="phone-ip" placeholder="Ej: 192.168.1.101:9999" value="192.168.1.101:9999">
+                <button class="btn-primary" onclick="connectPhone()">Conectar</button>
+                <button onclick="autoScan()">🔍 Auto-Detectar</button>
+            </div>
+        </div>
+
+        <!-- Panel de Escritura en Vivo -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⚡ ESCRITURA ULTRARRÁPIDA (&lt;3MS)</div>
+                <div style="font-size: 10px; font-weight: bold; color: var(--text-muted);">Escribe directamente aquí</div>
+            </div>
+            <div class="live-area">
+                <input type="text" id="live-input" placeholder="Haz clic aquí y escribe con tu teclado..." autocomplete="off">
+                <div class="focus-banner unfocused" id="focus-banner">
+                    <span id="focus-icon">⚠️</span> <span id="focus-text">Ventana sin foco: Haz clic aquí para escribir</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Párrafo y Dictado -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📝 PÁRRAFO O PORTAPAPELES</div>
+            </div>
+            <textarea id="paragraph-input" placeholder="Pega texto largo, notas o enlaces para enviar completo al teléfono..."></textarea>
+            <div class="input-group" style="justify-content: space-between;">
+                <button id="btn-dictate" onclick="toggleDictation()" style="display: flex; align-items: center; gap: 6px;">🎤 Dictar</button>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
+                    <button class="btn-primary" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teclas Especiales -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⌨️ TECLAS RÁPIDAS</div>
+            </div>
+            <div class="keys-grid">
+                <button class="key-btn" onclick="sendKey('ENTER')"><span class="key-icon">⎎</span>Enter</button>
+                <button class="key-btn" onclick="sendKey('BACKSPACE')"><span class="key-icon">⌫</span>Borrar</button>
+                <button class="key-btn" onclick="sendKey('TAB')"><span class="key-icon">⇥</span>Tab</button>
+                <button class="key-btn" onclick="sendKey('SPACE')"><span class="key-icon">␣</span>Espacio</button>
+                <button class="key-btn" onclick="sendKey('SELECT_ALL')"><span class="key-icon">▭</span>Selec. Todo</button>
+                <button class="key-btn" onclick="sendKey('ARROW_LEFT')"><span class="key-icon">←</span>Izquierda</button>
+                <button class="key-btn" onclick="sendKey('ARROW_RIGHT')"><span class="key-icon">→</span>Derecha</button>
+                <button class="key-btn" onclick="sendKey('ARROW_UP')"><span class="key-icon">↑</span>Arriba</button>
+                <button class="key-btn" onclick="sendKey('ARROW_DOWN')"><span class="key-icon">↓</span>Abajo</button>
+            </div>
+        </div>
+
+        <!-- Telemetría -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📊 TELEMETRÍA <span class="pulse-dot" id="pulse-dot" style="display:none;"></span></div>
+            </div>
+            <div class="terminal" id="terminal">
+                <div class="terminal-line"><span class="terminal-time">[SYS]</span> Interfaz inicializada.</div>
+            </div>
+        </div>
     </div>
 
-    <main>
-        <!-- Card 1: Connection to Phone -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📱 Conexión con Teléfono</div>
-                <button class="btn-scan" style="padding: 4px 8px; font-size: 10px;" onclick="runBenchmark()">🚀 Test Ping</button>
-            </div>
-
-            <div class="ip-input-row">
-                <input 
-                    type="text" 
-                    id="phone-ip" 
-                    class="ip-input" 
-                    placeholder="Ej. 192.168.1.105:8080" 
-                    value="192.168.1.105:8080"
-                />
-                <button class="btn-action" onclick="connectPhone()">Conectar</button>
-                <button class="btn-scan" onclick="autoScan()">🔍 Auto-Detectar</button>
-            </div>
-            
-            <!-- Contenedor para Dispositivos Descubiertos (UDP) -->
-            <div id="discovery-container" style="margin-top: 12px; display: none;">
-                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 800;">DISPOSITIVOS DETECTADOS:</div>
-                <div id="discovery-list" style="display: flex; flex-direction: column; gap: 6px;">
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 2: Live Real-time Typing -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">⚡ Escritura Ultrarrápida (&lt;3ms)</div>
-                <div style="font-size: 10px; color: var(--text-muted);">Escribe directamente aquí</div>
-            </div>
-
-            <input 
-                type="text" 
-                id="live-input" 
-                class="input-live" 
-                placeholder="Haz clic aquí y escribe con tu teclado..." 
-                autofocus
-                autocomplete="off"
-            />
-        </div>
-
-        <!-- Card 3: Long Text & Clipboard -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📋 Párrafo o Portapapeles</div>
-            </div>
-
-            <textarea 
-                id="paragraph-input" 
-                class="textarea-box" 
-                placeholder="Pega texto largo, notas o enlaces para enviar completo al teléfono..."
-            ></textarea>
-
-            <div style="display: flex; gap: 6px; margin-top: 8px;">
-                <button id="btn-dictate" class="btn-scan" onclick="toggleDictation()" style="flex: 0.5;">🎤 Dictar</button>
-                <button class="btn-scan" onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
-                <button class="btn-action" style="flex: 1;" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
-            </div>
-        </div>
-
-        <!-- Card 4: Quick Keys -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">🎮 Teclas Rápidas</div>
-            </div>
-
-            <div class="key-grid">
-                <button class="key-btn" onclick="sendKey('ENTER')">
-                    <span>⏎</span>
-                    <span>Enter</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('BACKSPACE')">
-                    <span>⌫</span>
-                    <span>Borrar</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('TAB')">
-                    <span>⇥</span>
-                    <span>Tab</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('SPACE')">
-                    <span>␣</span>
-                    <span>Espacio</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('SELECT_ALL')">
-                    <span>🔲</span>
-                    <span>Selec. Todo</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_LEFT')">
-                    <span>◀</span>
-                    <span>Izquierda</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_RIGHT')">
-                    <span>▶</span>
-                    <span>Derecha</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_UP')">
-                    <span>▲</span>
-                    <span>Arriba</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_DOWN')">
-                    <span>▼</span>
-                    <span>Abajo</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Card 5: Live Metrics & Log Console -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📊 Telemetría</div>
-            </div>
-
-            <div class="metrics-row">
-                <div class="metric-card">
-                    <div id="metric-ping" class="metric-value">-- ms</div>
-                    <div class="metric-label">Ping RTT</div>
-                </div>
-                <div class="metric-card">
-                    <div id="metric-typed" class="metric-value">0</div>
-                    <div class="metric-label">Teclas Enviadas</div>
-                </div>
-                <div class="metric-card">
-                    <div id="metric-protocol" class="metric-value">WebSocket</div>
-                    <div class="metric-label">Protocolo</div>
-                </div>
-            </div>
-
-            <div id="log-console" class="log-box" style="margin-top: 8px;">
-                [Listo] Ingresa la IP de tu teléfono Android y presiona Conectar.
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        Remote WiFi Keyboard • Windows Client • Latencia Local Ultrabaja
-    </footer>
-
     <script>
-        const dgram = require('dgram');
-        const udpClient = dgram.createSocket('udp4');
-        const discoveryList = document.getElementById('discovery-list');
-        const discoveryContainer = document.getElementById('discovery-container');
-        const discoveredDevices = new Set();
-
-        udpClient.on('message', (msg, rinfo) => {
-            try {
-                const data = JSON.parse(msg.toString());
-                if (data.app === 'remote-keyboard') {
-                    const ip = rinfo.address;
-                    const port = data.port || 9999;
-                    const deviceName = data.device || 'Dispositivo Desconocido';
-                    const fullIp = `${ip}:${port}`;
-                    
-                    if (!discoveredDevices.has(fullIp)) {
-                        discoveredDevices.add(fullIp);
-                        discoveryContainer.style.display = 'block';
-                        
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-secondary';
-                        btn.style.width = '100%';
-                        btn.style.textAlign = 'left';
-                        btn.style.padding = '8px 12px';
-                        btn.style.fontSize = '12px';
-                        btn.innerText = `📱 Conectar con ${deviceName} (${ip})`;
-                        btn.onclick = () => {
-                            document.getElementById('phone-ip').value = fullIp;
-                            connectPhone();
-                        };
-                        discoveryList.appendChild(btn);
-                    }
-                }
-            } catch(e) { /* ignore invalid json */ }
-        });
-
-        try {
-            udpClient.bind(9998);
-        } catch(e) { console.error("Could not bind UDP", e); }
-
         const phoneIpInput = document.getElementById('phone-ip');
-        const liveInput = document.getElementById('live-input');
-        const paragraphInput = document.getElementById('paragraph-input');
-        const logConsole = document.getElementById('log-console');
-        const badgeStatus = document.getElementById('badge-status');
-        const statusLabel = document.getElementById('status-label');
+        const statusBadge = document.getElementById('status-badge');
         const pingBadge = document.getElementById('ping-badge');
+        const terminal = document.getElementById('terminal');
+        const pulseDot = document.getElementById('pulse-dot');
+        const liveInput = document.getElementById('live-input');
+        
         const focusBanner = document.getElementById('focus-banner');
         const focusIcon = document.getElementById('focus-icon');
         const focusText = document.getElementById('focus-text');
-
-        const metricPing = document.getElementById('metric-ping');
-        const metricTyped = document.getElementById('metric-typed');
-        const metricProtocol = document.getElementById('metric-protocol');
+        const paragraphInput = document.getElementById('paragraph-input');
 
         let ws = null;
-        let totalSent = 0;
+        let pendingPings = new Map();
         let pingSeq = 0;
-        const pendingPings = new Map();
-
-        let targetIp = localStorage.getItem('last_phone_ip') || '192.168.1.105:9999';
-        phoneIpInput.value = targetIp;
 
         function appendLog(msg) {
-            const time = new Date().toLocaleTimeString();
-            logConsole.innerHTML += `<br>[${time}] ${msg}`;
-            logConsole.scrollTop = logConsole.scrollHeight;
+            const time = new Date().toLocaleTimeString('es-ES', {hour12: false});
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="terminal-time">[${time}]</span> ${msg}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function triggerPulse() {
+            pulseDot.style.display = 'inline-block';
+            setTimeout(() => { pulseDot.style.display = 'none'; }, 200);
+        }
+
+        function updatePingUI(rtt) {
+            pingBadge.innerText = `${rtt} ms`;
+            if (rtt < 20) pingBadge.style.color = '#10b981';
+            else if (rtt < 50) pingBadge.style.color = '#f59e0b';
+            else pingBadge.style.color = '#ef4444';
         }
 
         function getBaseHost() {
-            let ip = phoneIpInput.value.trim().replace(/^http:\/\//i, '').replace(/^https:\/\//i, '').replace(/\/+$/, '');
-            return ip;
+            let host = phoneIpInput.value.trim();
+            if (host.startsWith('http://')) host = host.substring(7);
+            if (!host.includes(':')) host += ':9999';
+            return host;
         }
 
         function connectWebSocket() {
             if (ws) {
-                try { ws.close(); } catch (e) {}
-                ws = null;
+                ws.close();
             }
-
+            
             const host = getBaseHost();
             const wsUrl = `ws://${host}/ws`;
-
+            
+            appendLog(`Intentando WebSocket en ${wsUrl}...`);
+            
             try {
                 ws = new WebSocket(wsUrl);
-
+                
                 ws.onopen = () => {
-                    badgeStatus.className = 'badge-status';
-                    statusLabel.innerText = 'WebSocket (<3ms)';
-                    metricProtocol.innerText = 'WebSocket';
-                    metricProtocol.style.color = '#34d399';
-                    localStorage.setItem('last_phone_ip', phoneIpInput.value.trim());
-                    appendLog(`🟢 WebSocket conectado con éxito a ${host}`);
+                    appendLog('✅ Conectado a ' + host);
+                    statusBadge.className = 'badge-status connected';
+                    statusBadge.innerText = 'Conectado';
                     liveInput.focus();
                 };
-
+                
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         if (data.type === 'pong') {
-                            const sentAt = pendingPings.get(data.id);
-                            if (sentAt) {
-                                const rtt = Math.max(1, Math.round(performance.now() - sentAt));
-                                pendingPings.delete(data.id);
+                            const sentTime = pendingPings.get(data.id);
+                            if (sentTime) {
+                                const rtt = Math.round(performance.now() - sentTime);
                                 updatePingUI(rtt);
+                                pendingPings.delete(data.id);
                             }
                         }
-                    } catch (e) {}
+                    } catch(e) {}
                 };
-
+                
                 ws.onclose = () => {
-                    badgeStatus.className = 'badge-status disconnected';
-                    statusLabel.innerText = 'Reconectando...';
-                    metricProtocol.innerText = 'HTTP Fallback';
-                    metricProtocol.style.color = '#fbbf24';
-                    setTimeout(connectWebSocket, 2500);
+                    appendLog('❌ Desconectado');
+                    statusBadge.className = 'badge-status disconnected';
+                    statusBadge.innerText = 'Desconectado';
+                    ws = null;
                 };
-
-                ws.onerror = () => {
-                    if (ws) {
-                        try { ws.close(); } catch (e) {}
-                    }
+                
+                ws.onerror = (e) => {
+                    appendLog('⚠️ Error de conexión WebSocket');
                 };
             } catch (e) {
-                appendLog(`⚠️ Error iniciando WebSocket con ${host}`);
+                appendLog('⚠️ Error creando WebSocket: ' + e);
             }
-        }
-
-        function updatePingUI(rtt) {
-            let color = '#34d399';
-            let label = '⚡ Ultrabaja';
-            if (rtt > 40) {
-                color = '#f87171';
-                label = '⚠️ Wi-Fi Lento';
-            } else if (rtt > 15) {
-                color = '#fbbf24';
-                label = '● Normal';
-            }
-
-            pingBadge.innerText = `${label} ${rtt} ms`;
-            pingBadge.style.color = color;
-            pingBadge.style.borderColor = color;
-            metricPing.innerText = `${rtt} ms`;
-            metricPing.style.color = color;
         }
 
         function sendPayload(payload) {
-            totalSent++;
-            metricTyped.innerText = totalSent;
-
+            triggerPulse();
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
                 return true;
             } else {
+                // Fallback a HTTP
                 const host = getBaseHost();
-                let endpoint = `http://${host}/api/type`;
-                if (payload.type === 'key') endpoint = `http://${host}/api/key`;
-                if (payload.type === 'key_event') endpoint = `http://${host}/api/key_event`;
-
-                fetch(endpoint, {
+                fetch(`http://${host}/api/type`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -931,7 +833,6 @@
                 miniWidgetText.innerText = 'OFF\n(PC)';
             }
         }
-
     </script>
 </body>
 </html>
