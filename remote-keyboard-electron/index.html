@@ -44,25 +44,7 @@
             padding: 0;
         }
 
-        body.mini-active {
-            margin: 0; padding: 0; width: 100vw; height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            background: transparent; overflow: hidden;
-        }
-        body.mini-active > *:not(#mini-widget) { display: none !important; }
         
-        #mini-widget { display: none; }
-        body.mini-active #mini-widget {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 100%; height: 100%; border-radius: 50%; cursor: pointer;
-            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center; color: white; font-family: var(--font); font-size: 11px;
-            user-select: none; -webkit-app-region: drag; font-weight: bold;
-        }
-        body.mini-active #mini-widget.status-on { background: #34c759; border: 4px solid #fff; }
-        body.mini-active #mini-widget.status-off { background: #ff3b30; border: 4px solid #fff; }
-        body.mini-active #mini-widget.status-pending { background: #ff9500; border: 4px solid #fff; }
-        body.mini-active #mini-widget:active { transform: scale(0.95); }
 
         body {
             font-family: var(--font);
@@ -364,9 +346,7 @@
 </head>
 <body>
 
-    <div id="mini-widget" class="status-off">
-        <span id="mini-widget-text">Sin Foco</span>
-    </div>
+    
 
     <header>
         <div class="brand">
@@ -378,7 +358,7 @@
         </div>
 
         <div class="header-badges">
-            <button id="btn-mini-mode" onclick="enableMiniMode()" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
+            <button id="btn-mini-mode" onclick="require('electron').ipcRenderer.send('toggle-mini-mode', true)" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
                 <span style="font-size:16px;">🗗</span> Mini Widget
             </button>
             <div class="badge-ping" id="ping-badge">⏳ -- ms</div>
@@ -665,7 +645,8 @@
         });
 
         // Full Keyboard Capture Logic
-        liveInput.addEventListener('keydown', (e) => {
+        function handleKey(e) {
+
             e.preventDefault(); // Detenemos el comportamiento nativo del input para evitar bugs en Wry
 
             if (e.ctrlKey && e.key.toLowerCase() === 'a') {
@@ -692,7 +673,22 @@
                 // Caracteres imprimibles normales (letras, números, símbolos)
                 sendText(e.key);
             }
-        });
+        
+}
+liveInput.addEventListener('keydown', handleKey);
+ipcRenderer.on('simulate-keystroke', (event, keyData) => {
+    // Create a mock event object for handleKey
+    const mockEvent = {
+        preventDefault: () => {},
+        key: keyData.key,
+        code: keyData.code,
+        ctrlKey: keyData.ctrlKey,
+        altKey: keyData.altKey,
+        shiftKey: keyData.shiftKey,
+        metaKey: keyData.metaKey
+    };
+    handleKey(mockEvent);
+});
 
         // --- Párrafo Largo y Dictado por Voz ---
         let recognition = null;
@@ -776,63 +772,7 @@
         setTimeout(connectPhone, 500);
 
         const { ipcRenderer } = require('electron');
-        let isMini = false;
-        let miniState = false;
-        let miniWaitDoubleTap = false;
-        const miniWidget = document.getElementById('mini-widget');
-        const miniWidgetText = document.getElementById('mini-widget-text');
-
-        function enableMiniMode() {
-            isMini = true;
-            miniState = document.hasFocus();
-            document.body.classList.add('mini-active');
-            ipcRenderer.send('toggle-mini-mode', true);
-            updateMiniUI();
-        }
-
-        ipcRenderer.on('window-focus-changed', (event, focused) => {
-            miniState = focused;
-            miniWaitDoubleTap = false;
-            if (isMini) updateMiniUI();
-        });
-
-        miniWidget.addEventListener('click', () => {
-            if (miniWaitDoubleTap) {
-                miniState = !miniState;
-                miniWaitDoubleTap = false;
-                if (miniState) liveInput.focus();
-                else liveInput.blur();
-                updateMiniUI();
-            } else {
-                miniWaitDoubleTap = true;
-                miniWidget.className = 'status-pending';
-                miniWidgetText.innerHTML = 'Toca otra vez<br><small style="font-size:10px; font-weight:normal;">(Clic derecho para salir)</small>';
-                setTimeout(() => {
-                    if (miniWaitDoubleTap) {
-                        miniWaitDoubleTap = false;
-                        updateMiniUI();
-                    }
-                }, 2000);
-            }
-        });
-
-        miniWidget.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            isMini = false;
-            document.body.classList.remove('mini-active');
-            ipcRenderer.send('toggle-mini-mode', false);
-        });
-
-        function updateMiniUI() {
-            if (!isMini) return;
-            if (miniState) {
-                miniWidget.className = 'status-on';
-                miniWidgetText.innerText = 'ON';
-            } else {
-                miniWidget.className = 'status-off';
-                miniWidgetText.innerText = 'OFF';
-            }
-        }
+                }
     </script>
 </body>
 </html>

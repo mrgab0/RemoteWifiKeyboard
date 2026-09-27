@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Widget</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #bubble {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 70px; height: 70px; border-radius: 50%; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            text-align: center; color: white; font-size: 11px;
+            user-select: none; -webkit-app-region: drag; font-weight: bold;
+            border: 4px solid rgba(255, 255, 255, 0.8);
+        }
+
+        #bubble:active { transform: scale(0.95); }
+
+        .status-on { background: #34c759; }
+        .status-off { background: #ff3b30; }
+    </style>
+</head>
+<body>
+    <div id="bubble" class="status-off">
+        <span id="text">OFF</span>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const bubble = document.getElementById('bubble');
+        const text = document.getElementById('text');
+
+        // Focus handling for ON/OFF colors
+        window.addEventListener('focus', () => {
+            bubble.className = 'status-on';
+            text.innerText = 'ON';
+        });
+
+        window.addEventListener('blur', () => {
+            bubble.className = 'status-off';
+            text.innerText = 'OFF';
+        });
+
+        // Double click or context menu to exit mini mode
+        window.addEventListener('dblclick', () => {
+            ipcRenderer.send('close-widget');
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            ipcRenderer.send('close-widget');
+        });
+
+        // Intercept keys and send to main window
+        window.addEventListener('keydown', (e) => {
+            e.preventDefault();
+            
+            // Extract necessary key event properties to forward
+            const keyData = {
+                key: e.key,
+                code: e.code,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                shiftKey: e.shiftKey,
+                metaKey: e.metaKey
+            };
+            
+            ipcRenderer.send('widget-keystroke', keyData);
+        });
+    </script>
+</body>
+</html>

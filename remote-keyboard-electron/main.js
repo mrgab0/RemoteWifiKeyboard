@@ -43,17 +43,41 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  let widgetWindow = null;
+
   // Mini Mode IPC
   ipcMain.on('toggle-mini-mode', (event, enable) => {
     isMiniMode = enable;
     if (enable) {
-      mainWindow.setMinimumSize(40, 40);
-      mainWindow.setSize(60, 60);
-      mainWindow.setAlwaysOnTop(true, 'floating');
+      if (!widgetWindow) {
+        widgetWindow = new BrowserWindow({
+          width: 80, height: 80,
+          transparent: true, frame: false,
+          alwaysOnTop: true, resizable: false,
+          webPreferences: { nodeIntegration: true, contextIsolation: false }
+        });
+        widgetWindow.loadFile('widget.html');
+        widgetWindow.on('closed', () => { widgetWindow = null; });
+      }
+      mainWindow.hide();
+      widgetWindow.show();
     } else {
-      mainWindow.setMinimumSize(320, 500);
-      mainWindow.setSize(380, 700);
-      mainWindow.setAlwaysOnTop(false);
+      if (widgetWindow) {
+        widgetWindow.close();
+      }
+      mainWindow.show();
+    }
+  });
+
+  ipcMain.on('close-widget', () => {
+    if (widgetWindow) widgetWindow.close();
+    mainWindow.show();
+    mainWindow.webContents.send('mini-mode-closed');
+  });
+
+  ipcMain.on('widget-keystroke', (event, keyData) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('simulate-keystroke', keyData);
     }
   });
 
