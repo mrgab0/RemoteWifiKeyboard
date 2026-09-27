@@ -42,6 +42,7 @@ public class RemoteInputMethodService extends InputMethodService {
     private TextView tvMetrics;
     private Vibrator vibrator;
     private SharedPreferences prefs;
+    private android.os.PowerManager.WakeLock typingWakeLock;
 
     public static synchronized RemoteInputMethodService getInstance() {
         return instance;
@@ -64,6 +65,14 @@ public class RemoteInputMethodService extends InputMethodService {
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         try {
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        } catch (Exception ignored) {}
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                // ACQUIRE_CAUSES_WAKEUP enciende/avisa a la pantalla, ON_AFTER_RELEASE resetea el timeout de apagado
+                typingWakeLock = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP | android.os.PowerManager.ON_AFTER_RELEASE, "RemoteIME:TypingWakeLock");
+                typingWakeLock.setReferenceCounted(false);
+            }
         } catch (Exception ignored) {}
         RemoteWebServerManager.ensureServerStarted(this);
     }
@@ -200,7 +209,21 @@ public class RemoteInputMethodService extends InputMethodService {
         }
     }
 
+    private void pokeWakeLock() {
+        if (typingWakeLock != null) {
+            try {
+                if (typingWakeLock.isHeld()) {
+                    typingWakeLock.release();
+                }
+                typingWakeLock.acquire(100);
+            } catch (Exception e) {
+                DebugLogger.log("Error con WakeLock: " + e.getMessage());
+            }
+        }
+    }
+
     public void typeText(final String text) {
+        pokeWakeLock();
         if (text == null) return;
         DebugLogger.log("typeText llamado con texto: [" + text + "]");
         totalKeysTyped.addAndGet(text.length());
@@ -232,6 +255,7 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
     public void sendSpecialKey(final String key) {
+        pokeWakeLock();
         if (key == null) return;
         totalKeysTyped.incrementAndGet();
         performHapticFeedbackAsync();
@@ -397,6 +421,7 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
     public void handleRawKeyEvent(final String action, final String key, final String code, final int metaState, final long ts) {
+        pokeWakeLock();
         final int androidAction = "keyup".equalsIgnoreCase(action) ? KeyEvent.ACTION_UP : KeyEvent.ACTION_DOWN;
         final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
         
