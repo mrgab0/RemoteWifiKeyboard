@@ -56,7 +56,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 100%; height: 100%; border-radius: 50%; cursor: pointer;
             transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center; color: white; font-family: var(--font); font-size: 14px;
+            text-align: center; color: white; font-family: var(--font); font-size: 11px;
             user-select: none; -webkit-app-region: drag; font-weight: bold;
         }
         body.mini-active #mini-widget.status-on { background: #34c759; border: 4px solid #fff; }
@@ -827,10 +827,10 @@
             if (!isMini) return;
             if (miniState) {
                 miniWidget.className = 'status-on';
-                miniWidgetText.innerText = 'ON\n(Teléfono)';
+                miniWidgetText.innerText = 'ON';
             } else {
                 miniWidget.className = 'status-off';
-                miniWidgetText.innerText = 'OFF\n(PC)';
+                miniWidgetText.innerText = 'OFF';
             }
         }
     </script>

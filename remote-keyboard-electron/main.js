@@ -47,8 +47,8 @@ app.whenReady().then(() => {
   ipcMain.on('toggle-mini-mode', (event, enable) => {
     isMiniMode = enable;
     if (enable) {
-      mainWindow.setMinimumSize(100, 100);
-      mainWindow.setSize(180, 180);
+      mainWindow.setMinimumSize(40, 40);
+      mainWindow.setSize(60, 60);
       mainWindow.setAlwaysOnTop(true, 'floating');
     } else {
       mainWindow.setMinimumSize(320, 500);
