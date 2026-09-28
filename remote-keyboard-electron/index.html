@@ -439,6 +439,7 @@
     </div>
 
     <script>
+        const { ipcRenderer } = require('electron');
         const phoneIpInput = document.getElementById('phone-ip');
         const statusBadge = document.getElementById('status-badge');
         const pingBadge = document.getElementById('ping-badge');
@@ -771,8 +772,6 @@ ipcRenderer.on('simulate-keystroke', (event, keyData) => {
 
         setTimeout(connectPhone, 500);
 
-        const { ipcRenderer } = require('electron');
-                }
     </script>
 </body>
 </html>
