@@ -358,6 +358,13 @@
         </div>
 
         <div class="header-badges">
+            <select id="editor-profile" style="background:#1e1e2e; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; margin-right:6px;" title="Perfil de Editor">
+                <option value="default">🎯 Default</option>
+                <option value="vscode">💜 VS Code</option>
+                <option value="intellij">🟠 IntelliJ</option>
+                <option value="termux">🖥️ Termux</option>
+                <option value="acode">📝 Acode</option>
+            </select>
             <button id="btn-mini-mode" onclick="require('electron').ipcRenderer.send('toggle-mini-mode', true)" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
                 <span style="font-size:16px;">🗗</span> Mini Widget
             </button>
@@ -645,37 +652,130 @@
             focusText.innerText = 'Ventana sin foco: Haz clic aquí para escribir';
         });
 
+        const PROFILES = {
+            default: {},
+            vscode: {
+                'CTRL+SHIFT+KeyP': { type: 'raw', key: 'p', code: 'KeyP', mods: ['CTRL', 'SHIFT'] },
+                'CTRL+Backquote': { type: 'raw', key: '`', code: 'Backquote', mods: ['CTRL'] },
+                'ALT+ArrowUp': { type: 'raw', key: 'ArrowUp', code: 'ArrowUp', mods: ['ALT'] },
+                'ALT+ArrowDown': { type: 'raw', key: 'ArrowDown', code: 'ArrowDown', mods: ['ALT'] }
+            },
+            intellij: {
+                'CTRL+SHIFT+KeyA': { type: 'raw', key: 'a', code: 'KeyA', mods: ['CTRL', 'SHIFT'] },
+                'ALT+Enter': { type: 'raw', key: 'Enter', code: 'Enter', mods: ['ALT'] },
+                'CTRL+KeyD': { type: 'raw', key: 'd', code: 'KeyD', mods: ['CTRL'] }
+            },
+            termux: {},
+            acode: {}
+        };
+
+        function sendRawKey(action, key, code, modifiers) {
+            triggerPulse();
+            const payload = {
+                type: 'key_event',
+                action: action,
+                key: key,
+                code: code,
+                modifiers: modifiers,
+                timestamp: Date.now()
+            };
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(payload));
+                appendLog(`⌨️ RAW: ${action} ${code} [${modifiers.join(',')}]`);
+            } else {
+                const host = getBaseHost();
+                fetch(`http://${host}/api/type`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(() => {});
+            }
+        }
+
         // Full Keyboard Capture Logic
         function handleKey(e) {
-
             e.preventDefault(); // Detenemos el comportamiento nativo del input para evitar bugs en Wry
-
-            if (e.ctrlKey && e.key.toLowerCase() === 'a') {
-                sendKey('SELECT_ALL');
-            } else if (e.key === 'Backspace') {
-                sendKey('BACKSPACE');
-            } else if (e.key === 'Enter') {
-                sendKey('ENTER');
-            } else if (e.key === 'Tab') {
-                sendKey('TAB');
-            } else if (e.key === ' ') {
-                sendKey('SPACE');
-            } else if (['Home', 'End', 'PageUp', 'PageDown', 'Insert', 'Delete'].includes(e.key)) {
-                const navKeyMap = {
-                    'Home': 'HOME', 'End': 'END', 
-                    'PageUp': 'PAGE_UP', 'PageDown': 'PAGE_DOWN', 
-                    'Insert': 'INSERT', 'Delete': 'DELETE'
-                };
-                sendKey(navKeyMap[e.key]);
-            } else if (e.key.startsWith('Arrow')) {
-                const arrKey = e.key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
-                sendKey(arrKey); // Ej: ARROW_UP
-            } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                // Caracteres imprimibles normales (letras, números, símbolos)
-                sendText(e.key);
+            
+            const key = e.key;
+            const code = e.code;
+            
+            let mods = [];
+            if (e.ctrlKey) mods.push('CTRL');
+            if (e.shiftKey) mods.push('SHIFT');
+            if (e.altKey) mods.push('ALT');
+            if (e.metaKey) mods.push('META');
+            
+            // Check Profiles
+            const profileSelect = document.getElementById('editor-profile');
+            const profile = profileSelect ? profileSelect.value : 'default';
+            const comboStr = [...mods, code].join('+');
+            if (PROFILES[profile] && PROFILES[profile][comboStr]) {
+                const remapped = PROFILES[profile][comboStr];
+                sendRawKey('keydown', remapped.key, remapped.code, remapped.mods);
+                return;
             }
-        
-}
+
+            // 1. Modifier combos (Ctrl+C, Ctrl+V, etc.)
+            if (e.ctrlKey || e.altKey || e.metaKey) {
+                if (e.ctrlKey && key.toLowerCase() === 'a') {
+                    sendKey('SELECT_ALL');
+                } else if (e.ctrlKey && key.toLowerCase() === 'c') {
+                    sendKey('COPY');
+                } else if (e.ctrlKey && key.toLowerCase() === 'v') {
+                    sendKey('PASTE');
+                } else if (e.ctrlKey && key.toLowerCase() === 'x') {
+                    sendKey('CUT');
+                } else if (e.ctrlKey && key.toLowerCase() === 'z') {
+                    sendRawKey('keydown', key, code, mods); // send raw for undo
+                } else {
+                    sendRawKey('keydown', key, code, mods);
+                }
+                return;
+            }
+            
+            // 2. Function keys F1-F12
+            if (key.startsWith('F') && key.length <= 3 && !isNaN(key.substring(1))) {
+                sendRawKey('keydown', key, code, mods);
+                return;
+            }
+            
+            // 3. Special keys
+            const specialKeyMap = {
+                'Backspace': 'BACKSPACE', 'Enter': 'ENTER', 'Tab': 'TAB',
+                ' ': 'SPACE', 'Escape': 'ESCAPE',
+                'Home': 'HOME', 'End': 'END',
+                'PageUp': 'PAGE_UP', 'PageDown': 'PAGE_DOWN',
+                'Insert': 'INSERT', 'Delete': 'DELETE',
+                'PrintScreen': 'PRINT_SCREEN', 'Pause': 'PAUSE',
+                'ScrollLock': 'SCROLL_LOCK', 'CapsLock': 'CAPS_LOCK',
+                'NumLock': 'NUM_LOCK', 'ContextMenu': 'CONTEXT_MENU'
+            };
+            
+            if (specialKeyMap[key]) {
+                if (e.shiftKey) {
+                    sendRawKey('keydown', key, code, mods);
+                } else {
+                    sendKey(specialKeyMap[key]);
+                }
+                return;
+            }
+            
+            // 4. Arrow keys (with shift for selection)
+            if (key.startsWith('Arrow')) {
+                if (e.shiftKey) {
+                    sendRawKey('keydown', key, code, mods);
+                } else {
+                    const arrKey = key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
+                    sendKey(arrKey); // Ej: ARROW_UP
+                }
+                return;
+            }
+            
+            // 5. Printable characters
+            if (key.length === 1) {
+                sendText(key);
+            }
+        }
 liveInput.addEventListener('keydown', handleKey);
 ipcRenderer.on('simulate-keystroke', (event, keyData) => {
     // Create a mock event object for handleKey
