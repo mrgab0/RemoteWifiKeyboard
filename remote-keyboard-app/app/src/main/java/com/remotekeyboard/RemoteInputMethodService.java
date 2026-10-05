@@ -1,4 +1,4 @@
-﻿package com.remotekeyboard;
+package com.remotekeyboard;
 
 import android.content.Context;
 import android.content.Intent;
@@ -195,7 +195,8 @@ public class RemoteInputMethodService extends InputMethodService {
         });
     }
 
-    @Override() {
+    @Override
+    public View onCreateInputView() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setBackgroundColor(Color.parseColor("#0B0D14"));
