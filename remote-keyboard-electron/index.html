@@ -342,6 +342,21 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* === SHORTCUTS PANEL === */
+        .shortcuts-panel { border: 3px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 0px var(--accent); }
+        .sp-header { background: var(--accent); color: var(--bg-color); padding: 12px 20px; font-weight: 800; font-size: 13px; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .sp-header:hover { opacity: 0.9; }
+        .sp-body { background: var(--card-bg); padding: 12px; }
+        .sp-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .sp-tab { padding: 5px 12px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border-color); border-radius: 20px; background: var(--bg-color); color: var(--text-muted); transition: all 0.15s; }
+        .sp-tab.active { background: var(--accent); color: var(--bg-color); border-color: var(--accent); }
+        .sp-tab:hover:not(.active) { border-color: var(--accent); color: var(--text-main); }
+        .sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 7px; }
+        .sp-btn { padding: 9px 6px 7px; font-size: 10px; font-weight: 700; text-align: center; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; background: var(--bg-color); color: var(--text-main); transition: all 0.1s; line-height: 1.3; }
+        .sp-btn:hover { border-color: var(--accent); background: var(--card-bg); transform: translateY(-1px); }
+        .sp-btn:active { transform: translateY(1px); background: var(--accent); color: var(--bg-color); }
+        .sp-combo { font-family: monospace; font-size: 9px; color: var(--text-muted); margin-top: 3px; display: block; }
     </style>
 </head>
 <body>
@@ -416,21 +431,15 @@
             </div>
         </div>
 
-        <!-- Teclas Especiales -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">⌨️ TECLAS RÁPIDAS</div>
+        <!-- Panel de Shortcuts PRO (dinámico) -->
+        <div class="shortcuts-panel">
+            <div class="sp-header" onclick="toggleShortcutsPanel()">
+                ⌨️ SHORTCUTS DE DEVELOPER
+                <span id="sp-toggle">▼</span>
             </div>
-            <div class="keys-grid">
-                <button class="key-btn" onclick="sendKey('ENTER')"><span class="key-icon">⎎</span>Enter</button>
-                <button class="key-btn" onclick="sendKey('BACKSPACE')"><span class="key-icon">⌫</span>Borrar</button>
-                <button class="key-btn" onclick="sendKey('TAB')"><span class="key-icon">⇥</span>Tab</button>
-                <button class="key-btn" onclick="sendKey('SPACE')"><span class="key-icon">␣</span>Espacio</button>
-                <button class="key-btn" onclick="sendKey('SELECT_ALL')"><span class="key-icon">▭</span>Selec. Todo</button>
-                <button class="key-btn" onclick="sendKey('ARROW_LEFT')"><span class="key-icon">←</span>Izquierda</button>
-                <button class="key-btn" onclick="sendKey('ARROW_RIGHT')"><span class="key-icon">→</span>Derecha</button>
-                <button class="key-btn" onclick="sendKey('ARROW_UP')"><span class="key-icon">↑</span>Arriba</button>
-                <button class="key-btn" onclick="sendKey('ARROW_DOWN')"><span class="key-icon">↓</span>Abajo</button>
+            <div class="sp-body" id="sp-body">
+                <div class="sp-tabs" id="sp-tabs"></div>
+                <div class="sp-grid" id="sp-grid"></div>
             </div>
         </div>
 
@@ -465,13 +474,30 @@
         let pendingPings = new Map();
         let pingSeq = 0;
 
+        // =========================================================
+        // FASE 3 — Optimización: appendLog con buffer + rAF
+        // =========================================================
+        const logBuffer = [];
+        let logFlushScheduled = false;
         function appendLog(msg) {
-            const time = new Date().toLocaleTimeString('es-ES', {hour12: false});
-            const line = document.createElement('div');
-            line.className = 'terminal-line';
-            line.innerHTML = `<span class="terminal-time">[${time}]</span> ${msg}`;
-            terminal.appendChild(line);
+            logBuffer.push(msg);
+            if (!logFlushScheduled) {
+                logFlushScheduled = true;
+                requestAnimationFrame(flushLogs);
+            }
+        }
+        function flushLogs() {
+            const frag = document.createDocumentFragment();
+            logBuffer.splice(0).forEach(msg => {
+                const time = new Date().toLocaleTimeString('es-ES', {hour12: false});
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.innerHTML = `<span class="terminal-time">[${time}]</span> ${msg}`;
+                frag.appendChild(line);
+            });
+            terminal.appendChild(frag);
             terminal.scrollTop = terminal.scrollHeight;
+            logFlushScheduled = false;
         }
 
         function triggerPulse() {
@@ -493,10 +519,20 @@
             return host;
         }
 
+        // =========================================================
+        // FASE 3 — Optimización: WebSocket con reconexión automática
+        // =========================================================
+        let reconnectDelay = 1000;
+        let reconnectTimer = null;
+        let manualDisconnect = false;
+
         function connectWebSocket() {
             if (ws) {
+                manualDisconnect = true;
                 ws.close();
             }
+            manualDisconnect = false;
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             
             const host = getBaseHost();
             const wsUrl = `ws://${host}/ws`;
@@ -507,6 +543,7 @@
                 ws = new WebSocket(wsUrl);
                 
                 ws.onopen = () => {
+                    reconnectDelay = 1000; // reset backoff en éxito
                     appendLog('✅ Conectado a ' + host);
                     statusBadge.className = 'badge-status connected';
                     statusBadge.innerText = 'Conectado';
@@ -532,9 +569,17 @@
                     statusBadge.className = 'badge-status disconnected';
                     statusBadge.innerText = 'Desconectado';
                     ws = null;
+                    // Reconexión automática con backoff exponencial (max 30s)
+                    if (!manualDisconnect && reconnectDelay <= 30000) {
+                        appendLog(`🔄 Reconectando en ${reconnectDelay/1000}s...`);
+                        reconnectTimer = setTimeout(() => {
+                            reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+                            connectWebSocket();
+                        }, reconnectDelay);
+                    }
                 };
                 
-                ws.onerror = (e) => {
+                ws.onerror = () => {
                     appendLog('⚠️ Error de conexión WebSocket');
                 };
             } catch (e) {
@@ -598,15 +643,24 @@
             appendLog('✅ Test completado.');
         }
 
-        // Ping periódico cada 1.5s
-        setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const id = ++pingSeq;
-                const now = performance.now();
-                pendingPings.set(id, now);
-                ws.send(JSON.stringify({ type: 'ping', id: id, t: now }));
-            }
-        }, 1500);
+
+        // =========================================================
+        // FASE 3 — Optimización: Ping con requestIdleCallback
+        // (No compite con keystrokes en el hilo de render)
+        // =========================================================
+        function schedulePing() {
+            requestIdleCallback(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const id = ++pingSeq;
+                    const now = performance.now();
+                    pendingPings.set(id, now);
+                    // JSON literal pre-armado: evita JSON.stringify por ping
+                    ws.send(`{"type":"ping","id":${id},"t":${now}}`);
+                }
+                setTimeout(schedulePing, 5000); // cada 5s, no 1.5s
+            }, { timeout: 3000 });
+        }
+        schedulePing();
 
         async function autoScan() {
             appendLog("🔍 Escaneando red local en busca de tu teléfono Android...");
@@ -686,7 +740,8 @@
             };
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
-                appendLog(`⌨️ RAW: ${action} ${code} [${modifiers.join(',')}]`);
+                // Solo loguear keydown para no spamear el log
+                if (action === 'keydown') appendLog(`⌨️ ${code}${modifiers.length ? ' ['+modifiers.join('+')+']' : ''}`);
             } else {
                 const host = getBaseHost();
                 fetch(`http://${host}/api/key_event`, {
@@ -697,120 +752,150 @@
             }
         }
 
-        // Full Keyboard Capture Logic
+        // =========================================================
+        // FASE 1 — Fix: handleKey unificado — SIEMPRE sendRawKey
+        // para teclas especiales (preserva keyup + metaState completo)
+        // =========================================================
+
+        // Teclas que son "especiales" y necesitan pasar por sendRawKey
+        // El 'code' del evento ya tiene el valor correcto (ShiftLeft, etc.)
+        const SPECIAL_CODES = new Set([
+            'Backspace', 'Delete', 'Insert', 'Enter', 'NumpadEnter',
+            'Tab', 'Space', 'Escape',
+            'Home', 'End', 'PageUp', 'PageDown',
+            'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+            'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+            'PrintScreen', 'ScrollLock', 'Pause', 'CapsLock', 'NumLock',
+            'ContextMenu',
+            'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
+            'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
+            'NumpadAdd', 'NumpadSubtract', 'NumpadMultiply', 'NumpadDivide',
+            'NumpadDecimal', 'NumpadEnter',
+        ]);
+
         function handleKey(e) {
-            e.preventDefault(); // Detenemos el comportamiento nativo del input
+            e.preventDefault();
             
-            const key = e.key;
-            const code = e.code;
+            const key   = e.key;
+            const code  = e.code;
             const action = e.type === 'keyup' ? 'keyup' : 'keydown';
             
             let mods = [];
-            if (e.ctrlKey) mods.push('CTRL');
+            if (e.ctrlKey)  mods.push('CTRL');
             if (e.shiftKey) mods.push('SHIFT');
-            if (e.altKey) mods.push('ALT');
-            if (e.metaKey) mods.push('META');
+            if (e.altKey)   mods.push('ALT');
+            if (e.metaKey)  mods.push('META');
             
-            // Check Profiles
-            const profileSelect = document.getElementById('editor-profile');
-            const profile = profileSelect ? profileSelect.value : 'default';
-            const comboStr = [...mods, code].join('+');
-            if (PROFILES[profile] && PROFILES[profile][comboStr]) {
-                const remapped = PROFILES[profile][comboStr];
-                sendRawKey(action, remapped.key, remapped.code, remapped.mods);
-                return;
-            }
-
-            // 1. Modifier combos (Ctrl+C, Ctrl+V, etc.)
+            // A — Si hay modificadores (Ctrl/Alt/Meta) → SIEMPRE sendRawKey
+            //     Esto captura Ctrl+C, Ctrl+Z, Alt+F4, Ctrl+Shift+P, etc.
             if (e.ctrlKey || e.altKey || e.metaKey) {
-                if (action === 'keydown') {
-                    if (e.ctrlKey && key.toLowerCase() === 'a') {
-                        sendKey('SELECT_ALL');
-                    } else if (e.ctrlKey && key.toLowerCase() === 'c') {
-                        sendKey('COPY');
-                    } else if (e.ctrlKey && key.toLowerCase() === 'v') {
-                        sendKey('PASTE');
-                    } else if (e.ctrlKey && key.toLowerCase() === 'x') {
-                        sendKey('CUT');
-                    } else {
-                        sendRawKey(action, key, code, mods);
-                    }
-                } else {
-                    sendRawKey(action, key, code, mods);
-                }
-                return;
-            }
-            
-            // 2. Function keys F1-F12
-            if (key.startsWith('F') && key.length <= 3 && !isNaN(key.substring(1))) {
                 sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // 3. Special keys
-            const specialKeyMap = {
-                'Backspace': 'BACKSPACE', 'Enter': 'ENTER', 'Tab': 'TAB',
-                ' ': 'SPACE', 'Escape': 'ESCAPE',
-                'Home': 'HOME', 'End': 'END',
-                'PageUp': 'PAGE_UP', 'PageDown': 'PAGE_DOWN',
-                'Insert': 'INSERT', 'Delete': 'DELETE',
-                'PrintScreen': 'PRINT_SCREEN', 'Pause': 'PAUSE',
-                'ScrollLock': 'SCROLL_LOCK', 'CapsLock': 'CAPS_LOCK',
-                'NumLock': 'NUM_LOCK', 'ContextMenu': 'CONTEXT_MENU'
-            };
-            
-            if (specialKeyMap[key]) {
-                // If it's a shifted special key (e.g. Shift+Tab), or we just want to send raw
-                // Actually, let's always send raw for special keys if we have keyup, but sendKey is safer for basic typing.
-                if (e.shiftKey) {
-                    sendRawKey(action, key, code, mods);
-                } else {
-                    if (action === 'keydown') {
-                        sendKey(specialKeyMap[key]);
-                    }
-                }
+            // B — Si es una tecla especial → sendRawKey (preserva keyup para Shift+Tab, etc.)
+            if (SPECIAL_CODES.has(code)) {
+                sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // 4. Arrow keys (with shift for selection)
-            if (key.startsWith('Arrow')) {
-                if (e.shiftKey) {
-                    sendRawKey(action, key, code, mods);
-                } else {
-                    if (action === 'keydown') {
-                        const arrKey = key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
-                        sendKey(arrKey); // Ej: ARROW_UP
-                    }
-                }
+            // C — Carácter imprimible → solo en keydown para no duplicar
+            if (key.length === 1 && action === 'keydown') {
+                sendText(key);
                 return;
             }
             
-            // 5. Printable characters
-            if (key.length === 1) {
-                if (action === 'keydown') {
-                    sendText(key);
-                }
-            } else {
-                // For anything else like standalone modifier keys (Control, Shift), send raw down/up
+            // D — Cualquier otra cosa (standalone Shift sin combo, etc.)
+            // Solo enviamos si es keydown para no duplicar texto
+            if (action === 'keydown') {
                 sendRawKey(action, key, code, mods);
             }
         }
-liveInput.addEventListener('keydown', handleKey);
-liveInput.addEventListener('keyup', handleKey);
-ipcRenderer.on('simulate-keystroke', (event, keyData) => {
-    // Create a mock event object for handleKey
-    const mockEvent = {
-        preventDefault: () => {},
-        type: keyData.type || 'keydown',
-        key: keyData.key,
-        code: keyData.code,
-        ctrlKey: keyData.ctrlKey,
-        altKey: keyData.altKey,
-        shiftKey: keyData.shiftKey,
-        metaKey: keyData.metaKey
-    };
-    handleKey(mockEvent);
-});
+
+        liveInput.addEventListener('keydown', handleKey);
+        liveInput.addEventListener('keyup', handleKey);
+
+        ipcRenderer.on('simulate-keystroke', (event, keyData) => {
+            const mockEvent = {
+                preventDefault: () => {},
+                type: keyData.type || 'keydown',
+                key: keyData.key,
+                code: keyData.code,
+                ctrlKey: keyData.ctrlKey || false,
+                altKey: keyData.altKey || false,
+                shiftKey: keyData.shiftKey || false,
+                metaKey: keyData.metaKey || false
+            };
+            handleKey(mockEvent);
+        });
+
+        // =========================================================
+        // FASE 2 — Panel de Shortcuts (dinámico desde shortcuts.js)
+        // =========================================================
+        const SHORTCUTS_CATALOG = require('./shortcuts.js');
+        let activeShortcutTab = SHORTCUTS_CATALOG[0].id;
+        let shortcutsPanelOpen = true;
+
+        function toggleShortcutsPanel() {
+            shortcutsPanelOpen = !shortcutsPanelOpen;
+            const body = document.getElementById('sp-body');
+            const toggle = document.getElementById('sp-toggle');
+            body.style.display = shortcutsPanelOpen ? '' : 'none';
+            toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
+        }
+
+        function renderShortcutsPanel() {
+            const tabsEl = document.getElementById('sp-tabs');
+            const gridEl = document.getElementById('sp-grid');
+
+            // Render tabs
+            tabsEl.innerHTML = '';
+            SHORTCUTS_CATALOG.forEach(cat => {
+                const tab = document.createElement('button');
+                tab.className = 'sp-tab' + (cat.id === activeShortcutTab ? ' active' : '');
+                tab.textContent = cat.label;
+                tab.onclick = () => {
+                    activeShortcutTab = cat.id;
+                    renderShortcutsPanel();
+                };
+                tabsEl.appendChild(tab);
+            });
+
+            // Render grid for active tab
+            gridEl.innerHTML = '';
+            const activeCat = SHORTCUTS_CATALOG.find(c => c.id === activeShortcutTab);
+            if (!activeCat) return;
+
+            activeCat.shortcuts.forEach(sc => {
+                const btn = document.createElement('button');
+                btn.className = 'sp-btn';
+                btn.innerHTML = `${sc.label}<span class="sp-combo">${sc.combo}</span>`;
+                btn.title = `Enviar: ${sc.combo}`;
+                btn.onclick = () => sendShortcut(sc);
+                gridEl.appendChild(btn);
+            });
+        }
+
+        function sendShortcut(sc) {
+            if (sc.type === 'key') {
+                sendKey(sc.key);
+            } else if (sc.type === 'key_event') {
+                // Simular keydown + keyup
+                sendRawKey('keydown', sc.code, sc.code, sc.mods || []);
+                setTimeout(() => sendRawKey('keyup', sc.code, sc.code, sc.mods || []), 50);
+            } else if (sc.type === 'text') {
+                sendText(sc.text);
+            }
+            appendLog(`🖱️ Shortcut: ${sc.combo}`);
+            liveInput.focus();
+        }
+
+        // Inicializar panel
+        renderShortcutsPanel();
+
+
+
+
 
         // --- Párrafo Largo y Dictado por Voz ---
         let recognition = null;

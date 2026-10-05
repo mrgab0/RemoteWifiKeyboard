@@ -91,10 +91,10 @@ public class RemoteWebServer extends NanoHTTPD {
                 if (mods != null) {
                     for (int i = 0; i < mods.length(); i++) {
                         String m = mods.optString(i, "");
-                        if ("CTRL".equals(m)) metaState |= android.view.KeyEvent.META_CTRL_ON;
-                        if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON;
-                        if ("ALT".equals(m)) metaState |= android.view.KeyEvent.META_ALT_ON;
-                        if ("META".equals(m)) metaState |= android.view.KeyEvent.META_META_ON;
+                        if ("CTRL".equals(m))  metaState |= android.view.KeyEvent.META_CTRL_ON  | android.view.KeyEvent.META_CTRL_LEFT_ON;
+                        if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON | android.view.KeyEvent.META_SHIFT_LEFT_ON;
+                        if ("ALT".equals(m))   metaState |= android.view.KeyEvent.META_ALT_ON   | android.view.KeyEvent.META_ALT_LEFT_ON;
+                        if ("META".equals(m))  metaState |= android.view.KeyEvent.META_META_ON  | android.view.KeyEvent.META_META_LEFT_ON;
                     }
                 }
 
@@ -109,17 +109,11 @@ public class RemoteWebServer extends NanoHTTPD {
             else if ("ping".equals(type)) {
                 long pingId = json.optLong("id", 0);
                 long clientTs = json.optLong("t", 0);
-
-                JSONObject pong = new JSONObject();
-                pong.put("type", "pong");
-                pong.put("id", pingId);
-                pong.put("t", clientTs);
-                pong.put("server_ts", System.currentTimeMillis());
-                pong.put("active_ws", getActiveWebSocketCount());
-                pong.put("total_packets", totalPacketsReceived.get());
-                pong.put("ime_active", RemoteInputMethodService.getInstance() != null);
-
-                session.sendText(pong.toString());
+                // Respuesta ultra-rápida: string literal, sin instanciar JSONObject
+                session.sendText("{\"type\":\"pong\",\"id\":" + pingId + ",\"t\":" + clientTs +
+                    ",\"server_ts\":" + System.currentTimeMillis() +
+                    ",\"active_ws\":" + getActiveWebSocketCount() +
+                    ",\"ime_active\":" + (RemoteInputMethodService.getInstance() != null) + "}");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error procesando mensaje WebSocket: " + message, e);
@@ -223,10 +217,10 @@ public class RemoteWebServer extends NanoHTTPD {
                     if (mods != null) {
                         for (int i = 0; i < mods.length(); i++) {
                             String m = mods.optString(i, "");
-                            if ("CTRL".equals(m)) metaState |= android.view.KeyEvent.META_CTRL_ON;
-                            if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON;
-                            if ("ALT".equals(m)) metaState |= android.view.KeyEvent.META_ALT_ON;
-                            if ("META".equals(m)) metaState |= android.view.KeyEvent.META_META_ON;
+                            if ("CTRL".equals(m))  metaState |= android.view.KeyEvent.META_CTRL_ON  | android.view.KeyEvent.META_CTRL_LEFT_ON;
+                            if ("SHIFT".equals(m)) metaState |= android.view.KeyEvent.META_SHIFT_ON | android.view.KeyEvent.META_SHIFT_LEFT_ON;
+                            if ("ALT".equals(m))   metaState |= android.view.KeyEvent.META_ALT_ON   | android.view.KeyEvent.META_ALT_LEFT_ON;
+                            if ("META".equals(m))  metaState |= android.view.KeyEvent.META_META_ON  | android.view.KeyEvent.META_META_LEFT_ON;
                         }
                     }
 

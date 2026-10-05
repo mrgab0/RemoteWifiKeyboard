@@ -528,6 +528,13 @@ public class RemoteInputMethodService extends InputMethodService {
             case "Backslash": return KeyEvent.KEYCODE_BACKSLASH;
             case "BracketRight": return KeyEvent.KEYCODE_RIGHT_BRACKET;
             case "Quote": return KeyEvent.KEYCODE_APOSTROPHE;
+            case "ContextMenu": return KeyEvent.KEYCODE_MENU;
+            case "NumpadAdd": return KeyEvent.KEYCODE_NUMPAD_ADD;
+            case "NumpadSubtract": return KeyEvent.KEYCODE_NUMPAD_SUBTRACT;
+            case "NumpadMultiply": return KeyEvent.KEYCODE_NUMPAD_MULTIPLY;
+            case "NumpadDivide": return KeyEvent.KEYCODE_NUMPAD_DIVIDE;
+            case "NumpadDecimal": return KeyEvent.KEYCODE_NUMPAD_DOT;
+            case "NumpadEqual": return KeyEvent.KEYCODE_NUMPAD_EQUALS;
         }
 
         return KeyEvent.KEYCODE_UNKNOWN;
