@@ -548,7 +548,10 @@
             } else {
                 // Fallback a HTTP
                 const host = getBaseHost();
-                fetch(`http://${host}/api/type`, {
+                let endpoint = 'type';
+                if (payload.type === 'key') endpoint = 'key';
+                if (payload.type === 'key_event') endpoint = 'key_event';
+                fetch(`http://${host}/api/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -684,7 +687,7 @@
                 appendLog(`⌨️ RAW: ${action} ${code} [${modifiers.join(',')}]`);
             } else {
                 const host = getBaseHost();
-                fetch(`http://${host}/api/type`, {
+                fetch(`http://${host}/api/key_event`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -694,10 +697,11 @@
 
         // Full Keyboard Capture Logic
         function handleKey(e) {
-            e.preventDefault(); // Detenemos el comportamiento nativo del input para evitar bugs en Wry
+            e.preventDefault(); // Detenemos el comportamiento nativo del input
             
             const key = e.key;
             const code = e.code;
+            const action = e.type === 'keyup' ? 'keyup' : 'keydown';
             
             let mods = [];
             if (e.ctrlKey) mods.push('CTRL');
@@ -711,31 +715,33 @@
             const comboStr = [...mods, code].join('+');
             if (PROFILES[profile] && PROFILES[profile][comboStr]) {
                 const remapped = PROFILES[profile][comboStr];
-                sendRawKey('keydown', remapped.key, remapped.code, remapped.mods);
+                sendRawKey(action, remapped.key, remapped.code, remapped.mods);
                 return;
             }
 
             // 1. Modifier combos (Ctrl+C, Ctrl+V, etc.)
             if (e.ctrlKey || e.altKey || e.metaKey) {
-                if (e.ctrlKey && key.toLowerCase() === 'a') {
-                    sendKey('SELECT_ALL');
-                } else if (e.ctrlKey && key.toLowerCase() === 'c') {
-                    sendKey('COPY');
-                } else if (e.ctrlKey && key.toLowerCase() === 'v') {
-                    sendKey('PASTE');
-                } else if (e.ctrlKey && key.toLowerCase() === 'x') {
-                    sendKey('CUT');
-                } else if (e.ctrlKey && key.toLowerCase() === 'z') {
-                    sendRawKey('keydown', key, code, mods); // send raw for undo
+                if (action === 'keydown') {
+                    if (e.ctrlKey && key.toLowerCase() === 'a') {
+                        sendKey('SELECT_ALL');
+                    } else if (e.ctrlKey && key.toLowerCase() === 'c') {
+                        sendKey('COPY');
+                    } else if (e.ctrlKey && key.toLowerCase() === 'v') {
+                        sendKey('PASTE');
+                    } else if (e.ctrlKey && key.toLowerCase() === 'x') {
+                        sendKey('CUT');
+                    } else {
+                        sendRawKey(action, key, code, mods);
+                    }
                 } else {
-                    sendRawKey('keydown', key, code, mods);
+                    sendRawKey(action, key, code, mods);
                 }
                 return;
             }
             
             // 2. Function keys F1-F12
             if (key.startsWith('F') && key.length <= 3 && !isNaN(key.substring(1))) {
-                sendRawKey('keydown', key, code, mods);
+                sendRawKey(action, key, code, mods);
                 return;
             }
             
@@ -752,10 +758,14 @@
             };
             
             if (specialKeyMap[key]) {
+                // If it's a shifted special key (e.g. Shift+Tab), or we just want to send raw
+                // Actually, let's always send raw for special keys if we have keyup, but sendKey is safer for basic typing.
                 if (e.shiftKey) {
-                    sendRawKey('keydown', key, code, mods);
+                    sendRawKey(action, key, code, mods);
                 } else {
-                    sendKey(specialKeyMap[key]);
+                    if (action === 'keydown') {
+                        sendKey(specialKeyMap[key]);
+                    }
                 }
                 return;
             }
@@ -763,24 +773,33 @@
             // 4. Arrow keys (with shift for selection)
             if (key.startsWith('Arrow')) {
                 if (e.shiftKey) {
-                    sendRawKey('keydown', key, code, mods);
+                    sendRawKey(action, key, code, mods);
                 } else {
-                    const arrKey = key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
-                    sendKey(arrKey); // Ej: ARROW_UP
+                    if (action === 'keydown') {
+                        const arrKey = key.replace(/([A-Z])/g, '_$1').toUpperCase().substring(1);
+                        sendKey(arrKey); // Ej: ARROW_UP
+                    }
                 }
                 return;
             }
             
             // 5. Printable characters
             if (key.length === 1) {
-                sendText(key);
+                if (action === 'keydown') {
+                    sendText(key);
+                }
+            } else {
+                // For anything else like standalone modifier keys (Control, Shift), send raw down/up
+                sendRawKey(action, key, code, mods);
             }
         }
 liveInput.addEventListener('keydown', handleKey);
+liveInput.addEventListener('keyup', handleKey);
 ipcRenderer.on('simulate-keystroke', (event, keyData) => {
     // Create a mock event object for handleKey
     const mockEvent = {
         preventDefault: () => {},
+        type: keyData.type || 'keydown',
         key: keyData.key,
         code: keyData.code,
         ctrlKey: keyData.ctrlKey,

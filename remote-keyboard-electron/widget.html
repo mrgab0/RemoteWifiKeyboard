@@ -60,11 +60,10 @@
         });
 
         // Intercept keys and send to main window
-        window.addEventListener('keydown', (e) => {
+        function handleWidgetKey(e) {
             e.preventDefault();
-            
-            // Extract necessary key event properties to forward
             const keyData = {
+                type: e.type,
                 key: e.key,
                 code: e.code,
                 ctrlKey: e.ctrlKey,
@@ -72,9 +71,10 @@
                 shiftKey: e.shiftKey,
                 metaKey: e.metaKey
             };
-            
             ipcRenderer.send('widget-keystroke', keyData);
-        });
+        }
+        window.addEventListener('keydown', handleWidgetKey);
+        window.addEventListener('keyup', handleWidgetKey);
     </script>
 </body>
 </html>

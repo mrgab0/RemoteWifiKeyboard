@@ -91,7 +91,10 @@ app.whenReady().then(() => {
       mainWindow.focus();
     }
   });
-
+// Enable DevTools only when the app is started with a '--dev' flag
+if (process.argv.includes('--dev')) {
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+}
   if (!ret) {
     console.log('Fallo al registrar el atajo global');
   }
