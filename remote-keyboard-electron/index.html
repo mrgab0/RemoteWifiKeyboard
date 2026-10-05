@@ -560,6 +560,18 @@
                                 updatePingUI(rtt);
                                 pendingPings.delete(data.id);
                             }
+                        } else if (data.type === 'clipboard_sync') {
+                            const { clipboard, nativeImage } = require('electron');
+                            if (data.contentType === 'text') {
+                                window._lastClipboardText = data.content; // evitar bucle
+                                clipboard.writeText(data.content);
+                                appendLog('📋 Portapapeles actualizado desde el teléfono');
+                            } else if (data.contentType === 'image') {
+                                const img = nativeImage.createFromDataURL(data.content);
+                                window._lastClipboardImageHash = window._getImageHash(img); // evitar bucle
+                                clipboard.writeImage(img);
+                                appendLog('📸 Imagen del portapapeles actualizada desde el teléfono');
+                            }
                         }
                     } catch(e) {}
                 };
@@ -1007,6 +1019,56 @@
         startUdpDiscovery();
 
         setTimeout(connectPhone, 500);
+
+        // =========================================================
+        // PORTAPAPELES MÁGICO: Polling y Envío (PC -> Móvil)
+        // =========================================================
+        const { clipboard, nativeImage } = require('electron');
+        window._lastClipboardText = clipboard.readText() || '';
+        
+        window._getImageHash = function(nativeImg) {
+            if (!nativeImg || nativeImg.isEmpty()) return '';
+            const size = nativeImg.getSize();
+            try {
+                const bmp = nativeImg.getBitmap();
+                const len = bmp.length;
+                if (len === 0) return '';
+                // Hash ligero con algunos bytes
+                const s = bmp[0] + ',' + bmp[Math.floor(len/2)] + ',' + bmp[len-1];
+                return `${size.width}x${size.height}_${len}_${s}`;
+            } catch(e) {
+                return `${size.width}x${size.height}`;
+            }
+        };
+
+        window._lastClipboardImageHash = '';
+        try { window._lastClipboardImageHash = window._getImageHash(clipboard.readImage()); } catch(e) {}
+
+        setInterval(() => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            try {
+                // 1. Text Sync
+                const currentText = clipboard.readText();
+                if (currentText && currentText !== window._lastClipboardText) {
+                    window._lastClipboardText = currentText;
+                    appendLog('📋 Sincronizando texto copiado...');
+                    sendPayload({ type: 'clipboard_sync', contentType: 'text', content: currentText });
+                }
+
+                // 2. Image Sync (solo si hay imágenes disponibles para no sobrecargar)
+                const formats = clipboard.availableFormats();
+                if (formats.some(f => f.includes('image/'))) {
+                    const currentImg = clipboard.readImage();
+                    const currentHash = window._getImageHash(currentImg);
+                    if (currentHash && currentHash !== window._lastClipboardImageHash) {
+                        window._lastClipboardImageHash = currentHash;
+                        appendLog('📸 Sincronizando imagen copiada...');
+                        sendPayload({ type: 'clipboard_sync', contentType: 'image', content: currentImg.toDataURL() });
+                    }
+                }
+            } catch(e) {}
+        }, 500);
 
     </script>
 </body>

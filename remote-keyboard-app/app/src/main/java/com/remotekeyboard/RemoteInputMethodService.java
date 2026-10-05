@@ -22,6 +22,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.remotekeyboard.server.RemoteWebServerManager;
+import com.remotekeyboard.server.RemoteWebServer;
+
+import android.content.ClipboardManager;
+import android.content.ClipData;
+import android.content.ClipDescription;
+import org.json.JSONObject;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +49,11 @@ public class RemoteInputMethodService extends InputMethodService {
     private Vibrator vibrator;
     private SharedPreferences prefs;
     private android.os.PowerManager.WakeLock typingWakeLock;
+
+    // --- Portapapeles Mágico ---
+    private ClipboardManager clipboardManager;
+    private ClipboardManager.OnPrimaryClipChangedListener clipListener;
+    private String lastClipboardText = "";
 
     public static synchronized RemoteInputMethodService getInstance() {
         return instance;
@@ -74,11 +85,117 @@ public class RemoteInputMethodService extends InputMethodService {
                 typingWakeLock.setReferenceCounted(false);
             }
         } catch (Exception ignored) {}
+        clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipListener = new ClipboardManager.OnPrimaryClipChangedListener() {
+            @Override
+            public void onPrimaryClipChanged() {
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) || clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)) {
+                            CharSequence text = clip.getItemAt(0).getText();
+                            if (text != null) {
+                                String str = text.toString();
+                                if (!str.equals(lastClipboardText)) {
+                                    lastClipboardText = str;
+                                    RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                    if (server != null) {
+                                        try {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "text");
+                                            json.put("content", str);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles texto enviado a PC");
+                                        } catch (Exception e) {}
+                                    }
+                                }
+                            }
+                        } else if (clip.getItemAt(0).getUri() != null) {
+                            android.net.Uri uri = clip.getItemAt(0).getUri();
+                            asyncExecutor.execute(() -> {
+                                try {
+                                    java.io.InputStream is = getContentResolver().openInputStream(uri);
+                                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(is);
+                                    if (bitmap != null) {
+                                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, baos);
+                                        byte[] bytes = baos.toByteArray();
+                                        String base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT);
+                                        String dataUrl = "data:image/png;base64," + base64;
+                                        RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                        if (server != null) {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "image");
+                                            json.put("content", dataUrl);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles imagen enviada a PC");
+                                        }
+                                    }
+                                } catch (Exception e) {}
+                            });
+                        }
+                    }
+                }
+            }
+        };
+        clipboardManager.addPrimaryClipChangedListener(clipListener);
+
         RemoteWebServerManager.ensureServerStarted(this);
     }
 
     @Override
-    public View onCreateInputView() {
+    public void onDestroy() {
+        super.onDestroy();
+        instance = null;
+        asyncExecutor.shutdownNow();
+        if (clipboardManager != null && clipListener != null) {
+            clipboardManager.removePrimaryClipChangedListener(clipListener);
+        }
+        RemoteWebServerManager.stopServer();
+    }
+
+    public void setClipboardText(String text) {
+        mainHandler.post(() -> {
+            lastClipboardText = text;
+            if (clipboardManager != null) {
+                ClipData clip = ClipData.newPlainText("PC Sync", text);
+                clipboardManager.setPrimaryClip(clip);
+                showLiveFeedback("?? Texto del PC copiado");
+            }
+        });
+    }
+
+    public void setClipboardImage(String dataUrl) {
+        asyncExecutor.execute(() -> {
+            try {
+                String base64 = dataUrl.substring(dataUrl.indexOf(",") + 1);
+                byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                java.io.File cacheDir = new java.io.File(getCacheDir(), "clipboard_images");
+                if (!cacheDir.exists()) cacheDir.mkdirs();
+                java.io.File imgFile = new java.io.File(cacheDir, "shared_image.png");
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(imgFile);
+                fos.write(bytes);
+                fos.close();
+
+                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getApplicationContext().getPackageName() + ".provider",
+                        imgFile);
+
+                mainHandler.post(() -> {
+                    if (clipboardManager != null) {
+                        ClipData clip = ClipData.newUri(getContentResolver(), "Image from PC", uri);
+                        clipboardManager.setPrimaryClip(clip);
+                        showLiveFeedback("?? Imagen del PC copiada");
+                    }
+                });
+            } catch (Exception e) {}
+        });
+    }
+
+    @Override() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setBackgroundColor(Color.parseColor("#0B0D14"));
@@ -163,6 +280,63 @@ public class RemoteInputMethodService extends InputMethodService {
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         super.onStartInput(attribute, restarting);
         instance = this;
+        clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipListener = new ClipboardManager.OnPrimaryClipChangedListener() {
+            @Override
+            public void onPrimaryClipChanged() {
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) || clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)) {
+                            CharSequence text = clip.getItemAt(0).getText();
+                            if (text != null) {
+                                String str = text.toString();
+                                if (!str.equals(lastClipboardText)) {
+                                    lastClipboardText = str;
+                                    RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                    if (server != null) {
+                                        try {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "text");
+                                            json.put("content", str);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles texto enviado a PC");
+                                        } catch (Exception e) {}
+                                    }
+                                }
+                            }
+                        } else if (clip.getItemAt(0).getUri() != null) {
+                            android.net.Uri uri = clip.getItemAt(0).getUri();
+                            asyncExecutor.execute(() -> {
+                                try {
+                                    java.io.InputStream is = getContentResolver().openInputStream(uri);
+                                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(is);
+                                    if (bitmap != null) {
+                                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, baos);
+                                        byte[] bytes = baos.toByteArray();
+                                        String base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT);
+                                        String dataUrl = "data:image/png;base64," + base64;
+                                        RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                        if (server != null) {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "image");
+                                            json.put("content", dataUrl);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles imagen enviada a PC");
+                                        }
+                                    }
+                                } catch (Exception e) {}
+                            });
+                        }
+                    }
+                }
+            }
+        };
+        clipboardManager.addPrimaryClipChangedListener(clipListener);
+
         RemoteWebServerManager.ensureServerStarted(this);
     }
 
@@ -170,14 +344,64 @@ public class RemoteInputMethodService extends InputMethodService {
     public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
         instance = this;
-        RemoteWebServerManager.ensureServerStarted(this);
-    }
+        clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipListener = new ClipboardManager.OnPrimaryClipChangedListener() {
+            @Override
+            public void onPrimaryClipChanged() {
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) || clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)) {
+                            CharSequence text = clip.getItemAt(0).getText();
+                            if (text != null) {
+                                String str = text.toString();
+                                if (!str.equals(lastClipboardText)) {
+                                    lastClipboardText = str;
+                                    RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                    if (server != null) {
+                                        try {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "text");
+                                            json.put("content", str);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles texto enviado a PC");
+                                        } catch (Exception e) {}
+                                    }
+                                }
+                            }
+                        } else if (clip.getItemAt(0).getUri() != null) {
+                            android.net.Uri uri = clip.getItemAt(0).getUri();
+                            asyncExecutor.execute(() -> {
+                                try {
+                                    java.io.InputStream is = getContentResolver().openInputStream(uri);
+                                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(is);
+                                    if (bitmap != null) {
+                                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, baos);
+                                        byte[] bytes = baos.toByteArray();
+                                        String base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT);
+                                        String dataUrl = "data:image/png;base64," + base64;
+                                        RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                                        if (server != null) {
+                                            JSONObject json = new JSONObject();
+                                            json.put("type", "clipboard_sync");
+                                            json.put("contentType", "image");
+                                            json.put("content", dataUrl);
+                                            server.broadcastWebSocket(json.toString());
+                                            DebugLogger.log("Portapapeles imagen enviada a PC");
+                                        }
+                                    }
+                                } catch (Exception e) {}
+                            });
+                        }
+                    }
+                }
+            }
+        };
+        clipboardManager.addPrimaryClipChangedListener(clipListener);
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        instance = null;
-        asyncExecutor.shutdownNow();
+        RemoteWebServerManager.ensureServerStarted(this);
     }
 
     private void performHapticFeedbackAsync() {
@@ -540,3 +764,7 @@ public class RemoteInputMethodService extends InputMethodService {
         return KeyEvent.KEYCODE_UNKNOWN;
     }
 }
+
+
+
+

@@ -80,6 +80,18 @@ public class RemoteWebServer extends NanoHTTPD {
                 }
             }
             // ⚡ 3. Full Keyboard Event (raw down/up)
+            else if ("clipboard_sync".equals(type)) {
+                String contentType = json.optString("contentType", "");
+                String content = json.optString("content", "");
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
+                    if ("text".equals(contentType)) {
+                        ime.setClipboardText(content);
+                    } else if ("image".equals(contentType)) {
+                        ime.setClipboardImage(content);
+                    }
+                }
+            }
             else if ("key_event".equals(type)) {
                 String action = json.optString("action", "");
                 String key = json.optString("key", "");
@@ -254,3 +266,4 @@ public class RemoteWebServer extends NanoHTTPD {
         }
     }
 }
+
