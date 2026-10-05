@@ -1,4 +1,4 @@
-package com.remotekeyboard;
+ï»¿package com.remotekeyboard;
 
 import android.content.Context;
 import android.content.Intent;
@@ -50,7 +50,7 @@ public class RemoteInputMethodService extends InputMethodService {
     private SharedPreferences prefs;
     private android.os.PowerManager.WakeLock typingWakeLock;
 
-    // --- Portapapeles Mágico ---
+    // --- Portapapeles Mï¿½gico ---
     private ClipboardManager clipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener clipListener;
     private String lastClipboardText = "";
@@ -433,16 +433,28 @@ public class RemoteInputMethodService extends InputMethodService {
         }
     }
 
+    private final Runnable releaseWakeLockRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (typingWakeLock != null && typingWakeLock.isHeld()) {
+                try {
+                    typingWakeLock.release();
+                    DebugLogger.log("WakeLock liberado suavemente, respetando timeout del sistema");
+                } catch (Exception e) {}
+            }
+        }
+    };
+
     private void pokeWakeLock() {
         if (typingWakeLock != null) {
             try {
-                if (typingWakeLock.isHeld()) {
-                    typingWakeLock.release();
+                if (!typingWakeLock.isHeld()) {
+                    typingWakeLock.acquire();
+                    DebugLogger.log("WakeLock sostenido");
                 }
-                typingWakeLock.acquire(100);
-            } catch (Exception e) {
-                DebugLogger.log("Error con WakeLock: " + e.getMessage());
-            }
+                mainHandler.removeCallbacks(releaseWakeLockRunnable);
+                mainHandler.postDelayed(releaseWakeLockRunnable, 3000);
+            } catch (Exception e) {}
         }
     }
 
@@ -764,6 +776,7 @@ public class RemoteInputMethodService extends InputMethodService {
         return KeyEvent.KEYCODE_UNKNOWN;
     }
 }
+
 
 
 
