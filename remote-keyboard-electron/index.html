@@ -447,6 +447,8 @@
 
     <script>
         const { ipcRenderer } = require('electron');
+        const dgram = require('dgram');
+        
         const phoneIpInput = document.getElementById('phone-ip');
         const statusBadge = document.getElementById('status-badge');
         const pingBadge = document.getElementById('ping-badge');
@@ -608,8 +610,8 @@
 
         async function autoScan() {
             appendLog("🔍 Escaneando red local en busca de tu teléfono Android...");
-            badgeStatus.className = 'badge-status disconnected';
-            statusLabel.innerText = 'Escaneando...';
+            statusBadge.className = 'badge-status disconnected';
+            statusBadge.innerText = 'Escaneando...';
             
             const subnets = ['192.168.1.', '192.168.0.', '192.168.100.'];
             let found = false;
@@ -888,6 +890,36 @@ ipcRenderer.on('simulate-keystroke', (event, keyData) => {
                 sendParagraph();
             }
         });
+
+        let udpServer = null;
+        function startUdpDiscovery() {
+            try {
+                udpServer = dgram.createSocket('udp4');
+                udpServer.on('error', (err) => {
+                    appendLog(`⚠️ Error UDP: ${err.message}`);
+                    udpServer.close();
+                });
+                udpServer.on('message', (msg, rinfo) => {
+                    try {
+                        const data = JSON.parse(msg.toString());
+                        if (data.app === 'remote-keyboard') {
+                            const newIp = `${rinfo.address}:${data.port}`;
+                            if (phoneIpInput.value !== newIp && (!ws || ws.readyState !== WebSocket.OPEN)) {
+                                appendLog(`📡 Auto-conectando a: ${data.device} en ${newIp}`);
+                                phoneIpInput.value = newIp;
+                                connectPhone();
+                            }
+                        }
+                    } catch (e) {}
+                });
+                udpServer.bind(9998, () => {
+                    appendLog('🎧 Escuchando auto-descubrimiento en puerto 9998');
+                });
+            } catch (e) {
+                appendLog(`⚠️ No se pudo iniciar UDP: ${e.message}`);
+            }
+        }
+        startUdpDiscovery();
 
         setTimeout(connectPhone, 500);
 
