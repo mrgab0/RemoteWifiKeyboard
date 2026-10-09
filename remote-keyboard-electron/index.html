@@ -373,6 +373,10 @@
         </div>
 
         <div class="header-badges">
+            <div class="mode-pill-selector" style="display:inline-flex; background:#181825; border:1px solid #313244; border-radius:8px; padding:2px; margin-right:8px;">
+                <button id="btn-mode-code" onclick="setKeyboardMode('code')" style="background:#6366f1; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Código: Máxima velocidad, keydown/keyup de todas las teclas físicas sin latencia">⚡ Modo Código</button>
+                <button id="btn-mode-daily" onclick="setKeyboardMode('daily')" style="background:transparent; color:#a6adc8; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Diario: Escritura continua con commitText, tildes y borrado inteligente">📝 Modo Diario</button>
+            </div>
             <select id="editor-profile" style="background:#1e1e2e; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; margin-right:6px;" title="Perfil de Editor">
                 <option value="default">🎯 Default</option>
                 <option value="vscode">💜 VS Code</option>
@@ -785,6 +789,33 @@
             'NumpadDecimal', 'NumpadEnter',
         ]);
 
+        let currentKeyboardMode = localStorage.getItem('rk_keyboard_mode') || 'code';
+
+        function setKeyboardMode(mode) {
+            currentKeyboardMode = mode;
+            localStorage.setItem('rk_keyboard_mode', mode);
+            updateKeyboardModeUI();
+            appendLog(`🔄 Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario (Normal)'}`);
+        }
+
+        function updateKeyboardModeUI() {
+            const btnCode = document.getElementById('btn-mode-code');
+            const btnDaily = document.getElementById('btn-mode-daily');
+            if (!btnCode || !btnDaily) return;
+            if (currentKeyboardMode === 'code') {
+                btnCode.style.background = '#6366f1';
+                btnCode.style.color = '#fff';
+                btnDaily.style.background = 'transparent';
+                btnDaily.style.color = '#a6adc8';
+            } else {
+                btnDaily.style.background = '#10b981';
+                btnDaily.style.color = '#fff';
+                btnCode.style.background = 'transparent';
+                btnCode.style.color = '#a6adc8';
+            }
+        }
+        updateKeyboardModeUI();
+
         function handleKey(e) {
             e.preventDefault();
             
@@ -798,27 +829,34 @@
             if (e.altKey)   mods.push('ALT');
             if (e.metaKey)  mods.push('META');
             
-            // A — Si hay modificadores (Ctrl/Alt/Meta) → SIEMPRE sendRawKey
-            //     Esto captura Ctrl+C, Ctrl+Z, Alt+F4, Ctrl+Shift+P, etc.
+            // ⚡ MODO CÓDIGO (Programador / Turbo)
+            // Transmisión directa y pura de todos los eventos down/up de hardware
+            // Soporta combinaciones completas (Ctrl, Alt, Shift, Meta, F1-F12, Esc, Tab, etc.)
+            if (currentKeyboardMode === 'code') {
+                sendRawKey(action, key, code, mods);
+                return;
+            }
+            
+            // 📝 MODO DIARIO (Normal)
+            // A — Modificadores (Ctrl/Alt/Meta) → sendRawKey (Ctrl+A, Ctrl+C, Ctrl+V, etc.)
             if (e.ctrlKey || e.altKey || e.metaKey) {
                 sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // B — Si es una tecla especial → sendRawKey (preserva keyup para Shift+Tab, etc.)
+            // B — Teclas especiales → sendRawKey (Backspace, Delete, Enter, Tab, flechas)
             if (SPECIAL_CODES.has(code)) {
                 sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // C — Carácter imprimible → solo en keydown para no duplicar
+            // C — Carácter imprimible → sendText solo en keydown (commitText nativo con acentos)
             if (key.length === 1 && action === 'keydown') {
                 sendText(key);
                 return;
             }
             
-            // D — Cualquier otra cosa (standalone Shift sin combo, etc.)
-            // Solo enviamos si es keydown para no duplicar texto
+            // D — Cualquier otra tecla
             if (action === 'keydown') {
                 sendRawKey(action, key, code, mods);
             }

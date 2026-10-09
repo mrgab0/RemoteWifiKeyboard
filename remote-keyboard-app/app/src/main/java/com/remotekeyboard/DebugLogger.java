@@ -5,13 +5,15 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DebugLogger {
     private static File logFile = null;
+    private static final ExecutorService logExecutor = Executors.newSingleThreadExecutor();
 
     public static void init(Context context) {
         if (logFile == null) {
@@ -27,18 +29,21 @@ public class DebugLogger {
         }
     }
 
-    public static void log(String message) {
+    public static void log(final String message) {
         Log.d("RemoteKB_DEBUG", message);
         if (logFile != null) {
-            try {
-                FileWriter writer = new FileWriter(logFile, true);
-                String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(new Date());
-                writer.append(time).append(" - ").append(message).append("\n");
-                writer.flush();
-                writer.close();
-            } catch (IOException e) {
-                Log.e("DebugLogger", "Fallo al escribir en el log", e);
-            }
+            logExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        FileWriter writer = new FileWriter(logFile, true);
+                        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(new Date());
+                        writer.append(time).append(" - ").append(message).append("\n");
+                        writer.flush();
+                        writer.close();
+                    } catch (Exception ignored) {}
+                }
+            });
         }
     }
 }

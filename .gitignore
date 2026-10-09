@@ -1,6 +1,7 @@
 # Unrelated Folders
 bonbonflowerhouston.com/
 ssh/
+tmuxconfig/
 
 # Binary Releases (Uploaded to GitHub Releases)
 *.apk
@@ -9,6 +10,10 @@ ssh/
 *.msix
 *.zip
 *.keystore
+*.nupkg
+installer/
+dist/
+dist-pro/
 
 # Node / Dependencies
 **/node_modules/

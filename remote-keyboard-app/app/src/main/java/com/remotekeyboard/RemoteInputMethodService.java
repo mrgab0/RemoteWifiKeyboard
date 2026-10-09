@@ -49,6 +49,7 @@ public class RemoteInputMethodService extends InputMethodService {
     private Vibrator vibrator;
     private SharedPreferences prefs;
     private android.os.PowerManager.WakeLock typingWakeLock;
+    private android.net.wifi.WifiManager.WifiLock wifiLock;
 
     // --- Portapapeles M�gico ---
     private ClipboardManager clipboardManager;
@@ -83,6 +84,19 @@ public class RemoteInputMethodService extends InputMethodService {
                 // ACQUIRE_CAUSES_WAKEUP enciende/avisa a la pantalla, ON_AFTER_RELEASE resetea el timeout de apagado
                 typingWakeLock = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP | android.os.PowerManager.ON_AFTER_RELEASE, "RemoteIME:TypingWakeLock");
                 typingWakeLock.setReferenceCounted(false);
+            }
+        } catch (Exception ignored) {}
+        try {
+            android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if (wm != null) {
+                int wifiMode = android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF;
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    wifiMode = 4; // WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+                }
+                wifiLock = wm.createWifiLock(wifiMode, "RemoteIME:WifiLock");
+                wifiLock.setReferenceCounted(false);
+                wifiLock.acquire();
+                DebugLogger.log("WifiLock adquirido en modo alto rendimiento/baja latencia");
             }
         } catch (Exception ignored) {}
         clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -153,6 +167,12 @@ public class RemoteInputMethodService extends InputMethodService {
         if (clipboardManager != null && clipListener != null) {
             clipboardManager.removePrimaryClipChangedListener(clipListener);
         }
+        if (wifiLock != null && wifiLock.isHeld()) {
+            try { wifiLock.release(); } catch (Exception ignored) {}
+        }
+        if (typingWakeLock != null && typingWakeLock.isHeld()) {
+            try { typingWakeLock.release(); } catch (Exception ignored) {}
+        }
         RemoteWebServerManager.stopServer();
     }
 
@@ -192,6 +212,15 @@ public class RemoteInputMethodService extends InputMethodService {
                     }
                 });
             } catch (Exception e) {}
+        });
+    }
+
+        private void showLiveFeedback(final String msg) {
+        mainHandler.post(() -> {
+            if (tvLiveFeedback != null) {
+                tvLiveFeedback.setText(msg);
+                tvLiveFeedback.setTextColor(Color.parseColor("#34D399"));
+            }
         });
     }
 
@@ -658,32 +687,91 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
     public void handleRawKeyEvent(final String action, final String key, final String code, final int metaState, final long ts) {
-        pokeWakeLock();
         final int androidAction = "keyup".equalsIgnoreCase(action) ? KeyEvent.ACTION_UP : KeyEvent.ACTION_DOWN;
+        if (androidAction == KeyEvent.ACTION_DOWN) {
+            pokeWakeLock();
+        }
         final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
-        
-        DebugLogger.log("[" + ts + "] RECEIVE " + code + " " + action.toUpperCase());
 
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
                 InputConnection ic = getCurrentInputConnection();
-                if (ic == null) {
-                    DebugLogger.log("[" + ts + "] INPUT_CONNECTION = NULL. Aborting raw event.");
+                if (ic == null) return;
+
+                // 1. Manejo seguro e inmediato de Backspace y Delete (WhatsApp, Chrome, editores)
+                if ("Backspace".equalsIgnoreCase(code)) {
+                    if (androidAction == KeyEvent.ACTION_DOWN) {
+                        CharSequence selected = ic.getSelectedText(0);
+                        if (selected != null && selected.length() > 0) {
+                            ic.commitText("", 1); // Borrar bloque seleccionado
+                        } else {
+                            ic.deleteSurroundingText(1, 0); // Borrar carácter anterior
+                        }
+                    }
                     return;
                 }
 
-                DebugLogger.log("[" + ts + "] INPUT_CONNECTION = AVAILABLE");
+                if ("Delete".equalsIgnoreCase(code)) {
+                    if (androidAction == KeyEvent.ACTION_DOWN) {
+                        CharSequence selected = ic.getSelectedText(0);
+                        if (selected != null && selected.length() > 0) {
+                            ic.commitText("", 1);
+                        } else {
+                            ic.deleteSurroundingText(0, 1);
+                        }
+                    }
+                    return;
+                }
 
+                // 2. Teclas de control básicas sin modificadores
+                if (metaState == 0) {
+                    if ("Space".equalsIgnoreCase(code)) {
+                        if (androidAction == KeyEvent.ACTION_DOWN) {
+                            ic.commitText(" ", 1);
+                        }
+                        return;
+                    }
+                    if ("Enter".equalsIgnoreCase(code) || "NumpadEnter".equalsIgnoreCase(code)) {
+                        if (androidAction == KeyEvent.ACTION_DOWN) {
+                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+                            ic.performEditorAction(EditorInfo.IME_ACTION_DONE);
+                            ic.performEditorAction(EditorInfo.IME_ACTION_SEND);
+                        }
+                        return;
+                    }
+                    if ("Tab".equalsIgnoreCase(code)) {
+                        if (androidAction == KeyEvent.ACTION_DOWN) {
+                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB));
+                            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_TAB));
+                        }
+                        return;
+                    }
+                }
+
+                // 3. Atajos universales con CTRL (Garantía híbrida: acción nativa + KeyEvent físico)
+                if ((metaState & KeyEvent.META_CTRL_ON) != 0 && androidAction == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_A) {
+                        ic.performContextMenuAction(android.R.id.selectAll);
+                    } else if (keyCode == KeyEvent.KEYCODE_C) {
+                        ic.performContextMenuAction(android.R.id.copy);
+                    } else if (keyCode == KeyEvent.KEYCODE_V) {
+                        ic.performContextMenuAction(android.R.id.paste);
+                    } else if (keyCode == KeyEvent.KEYCODE_X) {
+                        ic.performContextMenuAction(android.R.id.cut);
+                    } else if (keyCode == KeyEvent.KEYCODE_Z) {
+                        ic.performContextMenuAction(android.R.id.undo);
+                    }
+                }
+
+                // 4. Despacho de KeyEvent físico limpio (sin FLAG_SOFT_KEYBOARD para Termux, Acode y editores)
                 if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
                     long eventTime = android.os.SystemClock.uptimeMillis();
                     KeyEvent event = new KeyEvent(eventTime, eventTime, androidAction, keyCode, 0, metaState);
-                    
-                    DebugLogger.log("[" + ts + "] ACTION = ic.sendKeyEvent(" + KeyEvent.keyCodeToString(keyCode) + ", " + action + ")");
                     ic.sendKeyEvent(event);
                 } else {
-                    DebugLogger.log("[" + ts + "] ACTION = UNKNOWN KEY CODE. Falling back to typeText.");
-                    if (androidAction == KeyEvent.ACTION_DOWN && key.length() == 1) {
+                    if (androidAction == KeyEvent.ACTION_DOWN && key != null && key.length() == 1) {
                         ic.commitText(key, 1);
                     }
                 }
@@ -777,6 +865,7 @@ public class RemoteInputMethodService extends InputMethodService {
         return KeyEvent.KEYCODE_UNKNOWN;
     }
 }
+
 
 
 
