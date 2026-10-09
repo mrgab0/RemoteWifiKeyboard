@@ -56,6 +56,38 @@ public class RemoteInputMethodService extends InputMethodService {
     private ClipboardManager.OnPrimaryClipChangedListener clipListener;
     private String lastClipboardText = "";
 
+    // --- UI Visual Keyboard & Themes ---
+    private LinearLayout mainLayout;
+    private android.widget.HorizontalScrollView suggestionBar;
+    private Button clipboardPill;
+    private LinearLayout visualKeyboardContainer;
+    private TextView tvTitle;
+    private Button btnSwitch;
+    private Button btnSettings;
+    private Button btnToggleKb;
+    private java.util.Map<String, TextView> keyViewsMap = new java.util.HashMap<>();
+    private java.util.Map<Integer, TextView> keyCodeViewsMap = new java.util.HashMap<>();
+    private boolean isVisualKeyboardVisible = false;
+    private int currentThemeIndex = 0;
+
+    private static class ThemeInfo {
+        int bg, keyBg, text, highlight;
+        ThemeInfo(String bg, String keyBg, String text, String highlight) {
+            this.bg = Color.parseColor(bg);
+            this.keyBg = Color.parseColor(keyBg);
+            this.text = Color.parseColor(text);
+            this.highlight = Color.parseColor(highlight);
+        }
+    }
+    
+    private final ThemeInfo[] THEMES = new ThemeInfo[]{
+        new ThemeInfo("#0B0D14", "#1E2337", "#818CF8", "#34D399"), // 0: Dark Hacker
+        new ThemeInfo("#000000", "#0D220D", "#00FF00", "#00FF00"), // 1: Neon Matrix
+        new ThemeInfo("#F0F0F0", "#FFFFFF", "#333333", "#007AFF"), // 2: Light Mac
+        new ThemeInfo("#1A1B26", "#24283B", "#7DCFFF", "#BB9AF7"), // 3: Tokyo Night
+        new ThemeInfo("#282A36", "#44475A", "#F8F8F2", "#FF79C6")  // 4: Dracula
+    };
+
     public static synchronized RemoteInputMethodService getInstance() {
         return instance;
     }
@@ -112,6 +144,7 @@ public class RemoteInputMethodService extends InputMethodService {
                                 String str = text.toString();
                                 if (!str.equals(lastClipboardText)) {
                                     lastClipboardText = str;
+                                    updateClipboardPill(str);
                                     RemoteWebServer server = RemoteWebServerManager.getServerInstance();
                                     if (server != null) {
                                         try {
@@ -188,7 +221,8 @@ public class RemoteInputMethodService extends InputMethodService {
             if (clipboardManager != null) {
                 ClipData clip = ClipData.newPlainText("PC Sync", text);
                 clipboardManager.setPrimaryClip(clip);
-                showLiveFeedback("?? Texto del PC copiado");
+                showLiveFeedback("📋 Texto del PC copiado");
+                updateClipboardPill(text);
             }
         });
     }
@@ -232,84 +266,221 @@ public class RemoteInputMethodService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#0B0D14"));
-        layout.setPadding(24, 16, 24, 16);
-        layout.setGravity(Gravity.CENTER_HORIZONTAL);
+        if (prefs == null) prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        currentThemeIndex = prefs.getInt("theme_index", 0);
+        isVisualKeyboardVisible = prefs.getBoolean("visual_keyboard_visible", true);
 
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("⌨️ Remote WiFi Keyboard • Modo Ultrabaja Latencia");
-        tvTitle.setTextColor(Color.parseColor("#818CF8"));
+        mainLayout = new LinearLayout(this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.setPadding(0, 8, 0, 8);
+
+        // 1. Suggestion Bar
+        suggestionBar = new android.widget.HorizontalScrollView(this);
+        suggestionBar.setHorizontalScrollBarEnabled(false);
+        LinearLayout suggestionContainer = new LinearLayout(this);
+        suggestionContainer.setOrientation(LinearLayout.HORIZONTAL);
+        suggestionContainer.setGravity(Gravity.CENTER_VERTICAL);
+        suggestionContainer.setPadding(24, 0, 24, 8);
+        
+        clipboardPill = new Button(this);
+        clipboardPill.setText("📋 Pegar");
+        clipboardPill.setTextSize(12);
+        clipboardPill.setPadding(32, 16, 32, 16);
+        clipboardPill.setVisibility(View.GONE);
+        clipboardPill.setOnClickListener(v -> {
+            InputConnection ic = getCurrentInputConnection();
+            if (ic != null && lastClipboardText != null) {
+                ic.commitText(lastClipboardText, 1);
+                clipboardPill.setVisibility(View.GONE);
+            }
+        });
+        
+        LinearLayout.LayoutParams pillParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        suggestionContainer.addView(clipboardPill, pillParams);
+        suggestionBar.addView(suggestionContainer);
+        mainLayout.addView(suggestionBar);
+
+        // 2. Classic Panel
+        LinearLayout classicPanel = new LinearLayout(this);
+        classicPanel.setOrientation(LinearLayout.VERTICAL);
+        classicPanel.setPadding(24, 8, 24, 16);
+        classicPanel.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        tvTitle = new TextView(this);
+        tvTitle.setText("⌨️ Remote WiFi Keyboard • Ultrabaja Latencia");
         tvTitle.setTextSize(13);
         tvTitle.setGravity(Gravity.CENTER);
 
         tvLiveFeedback = new TextView(this);
-        tvLiveFeedback.setText("🟢 Listo para recibir teclas desde PC...");
-        tvLiveFeedback.setTextColor(Color.parseColor("#34D399"));
+        tvLiveFeedback.setText("🟢 Listo para recibir teclas...");
         tvLiveFeedback.setTextSize(12);
         tvLiveFeedback.setGravity(Gravity.CENTER);
         tvLiveFeedback.setPadding(0, 4, 0, 4);
 
         tvMetrics = new TextView(this);
         tvMetrics.setText("Pulsaciones: " + totalKeysTyped.get());
-        tvMetrics.setTextColor(Color.parseColor("#64748B"));
         tvMetrics.setTextSize(10);
         tvMetrics.setGravity(Gravity.CENTER);
         tvMetrics.setPadding(0, 0, 0, 8);
 
-        layout.addView(tvTitle);
-        layout.addView(tvLiveFeedback);
-        layout.addView(tvMetrics);
+        classicPanel.addView(tvTitle);
+        classicPanel.addView(tvLiveFeedback);
+        classicPanel.addView(tvMetrics);
 
-        // Barra de botones rápidos dentro del teclado
         LinearLayout buttonRow = new LinearLayout(this);
         buttonRow.setOrientation(LinearLayout.HORIZONTAL);
         buttonRow.setGravity(Gravity.CENTER);
 
-        Button btnSwitch = new Button(this);
-        btnSwitch.setText("🌐 Cambiar Teclado");
-        btnSwitch.setTextColor(Color.WHITE);
-        btnSwitch.setBackgroundColor(Color.parseColor("#1E2337"));
+        btnSwitch = new Button(this);
+        btnSwitch.setText("🌐 Cambiar");
         btnSwitch.setTextSize(11);
-        btnSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) {
-                        imm.showInputMethodPicker();
-                    }
-                } catch (Exception ignored) {}
-            }
+        btnSwitch.setOnClickListener(v -> {
+            try {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showInputMethodPicker();
+            } catch (Exception ignored) {}
         });
 
-        Button btnSettings = new Button(this);
-        btnSettings.setText("⚙️ Panel y Debug");
-        btnSettings.setTextColor(Color.WHITE);
-        btnSettings.setBackgroundColor(Color.parseColor("#1E2337"));
+        btnSettings = new Button(this);
+        btnSettings.setText("⚙️ Panel");
         btnSettings.setTextSize(11);
-        btnSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    Intent intent = new Intent(RemoteInputMethodService.this, MainActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                } catch (Exception ignored) {}
-            }
+        btnSettings.setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(RemoteInputMethodService.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception ignored) {}
         });
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(6, 0, 6, 0);
+        btnToggleKb = new Button(this);
+        btnToggleKb.setText(isVisualKeyboardVisible ? "🔽 Ocultar" : "⌨️ Mostrar");
+        btnToggleKb.setTextSize(11);
+        btnToggleKb.setOnClickListener(v -> {
+            isVisualKeyboardVisible = !isVisualKeyboardVisible;
+            prefs.edit().putBoolean("visual_keyboard_visible", isVisualKeyboardVisible).apply();
+            btnToggleKb.setText(isVisualKeyboardVisible ? "🔽 Ocultar" : "⌨️ Mostrar");
+            visualKeyboardContainer.setVisibility(isVisualKeyboardVisible ? View.VISIBLE : View.GONE);
+        });
 
-        buttonRow.addView(btnSwitch, params);
-        buttonRow.addView(btnSettings, params);
-        layout.addView(buttonRow);
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        btnParams.setMargins(4, 0, 4, 0);
 
-        return layout;
+        buttonRow.addView(btnSwitch, btnParams);
+        buttonRow.addView(btnSettings, btnParams);
+        buttonRow.addView(btnToggleKb, btnParams);
+        classicPanel.addView(buttonRow);
+        
+        mainLayout.addView(classicPanel);
+
+        // 3. Visual Keyboard
+        visualKeyboardContainer = new LinearLayout(this);
+        visualKeyboardContainer.setOrientation(LinearLayout.VERTICAL);
+        visualKeyboardContainer.setPadding(8, 0, 8, 8);
+        visualKeyboardContainer.setVisibility(isVisualKeyboardVisible ? View.VISIBLE : View.GONE);
+        
+        buildVisualKeyboardGrid();
+        mainLayout.addView(visualKeyboardContainer);
+
+        applyTheme();
+        return mainLayout;
+    }
+
+    private void buildVisualKeyboardGrid() {
+        keyViewsMap.clear();
+        keyCodeViewsMap.clear();
+        
+        String[][] rows = {
+            {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"},
+            {"A", "S", "D", "F", "G", "H", "J", "K", "L"},
+            {"SHIFT", "Z", "X", "C", "V", "B", "N", "M", "DEL"},
+            {"?123", ",", "SPACE", ".", "ENTER"}
+        };
+        
+        for (String[] rowKeys : rows) {
+            LinearLayout rowLayout = new LinearLayout(this);
+            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
+            rowLayout.setGravity(Gravity.CENTER);
+            
+            for (String keyStr : rowKeys) {
+                TextView keyView = new TextView(this);
+                keyView.setText(keyStr);
+                keyView.setGravity(Gravity.CENTER);
+                keyView.setTextSize(16);
+                
+                // Set fixed height and weight for width
+                LinearLayout.LayoutParams params;
+                if ("SPACE".equals(keyStr)) {
+                    params = new LinearLayout.LayoutParams(0, 120, 4f);
+                } else if ("SHIFT".equals(keyStr) || "DEL".equals(keyStr) || "ENTER".equals(keyStr) || "?123".equals(keyStr)) {
+                    params = new LinearLayout.LayoutParams(0, 120, 1.5f);
+                } else {
+                    params = new LinearLayout.LayoutParams(0, 120, 1f);
+                }
+                params.setMargins(4, 4, 4, 4);
+                keyView.setLayoutParams(params);
+                
+                keyViewsMap.put(keyStr.toUpperCase(), keyView);
+                rowLayout.addView(keyView);
+            }
+            visualKeyboardContainer.addView(rowLayout);
+        }
+        
+        // Map common keycodes to the visual keys for handleRawKeyEvent
+        keyCodeViewsMap.put(KeyEvent.KEYCODE_DEL, keyViewsMap.get("DEL"));
+        keyCodeViewsMap.put(KeyEvent.KEYCODE_ENTER, keyViewsMap.get("ENTER"));
+        keyCodeViewsMap.put(KeyEvent.KEYCODE_SPACE, keyViewsMap.get("SPACE"));
+        keyCodeViewsMap.put(KeyEvent.KEYCODE_SHIFT_LEFT, keyViewsMap.get("SHIFT"));
+        keyCodeViewsMap.put(KeyEvent.KEYCODE_SHIFT_RIGHT, keyViewsMap.get("SHIFT"));
+    }
+
+    public void setThemeIndex(int index) {
+        if (index >= 0 && index < THEMES.length) {
+            currentThemeIndex = index;
+            if (prefs != null) {
+                prefs.edit().putInt("theme_index", index).apply();
+            }
+            mainHandler.post(this::applyTheme);
+        }
+    }
+
+    public void applyTheme() {
+        if (currentThemeIndex < 0 || currentThemeIndex >= THEMES.length) currentThemeIndex = 0;
+        ThemeInfo theme = THEMES[currentThemeIndex];
+
+        if (mainLayout != null) {
+            mainLayout.setBackgroundColor(theme.bg);
+            tvTitle.setTextColor(theme.text);
+            tvMetrics.setTextColor(theme.text);
+            tvLiveFeedback.setTextColor(theme.highlight);
+            
+            clipboardPill.setBackgroundColor(theme.keyBg);
+            clipboardPill.setTextColor(theme.highlight);
+
+            btnSwitch.setBackgroundColor(theme.keyBg);
+            btnSwitch.setTextColor(theme.text);
+            btnSettings.setBackgroundColor(theme.keyBg);
+            btnSettings.setTextColor(theme.text);
+            btnToggleKb.setBackgroundColor(theme.keyBg);
+            btnToggleKb.setTextColor(theme.text);
+            
+            for (TextView keyView : keyViewsMap.values()) {
+                keyView.setBackgroundColor(theme.keyBg);
+                keyView.setTextColor(theme.text);
+            }
+        }
+    }
+
+    private void updateClipboardPill(final String text) {
+        mainHandler.post(() -> {
+            if (clipboardPill != null) {
+                lastClipboardText = text;
+                String snippet = text.length() > 15 ? text.substring(0, 15) + "..." : text;
+                clipboardPill.setText("📋 " + snippet);
+                clipboardPill.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
@@ -329,6 +500,7 @@ public class RemoteInputMethodService extends InputMethodService {
                                 String str = text.toString();
                                 if (!str.equals(lastClipboardText)) {
                                     lastClipboardText = str;
+                                    updateClipboardPill(str);
                                     RemoteWebServer server = RemoteWebServerManager.getServerInstance();
                                     if (server != null) {
                                         try {
@@ -400,6 +572,7 @@ public class RemoteInputMethodService extends InputMethodService {
                                 String str = text.toString();
                                 if (!str.equals(lastClipboardText)) {
                                     lastClipboardText = str;
+                                    updateClipboardPill(str);
                                     RemoteWebServer server = RemoteWebServerManager.getServerInstance();
                                     if (server != null) {
                                         try {
@@ -508,12 +681,50 @@ public class RemoteInputMethodService extends InputMethodService {
         }
     }
 
+    private void highlightVisualKeyByString(final String keyStr) {
+        if (!isVisualKeyboardVisible || keyStr == null || keyStr.isEmpty()) return;
+        mainHandler.post(() -> {
+            String upper = keyStr.toUpperCase();
+            TextView view = keyViewsMap.get(upper);
+            if (view != null) {
+                int originalColor = THEMES[currentThemeIndex].keyBg;
+                int highlightColor = THEMES[currentThemeIndex].highlight;
+                view.setBackgroundColor(highlightColor);
+                view.setTextColor(THEMES[currentThemeIndex].bg);
+                mainHandler.postDelayed(() -> {
+                    view.setBackgroundColor(originalColor);
+                    view.setTextColor(THEMES[currentThemeIndex].text);
+                }, 100);
+            }
+        });
+    }
+
+    private void highlightVisualKeyByCode(final int keyCode) {
+        if (!isVisualKeyboardVisible) return;
+        mainHandler.post(() -> {
+            TextView view = keyCodeViewsMap.get(keyCode);
+            if (view != null) {
+                int originalColor = THEMES[currentThemeIndex].keyBg;
+                int highlightColor = THEMES[currentThemeIndex].highlight;
+                view.setBackgroundColor(highlightColor);
+                view.setTextColor(THEMES[currentThemeIndex].bg);
+                mainHandler.postDelayed(() -> {
+                    view.setBackgroundColor(originalColor);
+                    view.setTextColor(THEMES[currentThemeIndex].text);
+                }, 100);
+            }
+        });
+    }
+
     public void typeText(final String text) {
         pokeWakeLock();
         if (text == null) return;
         DebugLogger.log("typeText llamado con texto: [" + text + "]");
         totalKeysTyped.addAndGet(text.length());
         performHapticFeedbackAsync();
+        if (text.length() == 1) {
+            highlightVisualKeyByString(text);
+        }
 
         mainHandler.post(new Runnable() {
             @Override
@@ -712,6 +923,14 @@ public class RemoteInputMethodService extends InputMethodService {
             pokeWakeLock();
         }
         final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
+        
+        if (androidAction == KeyEvent.ACTION_DOWN) {
+            if (key != null && key.length() == 1) {
+                highlightVisualKeyByString(key);
+            } else if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                highlightVisualKeyByCode(keyCode);
+            }
+        }
 
         mainHandler.post(new Runnable() {
             @Override

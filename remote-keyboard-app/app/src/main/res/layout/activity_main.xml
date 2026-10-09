@@ -226,6 +226,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
+
+            <!-- Botón Cambiar Tema -->
+            <Button
+                android:id="@+id/btnCycleTheme"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🎨 Cambiar Tema del Teclado"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="#334155"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <!-- Card 4: Live Testing Area -->
