@@ -234,7 +234,6 @@
                 android:layout_height="wrap_content"
                 android:text="🎨 Cambiar Tema del Teclado"
                 android:layout_marginTop="12dp"
-                android:backgroundTint="#334155"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 

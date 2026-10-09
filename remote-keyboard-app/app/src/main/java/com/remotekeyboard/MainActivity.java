@@ -146,20 +146,23 @@ public class MainActivity extends Activity {
         });
 
         Button btnCycleTheme = findViewById(R.id.btnCycleTheme);
-        btnCycleTheme.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int currentIndex = prefs.getInt("theme_index", 0);
-                int nextIndex = (currentIndex + 1) % 5;
-                prefs.edit().putInt("theme_index", nextIndex).apply();
-                if (RemoteInputMethodService.getInstance() != null) {
-                    RemoteInputMethodService.getInstance().setThemeIndex(nextIndex);
+        if (btnCycleTheme != null) {
+            btnCycleTheme.setBackgroundColor(Color.parseColor("#334155"));
+            btnCycleTheme.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int currentIndex = prefs.getInt("theme_index", 0);
+                    int nextIndex = (currentIndex + 1) % 5;
+                    prefs.edit().putInt("theme_index", nextIndex).apply();
+                    if (RemoteInputMethodService.getInstance() != null) {
+                        RemoteInputMethodService.getInstance().setThemeIndex(nextIndex);
+                    }
+                    
+                    String[] themeNames = {"Dark Hacker", "Neon Matrix", "Light Mac", "Tokyo Night", "Dracula"};
+                    Toast.makeText(MainActivity.this, "Tema: " + themeNames[nextIndex], Toast.LENGTH_SHORT).show();
                 }
-                
-                String[] themeNames = {"Dark Hacker", "Neon Matrix", "Light Mac", "Tokyo Night", "Dracula"};
-                Toast.makeText(MainActivity.this, "Tema: " + themeNames[nextIndex], Toast.LENGTH_SHORT).show();
-            }
-        });
+            });
+        }
 
         btnEnableIme.setOnClickListener(new View.OnClickListener() {
             @Override
