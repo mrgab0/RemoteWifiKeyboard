@@ -83,14 +83,52 @@ public class RemoteWebServer extends NanoHTTPD {
             else if ("clipboard_sync".equals(type)) {
                 String contentType = json.optString("contentType", "");
                 String content = json.optString("content", "");
-                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
-                if (ime != null) {
-                    if ("text".equals(contentType)) {
-                        ime.setClipboardText(content);
-                    } else if ("image".equals(contentType)) {
-                        ime.setClipboardImage(content);
+                
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    try {
+                        RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                        if (ime != null) {
+                            if ("text".equals(contentType)) {
+                                ime.setClipboardText(content);
+                            } else if ("image".equals(contentType)) {
+                                ime.setClipboardImage(content);
+                            }
+                        } else {
+                            // UNIVERSAL FALLBACK: Escribir al portapapeles aunque Gboard esté activo
+                            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                            if (clipboard != null) {
+                                if ("text".equals(contentType)) {
+                                    android.content.ClipData clip = android.content.ClipData.newPlainText("PC Sync", content);
+                                    clipboard.setPrimaryClip(clip);
+                                    com.remotekeyboard.DebugLogger.log("Universal Clipboard: Texto copiado desde PC (sin IME)");
+                                } else if ("image".equals(contentType)) {
+                                    // Para imágenes sin IME, guardamos y compartimos el URI usando el contexto global
+                                    new Thread(() -> {
+                                        try {
+                                            String base64 = content.substring(content.indexOf(",") + 1);
+                                            byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                                            java.io.File cacheDir = new java.io.File(context.getCacheDir(), "clipboard_images");
+                                            if (!cacheDir.exists()) cacheDir.mkdirs();
+                                            java.io.File imgFile = new java.io.File(cacheDir, "shared_image.png");
+                                            java.io.FileOutputStream fos = new java.io.FileOutputStream(imgFile);
+                                            fos.write(bytes);
+                                            fos.close();
+                                            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(context, context.getPackageName() + ".provider", imgFile);
+                                            mainHandler.post(() -> {
+                                                android.content.ClipData clip = android.content.ClipData.newUri(context.getContentResolver(), "Image from PC", uri);
+                                                clipboard.setPrimaryClip(clip);
+                                                com.remotekeyboard.DebugLogger.log("Universal Clipboard: Imagen copiada desde PC (sin IME)");
+                                            });
+                                        } catch (Exception e) {}
+                                    }).start();
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error in universal clipboard sync", e);
                     }
-                }
+                });
             }
             else if ("key_event".equals(type)) {
                 String action = json.optString("action", "");

@@ -156,7 +156,14 @@ public class RemoteInputMethodService extends InputMethodService {
         };
         clipboardManager.addPrimaryClipChangedListener(clipListener);
 
-        RemoteWebServerManager.ensureServerStarted(this);
+        try {
+            Intent serviceIntent = new Intent(this, com.remotekeyboard.server.ConnectionService.class);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {}
     }
 
     @Override
@@ -173,7 +180,6 @@ public class RemoteInputMethodService extends InputMethodService {
         if (typingWakeLock != null && typingWakeLock.isHeld()) {
             try { typingWakeLock.release(); } catch (Exception ignored) {}
         }
-        RemoteWebServerManager.stopServer();
     }
 
     public void setClipboardText(String text) {
@@ -367,7 +373,14 @@ public class RemoteInputMethodService extends InputMethodService {
         };
         clipboardManager.addPrimaryClipChangedListener(clipListener);
 
-        RemoteWebServerManager.ensureServerStarted(this);
+        try {
+            Intent serviceIntent = new Intent(this, com.remotekeyboard.server.ConnectionService.class);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {}
     }
 
     @Override
@@ -431,7 +444,14 @@ public class RemoteInputMethodService extends InputMethodService {
         };
         clipboardManager.addPrimaryClipChangedListener(clipListener);
 
-        RemoteWebServerManager.ensureServerStarted(this);
+        try {
+            Intent serviceIntent = new Intent(this, com.remotekeyboard.server.ConnectionService.class);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {}
     }
 
     private void performHapticFeedbackAsync() {

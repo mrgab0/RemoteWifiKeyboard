@@ -79,8 +79,14 @@ public class MainActivity extends Activity {
             setContentView(R.layout.activity_main);
             prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
-            // Iniciar servidor HTTP & WebSocket en segundo plano
-            RemoteWebServerManager.ensureServerStarted(this);
+        try {
+            Intent serviceIntent = new Intent(this, com.remotekeyboard.server.ConnectionService.class);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {}
 
             initViews();
             setupMonetization();
@@ -317,7 +323,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        RemoteWebServerManager.ensureServerStarted(this);
+        try {
+            Intent serviceIntent = new Intent(this, com.remotekeyboard.server.ConnectionService.class);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {}
         updateIpDisplay();
         if (telemetryRunnable != null) {
             telemetryHandler.post(telemetryRunnable);
@@ -332,3 +345,4 @@ public class MainActivity extends Activity {
         }
     }
 }
+
