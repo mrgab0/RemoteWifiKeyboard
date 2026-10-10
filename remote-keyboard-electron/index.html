@@ -797,11 +797,56 @@
 
         let currentKeyboardMode = localStorage.getItem('rk_keyboard_mode') || 'code';
 
+        let composeMap = {};
+        let composePrefixes = new Set();
+        let macroWindow = "";
+        let deadKeyBuffer = "";
+
+        function loadComposeMap(mode) {
+            const fs = require('fs');
+            const path = require('path');
+            try {
+                const activePath = path.join(__dirname, 'config', 'active_layouts.json');
+                const activeLayouts = JSON.parse(fs.readFileSync(activePath, 'utf8'));
+                const files = mode === 'code' ? activeLayouts.codigo_pro_mode : activeLayouts.diario_mode;
+                
+                composeMap = {};
+                composePrefixes.clear();
+                deadKeyBuffer = "";
+                macroWindow = "";
+
+                if (files) {
+                    files.forEach(file => {
+                        const layoutPath = path.join(__dirname, 'config', 'layouts', file);
+                        if (fs.existsSync(layoutPath)) {
+                            const data = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
+                            if (data.compose_map) Object.assign(composeMap, data.compose_map);
+                            if (data.macros) Object.assign(composeMap, data.macros);
+                        }
+                    });
+                }
+
+                // If in Diario mode, compute dead key prefixes
+                if (mode === 'daily') {
+                    for (let key in composeMap) {
+                        for (let i = 1; i < key.length; i++) {
+                            composePrefixes.add(key.substring(0, i));
+                        }
+                    }
+                }
+
+                appendLog(`📖 Layouts cargados (${mode}): ${files ? files.length : 0} archivo(s), ${Object.keys(composeMap).length} secuencias`);
+            } catch(e) {
+                appendLog(`⚠️ Error cargando layouts: ${e.message}`);
+            }
+        }
+
         function setKeyboardMode(mode) {
             currentKeyboardMode = mode;
             localStorage.setItem('rk_keyboard_mode', mode);
             updateKeyboardModeUI();
             appendLog(`🔄 Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario (Normal)'}`);
+            loadComposeMap(mode);
             try {
                 sendPayload({
                     type: "set_theme",
@@ -809,6 +854,7 @@
                 });
             } catch (e) {}
         }
+
 
         function updateKeyboardModeUI() {
             const btnCode = document.getElementById('btn-mode-code');
@@ -828,6 +874,38 @@
         }
         updateKeyboardModeUI();
 
+        function executeMacro(macroStr) {
+            // Process macro string which may contain text and escape sequences
+            // E.g., "console.log();\u001B[D\u001B[D"
+            let i = 0;
+            let currentText = "";
+            while (i < macroStr.length) {
+                if (macroStr[i] === '\u001B' && macroStr[i+1] === '[') {
+                    if (currentText) {
+                        sendText(currentText);
+                        currentText = "";
+                    }
+                    const action = macroStr[i+2];
+                    if (action === 'D') sendRawKey('keydown', 'ArrowLeft', 'ArrowLeft', []);
+                    else if (action === 'C') sendRawKey('keydown', 'ArrowRight', 'ArrowRight', []);
+                    else if (action === 'A') sendRawKey('keydown', 'ArrowUp', 'ArrowUp', []);
+                    else if (action === 'B') sendRawKey('keydown', 'ArrowDown', 'ArrowDown', []);
+                    i += 3;
+                } else if (macroStr[i] === '\n') {
+                    if (currentText) {
+                        sendText(currentText);
+                        currentText = "";
+                    }
+                    sendRawKey('keydown', 'Enter', 'Enter', []);
+                    i++;
+                } else {
+                    currentText += macroStr[i];
+                    i++;
+                }
+            }
+            if (currentText) sendText(currentText);
+        }
+
         function handleKey(e) {
             e.preventDefault();
             
@@ -842,33 +920,59 @@
             if (e.metaKey)  mods.push('META');
             
             // ⚡ MODO CÓDIGO (Programador / Turbo)
-            // Transmisión directa y pura de todos los eventos down/up de hardware
-            // Soporta combinaciones completas (Ctrl, Alt, Shift, Meta, F1-F12, Esc, Tab, etc.)
             if (currentKeyboardMode === 'code') {
                 sendRawKey(action, key, code, mods);
+
+                if (action === 'keydown' && key.length === 1 && mods.length === 0) {
+                    macroWindow += key;
+                    if (macroWindow.length > 20) macroWindow = macroWindow.substring(macroWindow.length - 20);
+                    
+                    for (let macroKey in composeMap) {
+                        if (macroWindow.endsWith(macroKey)) {
+                            // Backspace the macro key length
+                            for (let i = 0; i < macroKey.length; i++) {
+                                sendRawKey('keydown', 'Backspace', 'Backspace', []);
+                            }
+                            executeMacro(composeMap[macroKey]);
+                            macroWindow = ""; // reset
+                            appendLog(`🪄 Macro ejecutado: ${macroKey}`);
+                            break;
+                        }
+                    }
+                }
                 return;
             }
             
             // 📝 MODO DIARIO (Normal)
-            // A — Modificadores (Ctrl/Alt/Meta) → sendRawKey (Ctrl+A, Ctrl+C, Ctrl+V, etc.)
             if (e.ctrlKey || e.altKey || e.metaKey) {
+                if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
                 sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // B — Teclas especiales → sendRawKey (Backspace, Delete, Enter, Tab, flechas)
             if (SPECIAL_CODES.has(code)) {
+                if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
                 sendRawKey(action, key, code, mods);
                 return;
             }
             
-            // C — Carácter imprimible → sendText solo en keydown (commitText nativo con acentos)
             if (key.length === 1 && action === 'keydown') {
-                sendText(key);
+                let candidate = deadKeyBuffer + key;
+                if (composeMap[candidate]) {
+                    sendText(composeMap[candidate]);
+                    deadKeyBuffer = "";
+                } else if (composePrefixes.has(candidate)) {
+                    deadKeyBuffer = candidate; // hold it
+                } else {
+                    if (deadKeyBuffer) {
+                        sendText(deadKeyBuffer);
+                        deadKeyBuffer = "";
+                    }
+                    sendText(key);
+                }
                 return;
             }
             
-            // D — Cualquier otra tecla
             if (action === 'keydown') {
                 sendRawKey(action, key, code, mods);
             }
