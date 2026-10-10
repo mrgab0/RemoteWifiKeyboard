@@ -3,19 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote WiFi Keyboard • Modo Ultrabaja Latencia</title>
+    <title>Remote WiFi Keyboard • Windows Native Client</title>
     <style>
         :root {
             --bg-color: #ffffff;
-            --card-bg: #ffffff;
-            --card-border: #000000;
-            --primary: #000000;
-            --primary-hover: #333333;
+            --card-bg: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
             --accent: #000000;
-            --danger: #000000;
-            --warning: #000000;
-            --text-main: #000000;
-            --text-muted: #000000;
+            --accent-hover: #333333;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --accent: #ffffff;
+                --accent-hover: #e2e8f0;
+            }
+            .key-btn {
+                background: #334155 !important;
+                color: #f8fafc !important;
+                border-color: #475569 !important;
+            }
+            .key-btn:active {
+                background: #475569 !important;
+            }
         }
 
         * {
@@ -24,27 +44,25 @@
             padding: 0;
         }
 
+        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: var(--font);
             background-color: var(--bg-color);
             color: var(--text-main);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            font-weight: 800;
+            height: 100vh;
+            overflow: hidden;
         }
 
         header {
-            background: #ffffff;
-            border-bottom: 3px solid var(--card-border);
-            padding: 14px 24px;
+            padding: 16px 24px;
+            border-bottom: 2px solid var(--accent);
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            align-items: center;
+            flex-shrink: 0;
         }
 
         .brand {
@@ -54,52 +72,261 @@
         }
 
         .brand-icon {
-            width: 38px;
-            height: 38px;
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .brand h1 {
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 900;
-            color: #000000;
         }
 
-        .brand p {
-            font-size: 12px;
+        h1 {
+            font-size: 18px;
             font-weight: 800;
-            color: #000000;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
         .header-badges {
             display: flex;
+            gap: 8px;
             align-items: center;
+        }
+
+        .badge-ping {
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-status::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .badge-status.connected {
+            background: #dcfce7;
+            color: #166534;
+            border: 2px solid #166534;
+        }
+        .badge-status.connected::before { background: #166534; }
+
+        .badge-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #991b1b;
+        }
+        .badge-status.disconnected::before { background: #991b1b; }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 4px 4px 0px var(--accent);
+            transition: transform 0.1s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: monospace;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background: var(--card-bg);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(2px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Área de escritura en vivo */
+        .live-area {
+            position: relative;
+        }
+
+        #live-input {
+            width: 100%;
+            height: 60px;
+            font-size: 20px;
+            padding: 16px;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-weight: bold;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #live-input:focus {
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .focus-banner {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            border: 2px solid var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .focus-banner.focused {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .focus-banner.unfocused {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Párrafo */
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: var(--font);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            resize: none;
+            margin-bottom: 12px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+        }
+        textarea:focus { border-color: var(--accent); }
+
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             gap: 10px;
         }
 
-        .badge-ping, .badge-status {
-            display: inline-flex;
+        .key-btn {
+            padding: 12px 8px;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 900;
-            font-family: monospace;
-            background: #ffffff;
-            color: #000000;
-            border: 2px solid #000000;
+            gap: 4px;
+            background: #f1f5f9;
+            border-color: #cbd5e1;
         }
 
+        .key-icon {
+            font-size: 16px;
+        }
+
+        .terminal {
+            background: #0f172a;
+            color: #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 120px;
+            overflow-y: auto;
+            border: 3px solid var(--accent);
+        }
+
+        .terminal-line { margin-bottom: 4px; }
+        .terminal-time { color: #64748b; margin-right: 8px; }
+
         .pulse-dot {
-            width: 8px;
-            height: 8px;
+            display: inline-block;
+            width: 8px; height: 8px;
             background-color: #000000;
             border-radius: 50%;
             animation: pulse 1.5s infinite;
@@ -111,473 +338,289 @@
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        /* Focus Status Banner */
-        .focus-banner {
-            background: #ffffff;
-            border-bottom: 3px solid var(--card-border);
-            padding: 10px 16px;
-            font-size: 14px;
-            font-weight: 900;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: #000000;
-            cursor: pointer;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        main {
-            flex: 1;
-            max-width: 740px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 3px solid var(--card-border);
-            border-radius: 16px;
-            padding: 20px;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #000000;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .card-subtitle {
-            font-size: 12px;
-            font-weight: 800;
-            color: #000000;
-        }
-
-        .input-live {
-            width: 100%;
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 12px;
-            padding: 16px 18px;
-            font-size: 18px;
-            font-weight: 900;
-            color: #000000;
-            outline: none;
-        }
-
-        .input-live:focus {
-            border-color: #000000;
-            background: #f0f0f0;
-        }
-
-        .textarea-box {
-            width: 100%;
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 14px;
-            font-weight: 900;
-            color: #000000;
-            outline: none;
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .textarea-box:focus {
-            border-color: #000000;
-            background: #f0f0f0;
-        }
-
-        .btn-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .btn-primary, .btn-secondary, .btn-benchmark {
-            background: #ffffff;
-            color: #000000;
-            border: 3px solid #000000;
-            border-radius: 10px;
-            font-weight: 900;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            flex: 1;
-            padding: 11px 18px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-secondary {
-            padding: 11px 16px;
-            font-size: 13px;
-        }
-
-        .btn-benchmark {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 8px;
-        }
-
-        .btn-primary:hover, .btn-secondary:hover, .btn-benchmark:hover {
-            background: #000000;
-            color: #ffffff;
-        }
-
-        .key-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .key-btn {
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 8px;
-            padding: 10px 6px;
-            color: #000000;
-            font-size: 12px;
-            font-weight: 900;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            user-select: none;
-        }
-
-        .key-btn:hover {
-            background: #000000;
-            color: #ffffff;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .metric-card {
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 10px;
-            padding: 10px 12px;
-            text-align: center;
-        }
-
-        .metric-value {
-            font-size: 16px;
-            font-weight: 900;
-            font-family: monospace;
-            color: #000000;
-        }
-
-        .metric-label {
-            font-size: 10px;
-            font-weight: 900;
-            color: #000000;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
-
-        .log-box {
-            background: #ffffff;
-            border: 3px solid #000000;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-family: monospace;
-            font-size: 12px;
-            font-weight: 800;
-            color: #000000;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        footer {
-            text-align: center;
-            padding: 14px;
-            font-size: 12px;
-            font-weight: 900;
-            color: #000000;
-            border-top: 3px solid #000000;
-            background: #ffffff;
-        }
+        /* === SHORTCUTS PANEL === */
+        .shortcuts-panel { border: 3px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 0px var(--accent); }
+        .sp-header { background: var(--accent); color: var(--bg-color); padding: 12px 20px; font-weight: 800; font-size: 13px; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .sp-header:hover { opacity: 0.9; }
+        .sp-body { background: var(--card-bg); padding: 12px; }
+        .sp-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .sp-tab { padding: 5px 12px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border-color); border-radius: 20px; background: var(--bg-color); color: var(--text-muted); transition: all 0.15s; }
+        .sp-tab.active { background: var(--accent); color: var(--bg-color); border-color: var(--accent); }
+        .sp-tab:hover:not(.active) { border-color: var(--accent); color: var(--text-main); }
+        .sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 7px; }
+        .sp-btn { padding: 9px 6px 7px; font-size: 10px; font-weight: 700; text-align: center; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; background: var(--bg-color); color: var(--text-main); transition: all 0.1s; line-height: 1.3; }
+        .sp-btn:hover { border-color: var(--accent); background: var(--card-bg); transform: translateY(-1px); }
+        .sp-btn:active { transform: translateY(1px); background: var(--accent); color: var(--bg-color); }
+        .sp-combo { font-family: monospace; font-size: 9px; color: var(--text-muted); margin-top: 3px; display: block; }
     </style>
 </head>
 <body>
+
+    
 
     <header>
         <div class="brand">
             <div class="brand-icon">⌨️</div>
             <div>
                 <h1>Remote WiFi Keyboard</h1>
-                <p>Modo Streaming de Ultrabaja Latencia</p>
+                <p>Cliente Windows ➔ Android</p>
             </div>
         </div>
 
         <div class="header-badges">
-            <div id="ping-badge" class="badge-ping">⚡ -- ms</div>
-            <div id="badge-status" class="badge-status disconnected">
-                <span class="pulse-dot"></span>
-                <span id="status-label">Conectando...</span>
+            <div class="mode-pill-selector" style="display:inline-flex; background:#181825; border:1px solid #313244; border-radius:8px; padding:2px; margin-right:8px;">
+                <button id="btn-mode-code" onclick="setKeyboardMode('code')" style="background:#6366f1; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Código: Máxima velocidad, keydown/keyup de todas las teclas físicas sin latencia">⚡ Modo Código</button>
+                <button id="btn-mode-daily" onclick="setKeyboardMode('daily')" style="background:transparent; color:#a6adc8; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Diario: Escritura continua con commitText, tildes y borrado inteligente">📝 Modo Diario</button>
             </div>
+            <select id="editor-profile" style="background:#1e1e2e; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; margin-right:6px;" title="Perfil de Editor">
+                <option value="default">🎯 Default</option>
+                <option value="vscode">💜 VS Code</option>
+                <option value="intellij">🟠 IntelliJ</option>
+                <option value="termux">🖥️ Termux</option>
+                <option value="acode">📝 Acode</option>
+            </select>
+            <button id="btn-mini-mode" onclick="require('electron').ipcRenderer.send('toggle-mini-mode', true)" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
+                <span style="font-size:16px;">🗗</span> Mini Widget
+            </button>
+            <div class="badge-ping" id="ping-badge">⏳ -- ms</div>
+            <div class="badge-status disconnected" id="status-badge">Desconectado</div>
         </div>
     </header>
 
-    <!-- Indicador de Foco de Ventana -->
-    <div id="focus-banner" class="focus-banner focused" onclick="document.getElementById('live-input').focus()">
-        <span id="focus-icon">🟢</span>
-        <span id="focus-text">Capturando Teclas: Escribe directamente con tu teclado físico</span>
+    <div class="main-container">
+        <!-- Panel de Conexión -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📱 CONEXIÓN CON TELÉFONO</div>
+                <button onclick="runBenchmark()" style="font-size: 11px; padding: 4px 8px;">🚀 Test Ping</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="phone-ip" placeholder="Ej: 192.168.1.101:9999" value="192.168.1.101:9999">
+                <button class="btn-primary" onclick="connectPhone()">Conectar</button>
+                <button onclick="autoScan()">🔍 Auto-Detectar</button>
+            </div>
+        </div>
+
+        <!-- Panel de Escritura en Vivo -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⚡ ESCRITURA ULTRARRÁPIDA (&lt;3MS)</div>
+                <div style="font-size: 10px; font-weight: bold; color: var(--text-muted);">Escribe directamente aquí</div>
+            </div>
+            <div class="live-area">
+                <input type="text" id="live-input" placeholder="Haz clic aquí y escribe con tu teclado..." autocomplete="off">
+                <div class="focus-banner unfocused" id="focus-banner">
+                    <span id="focus-icon">⚠️</span> <span id="focus-text">Ventana sin foco: Haz clic aquí para escribir</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Párrafo y Dictado -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📝 PÁRRAFO O PORTAPAPELES</div>
+            </div>
+            <textarea id="paragraph-input" placeholder="Pega texto largo, notas o enlaces para enviar completo al teléfono..."></textarea>
+            <div class="input-group" style="justify-content: space-between;">
+                <button id="btn-dictate" onclick="toggleDictation()" style="display: flex; align-items: center; gap: 6px;">🎤 Dictar</button>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
+                    <button class="btn-primary" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Shortcuts PRO (dinámico) -->
+        <div class="shortcuts-panel">
+            <div class="sp-header" onclick="toggleShortcutsPanel()">
+                ⌨️ SHORTCUTS DE DEVELOPER
+                <span id="sp-toggle">▼</span>
+            </div>
+            <div class="sp-body" id="sp-body">
+                <div class="sp-tabs" id="sp-tabs"></div>
+                <div class="sp-grid" id="sp-grid"></div>
+            </div>
+        </div>
+
+        <!-- Telemetría -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📊 TELEMETRÍA <span class="pulse-dot" id="pulse-dot" style="display:none;"></span></div>
+            </div>
+            <div class="terminal" id="terminal">
+                <div class="terminal-line"><span class="terminal-time">[SYS]</span> Interfaz inicializada.</div>
+            </div>
+        </div>
     </div>
 
-    <main>
-        <!-- Card 1: Real-time Live Typing -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">⚡ Escritura Instantánea (&lt;3ms)</div>
-                <button class="btn-benchmark" onclick="runBenchmark()">🚀 Test de Velocidad</button>
-            </div>
-
-            <input 
-                type="text" 
-                id="live-input" 
-                class="input-live" 
-                placeholder="Haz clic aquí y escribe con tu teclado de PC..." 
-                autofocus
-                autocomplete="off"
-            />
-
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
-                💡 <b>Atajos directos:</b> <kbd>Enter ⏎</kbd>, <kbd>Backspace ⌫</kbd>, <kbd>Tab ⇥</kbd>, <kbd>Espacio</kbd> y flechas de navegación.
-            </div>
-        </div>
-
-        <!-- Card 2: Long Text / Paragraph / Clipboard Paste -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📋 Enviar Párrafo o Portapapeles</div>
-                <div class="card-subtitle">Ctrl + Enter para enviar</div>
-            </div>
-
-            <textarea 
-                id="paragraph-input" 
-                class="textarea-box" 
-                placeholder="Pega un mensaje largo, notas, enlaces o contraseñas para enviarlo completo al teléfono..."
-            ></textarea>
-
-            <div class="btn-row">
-                <button class="btn-secondary" onclick="clearParagraph()">Limpiar</button>
-                <button class="btn-primary" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
-            </div>
-        </div>
-
-        <!-- Card 3: Quick Action Keys -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">🎮 Teclas Rápidas</div>
-            </div>
-
-            <div class="key-grid">
-                <button class="key-btn" onclick="sendKey('ENTER')">
-                    <span>⏎</span>
-                    <span>Enter</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('BACKSPACE')">
-                    <span>⌫</span>
-                    <span>Borrar</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('TAB')">
-                    <span>⇥</span>
-                    <span>Tab</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('SPACE')">
-                    <span>␣</span>
-                    <span>Espacio</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('SELECT_ALL')">
-                    <span>🔲</span>
-                    <span>Selec. Todo</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_LEFT')">
-                    <span>◀</span>
-                    <span>Izquierda</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_RIGHT')">
-                    <span>▶</span>
-                    <span>Derecha</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_UP')">
-                    <span>▲</span>
-                    <span>Arriba</span>
-                </button>
-                <button class="key-btn" onclick="sendKey('ARROW_DOWN')">
-                    <span>▼</span>
-                    <span>Abajo</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Card 4: Telemetry & Benchmark Metrics -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📊 Telemetría y Métricas en Vivo</div>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div id="metric-ping" class="metric-value">-- ms</div>
-                    <div class="metric-label">Latencia RTT</div>
-                </div>
-                <div class="metric-card">
-                    <div id="metric-typed" class="metric-value">0</div>
-                    <div class="metric-label">Teclas Enviadas</div>
-                </div>
-                <div class="metric-card">
-                    <div id="metric-protocol" class="metric-value">WebSocket</div>
-                    <div class="metric-label">Protocolo</div>
-                </div>
-            </div>
-
-            <div id="log-console" class="log-box" style="margin-top: 12px;">
-                [Sistema] Inicializando canal de ultra-baja latencia...
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        Remote WiFi Keyboard • Conexión Directa Wi-Fi • Pipeline Stream No Bloqueante
-    </footer>
-
     <script>
-        const liveInput = document.getElementById('live-input');
-        const paragraphInput = document.getElementById('paragraph-input');
-        const logConsole = document.getElementById('log-console');
-        const badgeStatus = document.getElementById('badge-status');
-        const statusLabel = document.getElementById('status-label');
+        const { ipcRenderer } = require('electron');
+        const dgram = require('dgram');
+        
+        const phoneIpInput = document.getElementById('phone-ip');
+        const statusBadge = document.getElementById('status-badge');
         const pingBadge = document.getElementById('ping-badge');
+        const terminal = document.getElementById('terminal');
+        const pulseDot = document.getElementById('pulse-dot');
+        const liveInput = document.getElementById('live-input');
+        
         const focusBanner = document.getElementById('focus-banner');
         const focusIcon = document.getElementById('focus-icon');
         const focusText = document.getElementById('focus-text');
-
-        const metricPing = document.getElementById('metric-ping');
-        const metricTyped = document.getElementById('metric-typed');
-        const metricProtocol = document.getElementById('metric-protocol');
+        const paragraphInput = document.getElementById('paragraph-input');
 
         let ws = null;
-        let totalSent = 0;
+        let pendingPings = new Map();
         let pingSeq = 0;
-        const pendingPings = new Map();
 
+        // =========================================================
+        // FASE 3 — Optimización: appendLog con buffer + rAF
+        // =========================================================
+        const logBuffer = [];
+        let logFlushScheduled = false;
         function appendLog(msg) {
-            const time = new Date().toLocaleTimeString();
-            logConsole.innerHTML += `<br>[${time}] ${msg}`;
-            logConsole.scrollTop = logConsole.scrollHeight;
+            logBuffer.push(msg);
+            if (!logFlushScheduled) {
+                logFlushScheduled = true;
+                requestAnimationFrame(flushLogs);
+            }
+        }
+        function flushLogs() {
+            const frag = document.createDocumentFragment();
+            logBuffer.splice(0).forEach(msg => {
+                const time = new Date().toLocaleTimeString('es-ES', {hour12: false});
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.innerHTML = `<span class="terminal-time">[${time}]</span> ${msg}`;
+                frag.appendChild(line);
+            });
+            terminal.appendChild(frag);
+            terminal.scrollTop = terminal.scrollHeight;
+            logFlushScheduled = false;
         }
 
-        // --- WebSocket Streaming ---
-        function initWebSocket() {
-            const loc = window.location;
-            const wsUrl = (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host + '/ws';
+        function triggerPulse() {
+            pulseDot.style.display = 'inline-block';
+            setTimeout(() => { pulseDot.style.display = 'none'; }, 200);
+        }
+
+        function updatePingUI(rtt) {
+            pingBadge.innerText = `${rtt} ms`;
+            if (rtt < 20) pingBadge.style.color = '#10b981';
+            else if (rtt < 50) pingBadge.style.color = '#f59e0b';
+            else pingBadge.style.color = '#ef4444';
+        }
+
+        function getBaseHost() {
+            let host = phoneIpInput.value.trim();
+            if (host.startsWith('http://')) host = host.substring(7);
+            if (!host.includes(':')) host += ':9999';
+            return host;
+        }
+
+        // =========================================================
+        // FASE 3 — Optimización: WebSocket con reconexión automática
+        // =========================================================
+        let reconnectDelay = 1000;
+        let reconnectTimer = null;
+        let manualDisconnect = false;
+
+        function connectWebSocket() {
+            if (ws) {
+                manualDisconnect = true;
+                ws.close();
+            }
+            manualDisconnect = false;
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+            
+            const host = getBaseHost();
+            const wsUrl = `ws://${host}/ws`;
+            
+            appendLog(`Intentando WebSocket en ${wsUrl}...`);
             
             try {
                 ws = new WebSocket(wsUrl);
-
+                
                 ws.onopen = () => {
-                    badgeStatus.className = 'badge-status';
-                    statusLabel.innerText = 'WebSocket (<3ms)';
-                    metricProtocol.innerText = 'WebSocket';
-                    metricProtocol.style.color = '#34d399';
-                    appendLog('🟢 Conexión WebSocket ultra-rápida establecida con el teléfono');
+                    reconnectDelay = 1000; // reset backoff en éxito
+                    appendLog('✅ Conectado a ' + host);
+                    statusBadge.className = 'badge-status connected';
+                    statusBadge.innerText = 'Conectado';
+                    liveInput.focus();
                 };
-
+                
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         if (data.type === 'pong') {
-                            const sentAt = pendingPings.get(data.id);
-                            if (sentAt) {
-                                const rtt = Math.max(1, Math.round(performance.now() - sentAt));
-                                pendingPings.delete(data.id);
+                            const sentTime = pendingPings.get(data.id);
+                            if (sentTime) {
+                                const rtt = Math.round(performance.now() - sentTime);
                                 updatePingUI(rtt);
+                                pendingPings.delete(data.id);
+                            }
+                                                } else if (data.type === 'logcat') {
+                            const fs = require('fs');
+                            const path = require('path');
+                            const logPath = path.join(__dirname, 'android_crash_logs.txt');
+                            fs.writeFileSync(logPath, data.logs, {flag: 'w'});
+                            appendLog('🐞 Logs de Android guardados en ' + logPath);
+                        } else if (data.type === 'clipboard_sync') {
+                            const { clipboard, nativeImage } = require('electron');
+                            if (data.contentType === 'text') {
+                                window._lastClipboardText = data.content; // evitar bucle
+                                clipboard.writeText(data.content);
+                                appendLog('📋 Portapapeles actualizado desde el teléfono');
+                            } else if (data.contentType === 'image') {
+                                const img = nativeImage.createFromDataURL(data.content);
+                                window._lastClipboardImageHash = window._getImageHash(img); // evitar bucle
+                                clipboard.writeImage(img);
+                                appendLog('📸 Imagen del portapapeles actualizada desde el teléfono');
                             }
                         }
-                    } catch (e) {}
+                    } catch(e) {}
                 };
-
+                
                 ws.onclose = () => {
-                    badgeStatus.className = 'badge-status disconnected';
-                    statusLabel.innerText = 'Reconectando...';
-                    metricProtocol.innerText = 'HTTP Fallback';
-                    metricProtocol.style.color = '#fbbf24';
-                    setTimeout(initWebSocket, 2000);
+                    appendLog('❌ Desconectado');
+                    statusBadge.className = 'badge-status disconnected';
+                    statusBadge.innerText = 'Desconectado';
+                    ws = null;
+                    // Reconexión automática con backoff exponencial (max 30s)
+                    if (!manualDisconnect && reconnectDelay <= 30000) {
+                        appendLog(`🔄 Reconectando en ${reconnectDelay/1000}s...`);
+                        reconnectTimer = setTimeout(() => {
+                            reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+                            connectWebSocket();
+                        }, reconnectDelay);
+                    }
                 };
-
+                
                 ws.onerror = () => {
-                    ws.close();
+                    appendLog('⚠️ Error de conexión WebSocket');
                 };
             } catch (e) {
-                setTimeout(initWebSocket, 2000);
+                appendLog('⚠️ Error creando WebSocket: ' + e);
             }
         }
 
-        function updatePingUI(rtt) {
-            let color = '#34d399'; // Verde < 15ms
-            let label = '⚡ Ultrabaja';
-            if (rtt > 40) {
-                color = '#f87171'; // Rojo
-                label = '⚠️ Wi-Fi Lento';
-            } else if (rtt > 15) {
-                color = '#fbbf24'; // Amarillo
-                label = '● Normal';
-            }
-
-            pingBadge.innerText = `${label} ${rtt} ms`;
-            pingBadge.style.color = color;
-            pingBadge.style.borderColor = color;
-            metricPing.innerText = `${rtt} ms`;
-            metricPing.style.color = color;
-        }
-
-        // Envío instantáneo sin bloqueo
         function sendPayload(payload) {
-            totalSent++;
-            metricTyped.innerText = totalSent;
-
+            triggerPulse();
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
                 return true;
             } else {
-                // Fallback HTTP REST
-                let endpoint = '/api/type';
-                if (payload.type === 'key') endpoint = '/api/key';
-                if (payload.type === 'key_event') endpoint = '/api/key_event';
-
-                fetch(endpoint, {
+                // Fallback a HTTP
+                const host = getBaseHost();
+                let endpoint = 'type';
+                if (payload.type === 'key') endpoint = 'key';
+                if (payload.type === 'key_event') endpoint = 'key_event';
+                fetch(`http://${host}/api/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -588,19 +631,22 @@
 
         function sendText(text) {
             if (!text) return;
-            sendPayload({ type: 'type', text: text });
+            sendPayload({ type: 'type', text });
             appendLog(`Texto enviado: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`);
         }
 
         function sendKey(key) {
-            sendPayload({ type: 'key', key: key });
+            sendPayload({ type: 'key', key });
             appendLog(`Tecla: ${key}`);
         }
 
-        // --- Benchmark de Velocidad ---
+        async function connectPhone() {
+            appendLog(`Conectando a ${phoneIpInput.value}...`);
+            connectWebSocket();
+        }
+
         async function runBenchmark() {
             appendLog('🚀 Ejecutando test de latencia en ráfaga (10 paquetes)...');
-            const rtts = [];
             for (let i = 0; i < 10; i++) {
                 const id = ++pingSeq;
                 const start = performance.now();
@@ -608,9 +654,10 @@
                     ws.send(JSON.stringify({ type: 'ping', id: id, t: start }));
                     pendingPings.set(id, start);
                 } else {
-                    const res = await fetch('/api/ping');
-                    if (res.ok) {
-                        rtts.push(Math.round(performance.now() - start));
+                    const host = getBaseHost();
+                    const res = await fetch(`http://${host}/api/ping`).catch(() => null);
+                    if (res && res.ok) {
+                        updatePingUI(Math.round(performance.now() - start));
                     }
                 }
                 await new Promise(r => setTimeout(r, 80));
@@ -618,82 +665,370 @@
             appendLog('✅ Test completado.');
         }
 
-        // Ping continuo
-        setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const id = ++pingSeq;
-                const now = performance.now();
-                pendingPings.set(id, now);
-                ws.send(JSON.stringify({ type: 'ping', id: id, t: now }));
-            }
-        }, 1500);
 
-        // --- Manejo de Foco de Ventana ---
+        // =========================================================
+        // FASE 3 — Optimización: Ping con requestIdleCallback
+        // (No compite con keystrokes en el hilo de render)
+        // =========================================================
+        function schedulePing() {
+            requestIdleCallback(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const id = ++pingSeq;
+                    const now = performance.now();
+                    pendingPings.set(id, now);
+                    // JSON literal pre-armado: evita JSON.stringify por ping
+                    ws.send(`{"type":"ping","id":${id},"t":${now}}`);
+                }
+                setTimeout(schedulePing, 5000); // cada 5s, no 1.5s
+            }, { timeout: 3000 });
+        }
+        schedulePing();
+
+        async function autoScan() {
+            appendLog("🔍 Escaneando red local en busca de tu teléfono Android...");
+            statusBadge.className = 'badge-status disconnected';
+            statusBadge.innerText = 'Escaneando...';
+            
+            const subnets = ['192.168.1.', '192.168.0.', '192.168.100.'];
+            let found = false;
+
+            for (const sub of subnets) {
+                if (found) break;
+                const promises = [];
+                for (let i = 2; i <= 254; i++) {
+                    const testUrl = `http://${sub}${i}:9999/api/ping`;
+                    promises.push(
+                        fetch(testUrl, { signal: AbortSignal.timeout(600) })
+                            .then(r => r.ok ? `${sub}${i}:9999` : null)
+                            .catch(() => null)
+                    );
+                }
+                const results = await Promise.all(promises);
+                for (const r of results) {
+                    if (r) {
+                        found = true;
+                        phoneIpInput.value = r;
+                        connectPhone();
+                        break;
+                    }
+                }
+            }
+
+            if (!found) {
+                appendLog("⚠️ No se detectó automáticamente. Ingresa la IP que muestra la app de tu teléfono.");
+            }
+        }
+
+        // Focus handling
         window.addEventListener('focus', () => {
             focusBanner.className = 'focus-banner focused';
             focusIcon.innerText = '🟢';
-            focusText.innerText = 'Capturando Teclas: Escribe directamente con tu teclado físico';
+            focusText.innerText = 'Capturando Teclas Físicas';
             liveInput.focus();
         });
 
         window.addEventListener('blur', () => {
             focusBanner.className = 'focus-banner unfocused';
             focusIcon.innerText = '⚠️';
-            focusText.innerText = 'Ventana sin foco: Haz clic aquí para continuar enviando teclas al teléfono';
+            focusText.innerText = 'Ventana sin foco: Haz clic aquí para escribir';
         });
 
-        // Full Keyboard Capture Logic
-        function getModifiers(e) {
-            const mods = [];
-            if (e.ctrlKey) mods.push("CTRL");
-            if (e.shiftKey) mods.push("SHIFT");
-            if (e.altKey) mods.push("ALT");
-            if (e.metaKey) mods.push("META");
-            return mods;
-        }
+        const PROFILES = {
+            default: {},
+            vscode: {
+                'CTRL+SHIFT+KeyP': { type: 'raw', key: 'p', code: 'KeyP', mods: ['CTRL', 'SHIFT'] },
+                'CTRL+Backquote': { type: 'raw', key: '`', code: 'Backquote', mods: ['CTRL'] },
+                'ALT+ArrowUp': { type: 'raw', key: 'ArrowUp', code: 'ArrowUp', mods: ['ALT'] },
+                'ALT+ArrowDown': { type: 'raw', key: 'ArrowDown', code: 'ArrowDown', mods: ['ALT'] }
+            },
+            intellij: {
+                'CTRL+SHIFT+KeyA': { type: 'raw', key: 'a', code: 'KeyA', mods: ['CTRL', 'SHIFT'] },
+                'ALT+Enter': { type: 'raw', key: 'Enter', code: 'Enter', mods: ['ALT'] },
+                'CTRL+KeyD': { type: 'raw', key: 'd', code: 'KeyD', mods: ['CTRL'] }
+            },
+            termux: {},
+            acode: {}
+        };
 
-        function handleKeyEvent(e, action) {
-            // Log local UI
-            const time = new Date().getTime();
-            const logAction = action.toUpperCase();
-            const displayKey = e.key.toUpperCase();
-            
-            appendLog(`[${time}] KEY_${logAction} ${displayKey}`);
-            appendLog(`[${time}] SEND ${displayKey} ${action === 'keyup' ? 'UP' : ''}`.trim());
-
+        function sendRawKey(action, key, code, modifiers) {
+            triggerPulse();
             const payload = {
                 type: 'key_event',
                 action: action,
-                key: e.key,
-                code: e.code,
-                modifiers: getModifiers(e),
-                timestamp: time
+                key: key,
+                code: code,
+                modifiers: modifiers,
+                timestamp: Date.now()
             };
-
-            sendPayload(payload);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(payload));
+                // Solo loguear keydown para no spamear el log
+                if (action === 'keydown') appendLog(`⌨️ ${code}${modifiers.length ? ' ['+modifiers.join('+')+']' : ''}`);
+            } else {
+                const host = getBaseHost();
+                fetch(`http://${host}/api/key_event`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(() => {});
+            }
         }
 
-        liveInput.addEventListener('keydown', (e) => {
-            e.preventDefault(); // Stop default browser behaviors
-            handleKeyEvent(e, 'keydown');
-        });
+        // =========================================================
+        // FASE 1 — Fix: handleKey unificado — SIEMPRE sendRawKey
+        // para teclas especiales (preserva keyup + metaState completo)
+        // =========================================================
 
-        liveInput.addEventListener('keyup', (e) => {
+        // Teclas que son "especiales" y necesitan pasar por sendRawKey
+        // El 'code' del evento ya tiene el valor correcto (ShiftLeft, etc.)
+        const SPECIAL_CODES = new Set([
+            'Backspace', 'Delete', 'Insert', 'Enter', 'NumpadEnter',
+            'Tab', 'Space', 'Escape',
+            'Home', 'End', 'PageUp', 'PageDown',
+            'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+            'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+            'PrintScreen', 'ScrollLock', 'Pause', 'CapsLock', 'NumLock',
+            'ContextMenu',
+            'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
+            'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
+            'NumpadAdd', 'NumpadSubtract', 'NumpadMultiply', 'NumpadDivide',
+            'NumpadDecimal', 'NumpadEnter',
+        ]);
+
+        let currentKeyboardMode = localStorage.getItem('rk_keyboard_mode') || 'code';
+
+        function setKeyboardMode(mode) {
+            currentKeyboardMode = mode;
+            localStorage.setItem('rk_keyboard_mode', mode);
+            updateKeyboardModeUI();
+            appendLog(`🔄 Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario (Normal)'}`);
+            try {
+                sendPayload({
+                    type: "set_theme",
+                    theme: mode === 'code' ? 'pro' : 'daily'
+                });
+            } catch (e) {}
+        }
+
+        function updateKeyboardModeUI() {
+            const btnCode = document.getElementById('btn-mode-code');
+            const btnDaily = document.getElementById('btn-mode-daily');
+            if (!btnCode || !btnDaily) return;
+            if (currentKeyboardMode === 'code') {
+                btnCode.style.background = '#6366f1';
+                btnCode.style.color = '#fff';
+                btnDaily.style.background = 'transparent';
+                btnDaily.style.color = '#a6adc8';
+            } else {
+                btnDaily.style.background = '#10b981';
+                btnDaily.style.color = '#fff';
+                btnCode.style.background = 'transparent';
+                btnCode.style.color = '#a6adc8';
+            }
+        }
+        updateKeyboardModeUI();
+
+        function handleKey(e) {
             e.preventDefault();
-            handleKeyEvent(e, 'keyup');
+            
+            const key   = e.key;
+            const code  = e.code;
+            const action = e.type === 'keyup' ? 'keyup' : 'keydown';
+            
+            let mods = [];
+            if (e.ctrlKey)  mods.push('CTRL');
+            if (e.shiftKey) mods.push('SHIFT');
+            if (e.altKey)   mods.push('ALT');
+            if (e.metaKey)  mods.push('META');
+            
+            // ⚡ MODO CÓDIGO (Programador / Turbo)
+            // Transmisión directa y pura de todos los eventos down/up de hardware
+            // Soporta combinaciones completas (Ctrl, Alt, Shift, Meta, F1-F12, Esc, Tab, etc.)
+            if (currentKeyboardMode === 'code') {
+                sendRawKey(action, key, code, mods);
+                return;
+            }
+            
+            // 📝 MODO DIARIO (Normal)
+            // A — Modificadores (Ctrl/Alt/Meta) → sendRawKey (Ctrl+A, Ctrl+C, Ctrl+V, etc.)
+            if (e.ctrlKey || e.altKey || e.metaKey) {
+                sendRawKey(action, key, code, mods);
+                return;
+            }
+            
+            // B — Teclas especiales → sendRawKey (Backspace, Delete, Enter, Tab, flechas)
+            if (SPECIAL_CODES.has(code)) {
+                sendRawKey(action, key, code, mods);
+                return;
+            }
+            
+            // C — Carácter imprimible → sendText solo en keydown (commitText nativo con acentos)
+            if (key.length === 1 && action === 'keydown') {
+                sendText(key);
+                return;
+            }
+            
+            // D — Cualquier otra tecla
+            if (action === 'keydown') {
+                sendRawKey(action, key, code, mods);
+            }
+        }
+
+        liveInput.addEventListener('keydown', handleKey);
+        liveInput.addEventListener('keyup', handleKey);
+
+        ipcRenderer.on('simulate-keystroke', (event, keyData) => {
+            const mockEvent = {
+                preventDefault: () => {},
+                type: keyData.type || 'keydown',
+                key: keyData.key,
+                code: keyData.code,
+                ctrlKey: keyData.ctrlKey || false,
+                altKey: keyData.altKey || false,
+                shiftKey: keyData.shiftKey || false,
+                metaKey: keyData.metaKey || false
+            };
+            handleKey(mockEvent);
         });
 
-        // --- Párrafo Largo ---
+        // =========================================================
+        // FASE 2 — Panel de Shortcuts (dinámico desde shortcuts.js)
+        // =========================================================
+        const SHORTCUTS_CATALOG = require('./shortcuts.js');
+        let activeShortcutTab = SHORTCUTS_CATALOG[0].id;
+        let shortcutsPanelOpen = true;
+
+        function toggleShortcutsPanel() {
+            shortcutsPanelOpen = !shortcutsPanelOpen;
+            const body = document.getElementById('sp-body');
+            const toggle = document.getElementById('sp-toggle');
+            body.style.display = shortcutsPanelOpen ? '' : 'none';
+            toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
+        }
+
+        function renderShortcutsPanel() {
+            const tabsEl = document.getElementById('sp-tabs');
+            const gridEl = document.getElementById('sp-grid');
+
+            // Render tabs
+            tabsEl.innerHTML = '';
+            SHORTCUTS_CATALOG.forEach(cat => {
+                const tab = document.createElement('button');
+                tab.className = 'sp-tab' + (cat.id === activeShortcutTab ? ' active' : '');
+                tab.textContent = cat.label;
+                tab.onclick = () => {
+                    activeShortcutTab = cat.id;
+                    renderShortcutsPanel();
+                };
+                tabsEl.appendChild(tab);
+            });
+
+            // Render grid for active tab
+            gridEl.innerHTML = '';
+            const activeCat = SHORTCUTS_CATALOG.find(c => c.id === activeShortcutTab);
+            if (!activeCat) return;
+
+            activeCat.shortcuts.forEach(sc => {
+                const btn = document.createElement('button');
+                btn.className = 'sp-btn';
+                btn.innerHTML = `${sc.label}<span class="sp-combo">${sc.combo}</span>`;
+                btn.title = `Enviar: ${sc.combo}`;
+                btn.onclick = () => sendShortcut(sc);
+                gridEl.appendChild(btn);
+            });
+        }
+
+        function sendShortcut(sc) {
+            if (sc.type === 'key') {
+                sendKey(sc.key);
+            } else if (sc.type === 'key_event') {
+                // Simular keydown + keyup
+                sendRawKey('keydown', sc.code, sc.code, sc.mods || []);
+                setTimeout(() => sendRawKey('keyup', sc.code, sc.code, sc.mods || []), 50);
+            } else if (sc.type === 'text') {
+                sendText(sc.text);
+            }
+            appendLog(`🖱️ Shortcut: ${sc.combo}`);
+            liveInput.focus();
+        }
+
+        // Inicializar panel
+        renderShortcutsPanel();
+
+
+
+
+
+        // --- Párrafo Largo y Dictado por Voz ---
+        let recognition = null;
+        let isDictating = false;
+        const btnDictate = document.getElementById('btn-dictate');
+
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'es-ES';
+
+            recognition.onstart = () => {
+                isDictating = true;
+                btnDictate.style.background = '#fecaca'; // Rojo clarito
+                btnDictate.style.color = '#ef4444';
+                btnDictate.innerText = '🔴 Escuchando...';
+                appendLog('🎤 Dictado iniciado');
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    if (paragraphInput.value && !paragraphInput.value.endsWith(' ')) {
+                        paragraphInput.value += ' ';
+                    }
+                    paragraphInput.value += finalTranscript;
+                }
+            };
+
+            recognition.onerror = (e) => {
+                appendLog('⚠️ Error de dictado: ' + e.error);
+                stopDictation();
+            };
+
+            recognition.onend = () => {
+                stopDictation();
+            };
+        }
+
+        function toggleDictation() {
+            if (!recognition) {
+                alert("Tu sistema no soporta el reconocimiento de voz nativo.");
+                return;
+            }
+            if (isDictating) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function stopDictation() {
+            isDictating = false;
+            btnDictate.style.background = '#ffffff';
+            btnDictate.style.color = 'var(--text-main)';
+            btnDictate.innerText = '🎤 Dictar';
+        }
         function sendParagraph() {
             const text = paragraphInput.value;
             if (!text.trim()) return;
             sendText(text);
             paragraphInput.value = '';
             liveInput.focus();
-        }
-
-        function clearParagraph() {
-            paragraphInput.value = '';
         }
 
         paragraphInput.addEventListener('keydown', (e) => {
@@ -703,8 +1038,88 @@
             }
         });
 
-        // Iniciar
-        initWebSocket();
+        let udpServer = null;
+        function startUdpDiscovery() {
+            try {
+                udpServer = dgram.createSocket('udp4');
+                udpServer.on('error', (err) => {
+                    appendLog(`⚠️ Error UDP: ${err.message}`);
+                    udpServer.close();
+                });
+                udpServer.on('message', (msg, rinfo) => {
+                    try {
+                        const data = JSON.parse(msg.toString());
+                        if (data.app === 'remote-keyboard') {
+                            const newIp = `${rinfo.address}:${data.port}`;
+                            if (phoneIpInput.value !== newIp && (!ws || ws.readyState !== WebSocket.OPEN)) {
+                                appendLog(`📡 Auto-conectando a: ${data.device} en ${newIp}`);
+                                phoneIpInput.value = newIp;
+                                connectPhone();
+                            }
+                        }
+                    } catch (e) {}
+                });
+                udpServer.bind(9998, () => {
+                    appendLog('🎧 Escuchando auto-descubrimiento en puerto 9998');
+                });
+            } catch (e) {
+                appendLog(`⚠️ No se pudo iniciar UDP: ${e.message}`);
+            }
+        }
+        startUdpDiscovery();
+
+        setTimeout(connectPhone, 500);
+
+        // =========================================================
+        // PORTAPAPELES MÁGICO: Polling y Envío (PC -> Móvil)
+        // =========================================================
+        const { clipboard, nativeImage } = require('electron');
+        window._lastClipboardText = clipboard.readText() || '';
+        
+        window._getImageHash = function(nativeImg) {
+            if (!nativeImg || nativeImg.isEmpty()) return '';
+            const size = nativeImg.getSize();
+            try {
+                const bmp = nativeImg.getBitmap();
+                const len = bmp.length;
+                if (len === 0) return '';
+                // Hash ligero con algunos bytes
+                const s = bmp[0] + ',' + bmp[Math.floor(len/2)] + ',' + bmp[len-1];
+                return `${size.width}x${size.height}_${len}_${s}`;
+            } catch(e) {
+                return `${size.width}x${size.height}`;
+            }
+        };
+
+        window._lastClipboardImageHash = '';
+        try { window._lastClipboardImageHash = window._getImageHash(clipboard.readImage()); } catch(e) {}
+
+        setInterval(() => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            try {
+                // 1. Text Sync
+                const currentText = clipboard.readText();
+                if (currentText && currentText !== window._lastClipboardText) {
+                    window._lastClipboardText = currentText;
+                    appendLog('📋 Sincronizando texto copiado...');
+                    sendPayload({ type: 'clipboard_sync', contentType: 'text', content: currentText });
+                }
+
+                // 2. Image Sync (solo si hay imágenes disponibles para no sobrecargar)
+                const formats = clipboard.availableFormats();
+                if (formats.some(f => f.includes('image/'))) {
+                    const currentImg = clipboard.readImage();
+                    const currentHash = window._getImageHash(currentImg);
+                    if (currentHash && currentHash !== window._lastClipboardImageHash) {
+                        window._lastClipboardImageHash = currentHash;
+                        appendLog('📸 Sincronizando imagen copiada...');
+                        sendPayload({ type: 'clipboard_sync', contentType: 'image', content: currentImg.toDataURL() });
+                    }
+                }
+            } catch(e) {}
+        }, 500);
+
     </script>
 </body>
 </html>
