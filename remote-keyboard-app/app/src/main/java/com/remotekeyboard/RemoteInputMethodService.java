@@ -64,6 +64,8 @@ public class RemoteInputMethodService extends InputMethodService {
     private Button pastePillButton;
     private int currentThemeIndex = 0;
     private boolean isVisualKeyboardVisible = true;
+    private boolean isShifted = false;
+    private boolean isSymbols = false;
     private java.util.HashMap<String, Button> keyButtons = new java.util.HashMap<>();
     private String pcClipboardText = "";
 
@@ -381,36 +383,90 @@ public class RemoteInputMethodService extends InputMethodService {
     private void buildVisualKeyboard() {
         visualKeyboardContainer.removeAllViews();
         keyButtons.clear();
-        String[] rows = {"QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"};
-        for (String rowStr : rows) {
+        
+        String[] rows;
+        if (isSymbols) {
+            rows = new String[]{
+                "1234567890",
+                "!@#$%^&*()",
+                "~_-+\\|/<>",
+                "=`:;\"'.,?"
+            };
+        } else {
+            rows = new String[]{
+                "1234567890",
+                isShifted ? "QWERTYUIOP" : "qwertyuiop",
+                isShifted ? "ASDFGHJKL" : "asdfghjkl",
+                isShifted ? "ZXCVBNM" : "zxcvbnm"
+            };
+        }
+
+        for (int r = 0; r < rows.length; r++) {
+            String rowStr = rows[r];
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER);
+            
+            // Add SHIFT to the beginning of the 4th row (index 3)
+            if (r == 3) {
+                Button btnShift = new Button(this);
+                btnShift.setText("⇧");
+                btnShift.setPadding(0, 0, 0, 0);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 110, 1.5f);
+                lp.setMargins(2, 2, 2, 2);
+                btnShift.setLayoutParams(lp);
+                btnShift.setOnClickListener(v -> {
+                    isShifted = !isShifted;
+                    buildVisualKeyboard();
+                    applyTheme(mainLayout);
+                });
+                row.addView(btnShift);
+            }
+
             for (int i = 0; i < rowStr.length(); i++) {
                 String key = String.valueOf(rowStr.charAt(i));
                 Button btn = new Button(this);
                 btn.setText(key);
                 btn.setPadding(0, 0, 0, 0);
+                // Adjust text size for lowercase
+                if (!isShifted && !isSymbols && r > 0) btn.setTextSize(12);
+                
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 110, 1.0f);
                 lp.setMargins(2, 2, 2, 2);
                 btn.setLayoutParams(lp);
                 btn.setOnClickListener(v -> typeText(key));
-                keyButtons.put(key, btn);
+                keyButtons.put(key.toUpperCase(), btn);
                 row.addView(btn);
             }
+            
+            // Add BACKSPACE to the end of the 4th row (index 3)
+            if (r == 3) {
+                Button btnBs = new Button(this);
+                btnBs.setText("⌫");
+                btnBs.setPadding(0, 0, 0, 0);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 110, 1.5f);
+                lp.setMargins(2, 2, 2, 2);
+                btnBs.setLayoutParams(lp);
+                btnBs.setOnClickListener(v -> sendSpecialKey("BACKSPACE"));
+                keyButtons.put("BACKSPACE", btnBs);
+                row.addView(btnBs);
+            }
+            
             visualKeyboardContainer.addView(row);
         }
+
+        // Bottom Row
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER);
         
-        String[] bottomKeys = {"CTRL", "META", "ALT", "SPACE", "FN", "MENU"};
-        float[] weights = {1.2f, 1.0f, 1.0f, 4.0f, 1.0f, 1.2f};
+        String[] bottomKeys = {"?123", "CTRL", "SPACE", "ENTER"};
+        float[] weights = {1.5f, 1.0f, 4.0f, 1.5f};
         
         for (int i = 0; i < bottomKeys.length; i++) {
             String key = bottomKeys[i];
             Button btn = new Button(this);
-            btn.setText(key.equals("META") ? "WIN" : (key.equals("MENU") ? "CTX" : key));
+            btn.setText(isSymbols && key.equals("?123") ? "ABC" : key);
             btn.setPadding(0, 0, 0, 0);
             btn.setTextSize(10);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 110, weights[i]);
@@ -420,6 +476,10 @@ public class RemoteInputMethodService extends InputMethodService {
             btn.setOnClickListener(v -> {
                 if (key.equals("SPACE")) {
                     typeText(" ");
+                } else if (key.equals("?123")) {
+                    isSymbols = !isSymbols;
+                    buildVisualKeyboard();
+                    applyTheme(mainLayout);
                 } else {
                     sendSpecialKey(key);
                 }
@@ -939,17 +999,19 @@ public class RemoteInputMethodService extends InputMethodService {
 
                 // 3. Atajos universales con CTRL (Garantía híbrida: acción nativa + KeyEvent físico)
                 if ((metaState & KeyEvent.META_CTRL_ON) != 0 && androidAction == KeyEvent.ACTION_DOWN) {
+                    boolean handled = false;
                     if (keyCode == KeyEvent.KEYCODE_A) {
-                        ic.performContextMenuAction(android.R.id.selectAll);
+                        handled = ic.performContextMenuAction(android.R.id.selectAll);
                     } else if (keyCode == KeyEvent.KEYCODE_C) {
-                        ic.performContextMenuAction(android.R.id.copy);
+                        handled = ic.performContextMenuAction(android.R.id.copy);
                     } else if (keyCode == KeyEvent.KEYCODE_V) {
-                        ic.performContextMenuAction(android.R.id.paste);
+                        handled = ic.performContextMenuAction(android.R.id.paste);
                     } else if (keyCode == KeyEvent.KEYCODE_X) {
-                        ic.performContextMenuAction(android.R.id.cut);
+                        handled = ic.performContextMenuAction(android.R.id.cut);
                     } else if (keyCode == KeyEvent.KEYCODE_Z) {
-                        ic.performContextMenuAction(android.R.id.undo);
+                        handled = ic.performContextMenuAction(android.R.id.undo);
                     }
+                    if (handled) return;
                 }
 
                 // 4. Despacho de KeyEvent físico limpio (sin FLAG_SOFT_KEYBOARD para Termux, Acode y editores)
