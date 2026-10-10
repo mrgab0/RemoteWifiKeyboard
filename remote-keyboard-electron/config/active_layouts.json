@@ -1,15 +1,8 @@
 {
-    "codigo_pro_mode":  [
-                            "shift.json",
-                            "fn.json",
-                            "substitutions.json"
-                        ],
-    "diario_mode":  [
-                        "accent_aigu.json",
-                        "accent_grave.json",
-                        "accent_circonflexe.json",
-                        "accent_tilde.json",
-                        "accent_trema.json",
-                        "accent_cedille.json"
-                    ]
+    "codigo_pro_mode": [
+        "codigo.json"
+    ],
+    "diario_mode": [
+        "diario.json"
+    ]
 }

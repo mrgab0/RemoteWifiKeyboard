@@ -1,0 +1,7 @@
+{
+  "macros": {
+    "fn.log": "console.log();\u001B[D\u001B[D",
+    "fn.for": "for (let i = 0; i < n; i++) {\n\n}\u001B[A",
+    "fn.tag": "<></>\u001B[D\u001B[D\u001B[D"
+  }
+}
