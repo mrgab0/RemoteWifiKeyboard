@@ -678,8 +678,8 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
     private void performHapticFeedbackAsync() {
-        if (prefs == null || !prefs.getBoolean(KEY_VIBRATION, false)) {
-            return; // Vibración desactivada por defecto para máxima velocidad
+        if (prefs == null || !prefs.getBoolean(KEY_VIBRATION, true)) {
+            return; // Vibración encendida por defecto
         }
         asyncExecutor.execute(new Runnable() {
             @Override

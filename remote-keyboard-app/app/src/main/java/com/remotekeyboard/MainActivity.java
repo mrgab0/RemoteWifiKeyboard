@@ -112,7 +112,7 @@ public class MainActivity extends Activity {
         btnBuyPro = findViewById(R.id.btnBuyPro);
 
         // Configuración de Switch de Vibración
-        boolean vibEnabled = prefs.getBoolean(KEY_VIBRATION, false);
+        boolean vibEnabled = prefs.getBoolean(KEY_VIBRATION, true);
         switchVibration.setChecked(vibEnabled);
         switchVibration.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
