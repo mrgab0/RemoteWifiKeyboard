@@ -374,7 +374,7 @@ public class RemoteInputMethodService extends InputMethodService {
         
         applyTheme(layout);
 
-        return layout;
+        return rootFrame;
     }
 
 

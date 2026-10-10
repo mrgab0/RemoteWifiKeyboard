@@ -13,6 +13,47 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RemoteWebServer extends NanoHTTPD {
+    private java.util.Timer logcatTimer;
+    private final java.util.List<WebSocketSession> activeSessions = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public void startLogcatStreamer() {
+        if (logcatTimer != null) return;
+        logcatTimer = new java.util.Timer();
+        logcatTimer.scheduleAtFixedRate(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                if (activeSessions.isEmpty()) return;
+                try {
+                    Process process = Runtime.getRuntime().exec("logcat -d -v time -t 500");
+                    java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+                    StringBuilder log = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.append(line).append("\n");
+                    }
+                    if (log.length() > 0) {
+                        JSONObject json = new JSONObject();
+                        json.put("type", "logcat");
+                        json.put("logs", log.toString());
+                        String jsonLog = json.toString();
+                        for (WebSocketSession session : activeSessions) {
+                            try { session.sendText(jsonLog); } catch(Exception e) {}
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error reading logcat", e);
+                }
+            }
+        }, 5000, 50000); // 50 seconds interval
+    }
+
+    public void stopLogcatStreamer() {
+        if (logcatTimer != null) {
+            logcatTimer.cancel();
+            logcatTimer = null;
+        }
+    }
+
 
     private static final String TAG = "RemoteWebServer";
     private final Context context;
@@ -22,6 +63,7 @@ public class RemoteWebServer extends NanoHTTPD {
     public RemoteWebServer(Context context, int port) {
         super(port);
         this.context = context.getApplicationContext();
+        startLogcatStreamer();
     }
 
     public long getTotalPacketsReceived() {
@@ -34,11 +76,13 @@ public class RemoteWebServer extends NanoHTTPD {
 
     @Override
     public void onWebSocketOpen(WebSocketSession session) {
+        activeSessions.add(session);
         Log.d(TAG, "🟢 WebSocket Conectado desde PC. Total clientes activos: " + getActiveWebSocketCount());
     }
 
     @Override
     public void onWebSocketClose(WebSocketSession session) {
+        activeSessions.remove(session);
         Log.d(TAG, "🔴 WebSocket Desconectado. Clientes restantes: " + getActiveWebSocketCount());
     }
 
