@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private static final String KEY_IS_PRO = "is_pro_user";
     private static final String KEY_VIBRATION = "vibration_enabled";
     private static final String KEY_VIBRATION_INTENSITY = "vibration_intensity";
+    private static final String KEY_VIBRATION_DURATION = "vibration_duration";
 
     private TextView tvStatus;
     private TextView tvUrl;
@@ -56,6 +57,8 @@ public class MainActivity extends Activity {
     private Switch switchVibration;
     private SeekBar seekBarVibration;
     private TextView tvVibIntensity;
+    private SeekBar seekBarVibrationDuration;
+    private TextView tvVibDuration;
 
     private LinearLayout layoutProUpgrade;
     private LinearLayout adContainer;
@@ -113,6 +116,8 @@ public class MainActivity extends Activity {
         switchVibration = findViewById(R.id.switchVibration);
         seekBarVibration = findViewById(R.id.seekBarVibration);
         tvVibIntensity = findViewById(R.id.tvVibIntensity);
+        seekBarVibrationDuration = findViewById(R.id.seekBarVibrationDuration);
+        tvVibDuration = findViewById(R.id.tvVibDuration);
 
         layoutProUpgrade = findViewById(R.id.layoutProUpgrade);
         adContainer = findViewById(R.id.adContainer);
@@ -138,6 +143,10 @@ public class MainActivity extends Activity {
         seekBarVibration.setProgress(currentIntensity);
         tvVibIntensity.setText("Intensidad: " + currentIntensity + "%");
         
+        int currentDuration = prefs.getInt(KEY_VIBRATION_DURATION, 50);
+        seekBarVibrationDuration.setProgress(currentDuration);
+        tvVibDuration.setText("Duración: " + currentDuration + "%");
+
         seekBarVibration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -151,20 +160,26 @@ public class MainActivity extends Activity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress = seekBar.getProgress();
                 prefs.edit().putInt(KEY_VIBRATION_INTENSITY, progress).apply();
-                
-                android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                if (vibrator != null && vibrator.hasVibrator() && progress > 0) {
-                    int duration = 10 + (int) (50 * (progress / 100.0f));
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        int amplitude = 1 + (int) (254 * (progress / 100.0f));
-                        vibrator.vibrate(android.os.VibrationEffect.createOneShot(duration, amplitude));
-                    } else {
-                        vibrator.vibrate(duration);
-                    }
-                }
+                testVibration();
             }
         });
 
+        seekBarVibrationDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvVibDuration.setText("Duración: " + progress + "%");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress = seekBar.getProgress();
+                prefs.edit().putInt(KEY_VIBRATION_DURATION, progress).apply();
+                testVibration();
+            }
+        });
         btnCopyUrl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -262,6 +277,22 @@ public class MainActivity extends Activity {
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    private void testVibration() {
+        int intensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
+        int durationPercent = prefs.getInt(KEY_VIBRATION_DURATION, 50);
+        
+        android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator() && intensity > 0) {
+            int duration = 5 + (int) (145 * (durationPercent / 100.0f)); // 5ms to 150ms
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                int amplitude = 1 + (int) (254 * (intensity / 100.0f));
+                vibrator.vibrate(android.os.VibrationEffect.createOneShot(duration, amplitude));
+            } else {
+                vibrator.vibrate(duration);
+            }
+        }
     }
 
     private boolean isImeEnabled() {

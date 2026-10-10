@@ -39,6 +39,7 @@ public class RemoteInputMethodService extends InputMethodService {
     private static final String PREFS_NAME = "RemoteKeyboardPrefs";
     private static final String KEY_VIBRATION = "vibration_enabled";
     private static final String KEY_VIBRATION_INTENSITY = "vibration_intensity";
+    private static final String KEY_VIBRATION_DURATION = "vibration_duration";
 
     private static RemoteInputMethodService instance;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -683,6 +684,7 @@ public class RemoteInputMethodService extends InputMethodService {
             return; // Vibración encendida por defecto
         }
         final int intensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
+        final int durationPercent = prefs.getInt(KEY_VIBRATION_DURATION, 50);
         if (intensity <= 0) return;
 
         asyncExecutor.execute(new Runnable() {
@@ -690,7 +692,7 @@ public class RemoteInputMethodService extends InputMethodService {
             public void run() {
                 try {
                     if (vibrator != null && vibrator.hasVibrator()) {
-                        int duration = 10 + (int) (50 * (intensity / 100.0f));
+                        int duration = 5 + (int) (145 * (durationPercent / 100.0f));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             int amplitude = 1 + (int) (254 * (intensity / 100.0f));
                             vibrator.vibrate(VibrationEffect.createOneShot(duration, amplitude));

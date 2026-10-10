@@ -236,12 +236,11 @@
 
                 <TextView
                     android:id="@+id/tvVibIntensity"
-                    android:layout_width="wrap_content"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:text="Intensidad: 100%"
                     android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="12dp" />
+                    android:textSize="11sp" />
 
                 <SeekBar
                     android:id="@+id/seekBarVibration"
@@ -250,6 +249,31 @@
                     android:layout_height="wrap_content"
                     android:max="100"
                     android:progress="100" />
+            </LinearLayout>
+
+            <!-- NUEVO: Slider de Duración -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/tvVibDuration"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Duración: 50%"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+                <SeekBar
+                    android:id="@+id/seekBarVibrationDuration"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:progress="50" />
             </LinearLayout>
         </LinearLayout>
 
