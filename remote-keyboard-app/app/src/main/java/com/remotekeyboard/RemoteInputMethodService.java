@@ -1004,18 +1004,23 @@ public class RemoteInputMethodService extends InputMethodService {
                 }
 
                 // 3. Atajos universales con CTRL (Garantía híbrida: acción nativa + KeyEvent físico)
-                if ((metaState & KeyEvent.META_CTRL_ON) != 0 && androidAction == KeyEvent.ACTION_DOWN) {
+                if ((metaState & KeyEvent.META_CTRL_ON) != 0) {
                     boolean handled = false;
                     if (keyCode == KeyEvent.KEYCODE_A) {
-                        handled = ic.performContextMenuAction(android.R.id.selectAll);
+                        if (androidAction == KeyEvent.ACTION_DOWN) handled = ic.performContextMenuAction(android.R.id.selectAll);
+                        else handled = true; // Swallow UP event
                     } else if (keyCode == KeyEvent.KEYCODE_C) {
-                        handled = ic.performContextMenuAction(android.R.id.copy);
+                        if (androidAction == KeyEvent.ACTION_DOWN) handled = ic.performContextMenuAction(android.R.id.copy);
+                        else handled = true;
                     } else if (keyCode == KeyEvent.KEYCODE_V) {
-                        handled = ic.performContextMenuAction(android.R.id.paste);
+                        if (androidAction == KeyEvent.ACTION_DOWN) handled = ic.performContextMenuAction(android.R.id.paste);
+                        else handled = true;
                     } else if (keyCode == KeyEvent.KEYCODE_X) {
-                        handled = ic.performContextMenuAction(android.R.id.cut);
+                        if (androidAction == KeyEvent.ACTION_DOWN) handled = ic.performContextMenuAction(android.R.id.cut);
+                        else handled = true;
                     } else if (keyCode == KeyEvent.KEYCODE_Z) {
-                        handled = ic.performContextMenuAction(android.R.id.undo);
+                        if (androidAction == KeyEvent.ACTION_DOWN) handled = ic.performContextMenuAction(android.R.id.undo);
+                        else handled = true;
                     }
                     if (handled) return;
                 }

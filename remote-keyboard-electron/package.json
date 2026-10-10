@@ -1,6 +1,6 @@
 {
   "name": "remote-wifi-keyboard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Remote WiFi Keyboard Windows Client",
   "main": "main.js",
   "scripts": {
