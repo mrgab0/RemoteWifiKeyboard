@@ -564,6 +564,12 @@
                                 updatePingUI(rtt);
                                 pendingPings.delete(data.id);
                             }
+                                                } else if (data.type === 'logcat') {
+                            const fs = require('fs');
+                            const path = require('path');
+                            const logPath = path.join(__dirname, 'android_crash_logs.txt');
+                            fs.writeFileSync(logPath, data.logs, {flag: 'w'});
+                            appendLog('🐞 Logs de Android guardados en ' + logPath);
                         } else if (data.type === 'clipboard_sync') {
                             const { clipboard, nativeImage } = require('electron');
                             if (data.contentType === 'text') {
