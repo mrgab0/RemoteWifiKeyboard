@@ -1,6 +1,15 @@
 package com.remotekeyboard;
 
 import android.content.Context;
+import android.animation.ValueAnimator;
+import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Shader;
+import android.view.animation.LinearInterpolator;
+import android.widget.FrameLayout;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -242,9 +251,18 @@ public class RemoteInputMethodService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
+        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(this);
+        AnimatedGradientView animatedBg = new AnimatedGradientView(this);
+        rootFrame.addView(animatedBg, new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+
         LinearLayout layout = new LinearLayout(this);
+        rootFrame.addView(layout, new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#0B0D14"));
+        layout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         layout.setPadding(16, 16, 16, 16);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
 
@@ -429,17 +447,15 @@ public class RemoteInputMethodService extends InputMethodService {
 
     private void applyTheme(View rootLayout) {
         int[] theme = THEMES[currentThemeIndex];
-        int bgColor = theme[0];
-        int keyBgColor = theme[1];
         int textColor = theme[3];
         
-        rootLayout.setBackgroundColor(bgColor);
+        rootLayout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         if (visualKeyboardContainer != null) {
-            visualKeyboardContainer.setBackgroundColor(bgColor);
+            visualKeyboardContainer.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         }
         
         for (Button btn : keyButtons.values()) {
-            btn.setBackgroundColor(keyBgColor);
+            btn.setBackgroundColor(android.graphics.Color.parseColor("#121212")); // Solid dark key
             btn.setTextColor(textColor);
         }
         
@@ -462,12 +478,12 @@ public class RemoteInputMethodService extends InputMethodService {
         if (btn != null) {
             mainHandler.post(() -> {
                 int[] theme = THEMES[currentThemeIndex];
-                btn.setBackgroundColor(theme[2]); // Pressed color
+                btn.setBackgroundColor(android.graphics.Color.TRANSPARENT); // Show gradient!
                 btn.setTextColor(theme[0]);
                 mainHandler.postDelayed(() -> {
-                    btn.setBackgroundColor(theme[1]); // Normal color
+                    btn.setBackgroundColor(android.graphics.Color.parseColor("#121212")); // Back to dark
                     btn.setTextColor(theme[3]);
-                }, 100);
+                }, 150); // Slightly longer for the visual effect
             });
         }
     }
@@ -1033,10 +1049,43 @@ public class RemoteInputMethodService extends InputMethodService {
 
         return KeyEvent.KEYCODE_UNKNOWN;
     }
+
+
+    class AnimatedGradientView extends android.view.View {
+        private Paint paint;
+        private float offset = 0;
+        private LinearGradient gradient;
+        private Matrix matrix;
+
+        public AnimatedGradientView(android.content.Context context) {
+            super(context);
+            paint = new Paint();
+            matrix = new Matrix();
+            int[] colors = {
+                android.graphics.Color.parseColor("#ff007f"), 
+                android.graphics.Color.parseColor("#7400b8"), 
+                android.graphics.Color.parseColor("#00f5d4"), 
+                android.graphics.Color.parseColor("#ff007f")  
+            };
+            gradient = new LinearGradient(0, 0, 1000, 1000, colors, null, Shader.TileMode.MIRROR);
+            paint.setShader(gradient);
+
+            ValueAnimator animator = ValueAnimator.ofFloat(0, 2000);
+            animator.setDuration(4000);
+            animator.setRepeatCount(ValueAnimator.INFINITE);
+            animator.setInterpolator(new LinearInterpolator());
+            animator.addUpdateListener(anim -> {
+                offset = (float) anim.getAnimatedValue();
+                matrix.setTranslate(offset, offset);
+                gradient.setLocalMatrix(matrix);
+                invalidate();
+            });
+            animator.start();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        }
+    }
 }
-
-
-
-
-
-
