@@ -251,18 +251,9 @@ public class RemoteInputMethodService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(this);
-        AnimatedGradientView animatedBg = new AnimatedGradientView(this);
-        rootFrame.addView(animatedBg, new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-
         LinearLayout layout = new LinearLayout(this);
-        rootFrame.addView(layout, new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        layout.setBackground(new AnimatedGradientDrawable());
         layout.setPadding(16, 16, 16, 16);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
 
@@ -374,7 +365,7 @@ public class RemoteInputMethodService extends InputMethodService {
         
         applyTheme(layout);
 
-        return rootFrame;
+        return layout;
     }
 
 
@@ -1051,41 +1042,49 @@ public class RemoteInputMethodService extends InputMethodService {
     }
 
 
-    class AnimatedGradientView extends android.view.View {
-        private Paint paint;
+    class AnimatedGradientDrawable extends android.graphics.drawable.Drawable {
+        private android.graphics.Paint paint;
         private float offset = 0;
-        private LinearGradient gradient;
-        private Matrix matrix;
+        private android.graphics.LinearGradient gradient;
+        private android.graphics.Matrix matrix;
 
-        public AnimatedGradientView(android.content.Context context) {
-            super(context);
-            paint = new Paint();
-            matrix = new Matrix();
+        public AnimatedGradientDrawable() {
+            paint = new android.graphics.Paint();
+            matrix = new android.graphics.Matrix();
             int[] colors = {
                 android.graphics.Color.parseColor("#ff007f"), 
                 android.graphics.Color.parseColor("#7400b8"), 
                 android.graphics.Color.parseColor("#00f5d4"), 
                 android.graphics.Color.parseColor("#ff007f")  
             };
-            gradient = new LinearGradient(0, 0, 1000, 1000, colors, null, Shader.TileMode.MIRROR);
+            gradient = new android.graphics.LinearGradient(0, 0, 1000, 1000, colors, null, android.graphics.Shader.TileMode.MIRROR);
             paint.setShader(gradient);
 
-            ValueAnimator animator = ValueAnimator.ofFloat(0, 2000);
+            android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat(0, 2000);
             animator.setDuration(4000);
-            animator.setRepeatCount(ValueAnimator.INFINITE);
-            animator.setInterpolator(new LinearInterpolator());
+            animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            animator.setInterpolator(new android.view.animation.LinearInterpolator());
             animator.addUpdateListener(anim -> {
                 offset = (float) anim.getAnimatedValue();
                 matrix.setTranslate(offset, offset);
                 gradient.setLocalMatrix(matrix);
-                invalidate();
+                invalidateSelf();
             });
             animator.start();
         }
 
         @Override
-        protected void onDraw(Canvas canvas) {
-            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        public void draw(android.graphics.Canvas canvas) {
+            canvas.drawRect(getBounds(), paint);
         }
+
+        @Override
+        public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter colorFilter) { paint.setColorFilter(colorFilter); }
+
+        @Override
+        public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 }
