@@ -1,0 +1,13 @@
+{
+    "active_compose":  [
+                           "accent_aigu.json",
+                           "accent_grave.json",
+                           "accent_circonflexe.json",
+                           "accent_tilde.json",
+                           "accent_trema.json",
+                           "accent_cedille.json",
+                           "shift.json",
+                           "fn.json",
+                           "substitutions.json"
+                       ]
+}
