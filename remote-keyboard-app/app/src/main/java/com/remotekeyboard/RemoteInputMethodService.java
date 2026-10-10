@@ -627,9 +627,9 @@ public class RemoteInputMethodService extends InputMethodService {
                 try {
                     if (vibrator != null && vibrator.hasVibrator()) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE));
+                            vibrator.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE));
                         } else {
-                            vibrator.vibrate(10);
+                            vibrator.vibrate(40);
                         }
                     }
                 } catch (Exception ignored) {}
@@ -875,6 +875,7 @@ public class RemoteInputMethodService extends InputMethodService {
         final int androidAction = "keyup".equalsIgnoreCase(action) ? KeyEvent.ACTION_UP : KeyEvent.ACTION_DOWN;
         if (androidAction == KeyEvent.ACTION_DOWN) {
             pokeWakeLock();
+            performHapticFeedbackAsync();
         }
         final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
         if (androidAction == KeyEvent.ACTION_DOWN) animateKey(key);
