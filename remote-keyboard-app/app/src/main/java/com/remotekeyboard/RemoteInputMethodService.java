@@ -38,6 +38,7 @@ public class RemoteInputMethodService extends InputMethodService {
     private static final String TAG = "RemoteIME";
     private static final String PREFS_NAME = "RemoteKeyboardPrefs";
     private static final String KEY_VIBRATION = "vibration_enabled";
+    private static final String KEY_VIBRATION_INTENSITY = "vibration_intensity";
 
     private static RemoteInputMethodService instance;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -681,15 +682,20 @@ public class RemoteInputMethodService extends InputMethodService {
         if (prefs == null || !prefs.getBoolean(KEY_VIBRATION, true)) {
             return; // Vibración encendida por defecto
         }
+        final int intensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
+        if (intensity <= 0) return;
+
         asyncExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     if (vibrator != null && vibrator.hasVibrator()) {
+                        int duration = 10 + (int) (50 * (intensity / 100.0f));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE));
+                            int amplitude = 1 + (int) (254 * (intensity / 100.0f));
+                            vibrator.vibrate(VibrationEffect.createOneShot(duration, amplitude));
                         } else {
-                            vibrator.vibrate(40);
+                            vibrator.vibrate(duration);
                         }
                     }
                 } catch (Exception ignored) {}

@@ -19,9 +19,11 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.HapticFeedbackConstants;
 
 import com.remotekeyboard.server.RemoteWebServer;
 import com.remotekeyboard.server.RemoteWebServerManager;
@@ -37,6 +39,7 @@ public class MainActivity extends Activity {
     private static final String PREFS_NAME = "RemoteKeyboardPrefs";
     private static final String KEY_IS_PRO = "is_pro_user";
     private static final String KEY_VIBRATION = "vibration_enabled";
+    private static final String KEY_VIBRATION_INTENSITY = "vibration_intensity";
 
     private TextView tvStatus;
     private TextView tvUrl;
@@ -51,6 +54,8 @@ public class MainActivity extends Activity {
     private TextView tvImeStatus;
     private TextView tvKeystrokes;
     private Switch switchVibration;
+    private SeekBar seekBarVibration;
+    private TextView tvVibIntensity;
 
     private LinearLayout layoutProUpgrade;
     private LinearLayout adContainer;
@@ -106,6 +111,8 @@ public class MainActivity extends Activity {
         tvImeStatus = findViewById(R.id.tvImeStatus);
         tvKeystrokes = findViewById(R.id.tvKeystrokes);
         switchVibration = findViewById(R.id.switchVibration);
+        seekBarVibration = findViewById(R.id.seekBarVibration);
+        tvVibIntensity = findViewById(R.id.tvVibIntensity);
 
         layoutProUpgrade = findViewById(R.id.layoutProUpgrade);
         adContainer = findViewById(R.id.adContainer);
@@ -120,8 +127,40 @@ public class MainActivity extends Activity {
                 prefs.edit().putBoolean(KEY_VIBRATION, isChecked).apply();
                 if (isChecked) {
                     Toast.makeText(MainActivity.this, "Vibración activada", Toast.LENGTH_SHORT).show();
+                    buttonView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 } else {
                     Toast.makeText(MainActivity.this, "Vibración desactivada (Máxima velocidad)", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        int currentIntensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
+        seekBarVibration.setProgress(currentIntensity);
+        tvVibIntensity.setText("Intensidad: " + currentIntensity + "%");
+        
+        seekBarVibration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvVibIntensity.setText("Intensidad: " + progress + "%");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress = seekBar.getProgress();
+                prefs.edit().putInt(KEY_VIBRATION_INTENSITY, progress).apply();
+                
+                android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                if (vibrator != null && vibrator.hasVibrator() && progress > 0) {
+                    int duration = 10 + (int) (50 * (progress / 100.0f));
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        int amplitude = 1 + (int) (254 * (progress / 100.0f));
+                        vibrator.vibrate(android.os.VibrationEffect.createOneShot(duration, amplitude));
+                    } else {
+                        vibrator.vibrate(duration);
+                    }
                 }
             }
         });

@@ -226,6 +226,31 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/tvVibIntensity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Intensidad: 100%"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="12dp" />
+
+                <SeekBar
+                    android:id="@+id/seekBarVibration"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:progress="100" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Card 4: Live Testing Area -->
