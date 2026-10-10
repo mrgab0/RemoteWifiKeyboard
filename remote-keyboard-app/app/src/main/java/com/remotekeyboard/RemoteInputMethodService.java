@@ -1,15 +1,6 @@
 package com.remotekeyboard;
 
 import android.content.Context;
-import android.animation.ValueAnimator;
-import android.graphics.Canvas;
-import android.graphics.LinearGradient;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Shader;
-import android.view.animation.LinearInterpolator;
-import android.widget.FrameLayout;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -253,7 +244,7 @@ public class RemoteInputMethodService extends InputMethodService {
     public View onCreateInputView() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackground(new AnimatedGradientDrawable());
+        layout.setBackgroundColor(Color.parseColor("#0B0D14"));
         layout.setPadding(16, 16, 16, 16);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
 
@@ -438,15 +429,17 @@ public class RemoteInputMethodService extends InputMethodService {
 
     private void applyTheme(View rootLayout) {
         int[] theme = THEMES[currentThemeIndex];
+        int bgColor = theme[0];
+        int keyBgColor = theme[1];
         int textColor = theme[3];
         
-        rootLayout.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        rootLayout.setBackgroundColor(bgColor);
         if (visualKeyboardContainer != null) {
-            visualKeyboardContainer.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            visualKeyboardContainer.setBackgroundColor(bgColor);
         }
         
         for (Button btn : keyButtons.values()) {
-            btn.setBackgroundColor(android.graphics.Color.parseColor("#121212")); // Solid dark key
+            btn.setBackgroundColor(keyBgColor);
             btn.setTextColor(textColor);
         }
         
@@ -469,12 +462,12 @@ public class RemoteInputMethodService extends InputMethodService {
         if (btn != null) {
             mainHandler.post(() -> {
                 int[] theme = THEMES[currentThemeIndex];
-                btn.setBackgroundColor(android.graphics.Color.TRANSPARENT); // Show gradient!
+                btn.setBackgroundColor(theme[2]); // Pressed color
                 btn.setTextColor(theme[0]);
                 mainHandler.postDelayed(() -> {
-                    btn.setBackgroundColor(android.graphics.Color.parseColor("#121212")); // Back to dark
+                    btn.setBackgroundColor(theme[1]); // Normal color
                     btn.setTextColor(theme[3]);
-                }, 150); // Slightly longer for the visual effect
+                }, 100);
             });
         }
     }
@@ -1040,51 +1033,10 @@ public class RemoteInputMethodService extends InputMethodService {
 
         return KeyEvent.KEYCODE_UNKNOWN;
     }
-
-
-    class AnimatedGradientDrawable extends android.graphics.drawable.Drawable {
-        private android.graphics.Paint paint;
-        private float offset = 0;
-        private android.graphics.LinearGradient gradient;
-        private android.graphics.Matrix matrix;
-
-        public AnimatedGradientDrawable() {
-            paint = new android.graphics.Paint();
-            matrix = new android.graphics.Matrix();
-            int[] colors = {
-                android.graphics.Color.parseColor("#ff007f"), 
-                android.graphics.Color.parseColor("#7400b8"), 
-                android.graphics.Color.parseColor("#00f5d4"), 
-                android.graphics.Color.parseColor("#ff007f")  
-            };
-            gradient = new android.graphics.LinearGradient(0, 0, 1000, 1000, colors, null, android.graphics.Shader.TileMode.MIRROR);
-            paint.setShader(gradient);
-
-            android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat(0, 2000);
-            animator.setDuration(4000);
-            animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-            animator.setInterpolator(new android.view.animation.LinearInterpolator());
-            animator.addUpdateListener(anim -> {
-                offset = (float) anim.getAnimatedValue();
-                matrix.setTranslate(offset, offset);
-                gradient.setLocalMatrix(matrix);
-                invalidateSelf();
-            });
-            animator.start();
-        }
-
-        @Override
-        public void draw(android.graphics.Canvas canvas) {
-            canvas.drawRect(getBounds(), paint);
-        }
-
-        @Override
-        public void setAlpha(int alpha) { paint.setAlpha(alpha); }
-
-        @Override
-        public void setColorFilter(android.graphics.ColorFilter colorFilter) { paint.setColorFilter(colorFilter); }
-
-        @Override
-        public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-    }
 }
+
+
+
+
+
+
