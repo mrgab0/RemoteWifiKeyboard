@@ -171,6 +171,15 @@ public class RemoteWebServer extends NanoHTTPD {
                     ",\"active_ws\":" + getActiveWebSocketCount() +
                     ",\"ime_active\":" + (RemoteInputMethodService.getInstance() != null) + "}");
             }
+            // ⚡ 4. Cambio de tema visual desde PC
+            else if ("set_theme".equals(type)) {
+                String theme = json.optString("theme", "daily");
+                com.remotekeyboard.DebugLogger.log("WebSocket RX [THEME]: " + theme);
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
+                    ime.setExternalTheme(theme);
+                }
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error procesando mensaje WebSocket: " + message, e);
         }

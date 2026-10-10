@@ -802,6 +802,12 @@
             localStorage.setItem('rk_keyboard_mode', mode);
             updateKeyboardModeUI();
             appendLog(`🔄 Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario (Normal)'}`);
+            if (window.androidWs && window.androidWs.readyState === WebSocket.OPEN) {
+                window.androidWs.send(JSON.stringify({
+                    type: "set_theme",
+                    theme: mode === 'code' ? 'pro' : 'daily'
+                }));
+            }
         }
 
         function updateKeyboardModeUI() {

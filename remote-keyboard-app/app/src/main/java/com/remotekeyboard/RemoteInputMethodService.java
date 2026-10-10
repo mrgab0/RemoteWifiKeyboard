@@ -58,6 +58,7 @@ public class RemoteInputMethodService extends InputMethodService {
 
     
     // --- Visual Keyboard & Clipboard ---
+    private LinearLayout mainLayout;
     private LinearLayout visualKeyboardContainer;
     private LinearLayout suggestionContainer;
     private Button pastePillButton;
@@ -72,7 +73,8 @@ public class RemoteInputMethodService extends InputMethodService {
         {Color.parseColor("#000000"), Color.parseColor("#003300"), Color.parseColor("#00FF00"), Color.parseColor("#00FF00")},
         {Color.parseColor("#F5F5F7"), Color.parseColor("#FFFFFF"), Color.parseColor("#007AFF"), Color.BLACK},
         {Color.parseColor("#1A1B26"), Color.parseColor("#24283B"), Color.parseColor("#7AA2F7"), Color.parseColor("#C0CAF5")},
-        {Color.parseColor("#282A36"), Color.parseColor("#44475A"), Color.parseColor("#FF79C6"), Color.parseColor("#F8F8F2")}
+        {Color.parseColor("#282A36"), Color.parseColor("#44475A"), Color.parseColor("#FF79C6"), Color.parseColor("#F8F8F2")},
+        {Color.BLACK, Color.parseColor("#121212"), Color.parseColor("#333333"), Color.WHITE} // 5: Pure Black (External)
     };
 
     public static synchronized RemoteInputMethodService getInstance() {
@@ -242,11 +244,13 @@ public class RemoteInputMethodService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#0B0D14"));
-        layout.setPadding(16, 16, 16, 16);
-        layout.setGravity(Gravity.CENTER_HORIZONTAL);
+        mainLayout = new LinearLayout(this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.setBackgroundColor(Color.parseColor("#0B0D14"));
+        mainLayout.setPadding(16, 16, 16, 16);
+        mainLayout.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        LinearLayout layout = mainLayout;
 
         suggestionContainer = new LinearLayout(this);
         suggestionContainer.setOrientation(LinearLayout.HORIZONTAL);
@@ -447,6 +451,19 @@ public class RemoteInputMethodService extends InputMethodService {
             pastePillButton.setBackgroundColor(theme[2]); 
             pastePillButton.setTextColor(theme[0]);
         }
+    }
+
+    public void setExternalTheme(String mode) {
+        mainHandler.post(() -> {
+            if ("pro".equals(mode)) {
+                currentThemeIndex = 5; // Pure Black
+            } else {
+                currentThemeIndex = 0; // Default
+            }
+            if (mainLayout != null) {
+                applyTheme(mainLayout);
+            }
+        });
     }
 
     private void animateKey(String keyStr) {
