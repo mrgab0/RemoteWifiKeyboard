@@ -1,11 +1,19 @@
 if (require('electron-squirrel-startup')) return require('electron').app.quit();
 
-const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut, screen } = require('electron');
 const path = require('path');
 
 let tray = null;
 let mainWindow = null;
 let isMiniMode = false;
+let appSettings = {
+  universalShortcut: 'CommandOrControl+Shift+Insert',
+  widgetHoverActivate: true,
+  widgetPosition: 'bottom-left',
+  widgetTooltips: true,
+  wheelPasteEnabled: true,
+  wheelPasteDebounce: 350
+};
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -45,19 +53,47 @@ app.whenReady().then(() => {
 
   let widgetWindow = null;
 
+  function getWidgetPosition(posKey = 'bottom-left', width = 240, height = 200) {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { workArea } = primaryDisplay;
+    let x = workArea.x + 24;
+    let y = workArea.y + workArea.height - height - 24;
+
+    if (posKey === 'bottom-right') {
+      x = workArea.x + workArea.width - width - 24;
+      y = workArea.y + workArea.height - height - 24;
+    } else if (posKey === 'top-left') {
+      x = workArea.x + 24;
+      y = workArea.y + 24;
+    } else if (posKey === 'top-right') {
+      x = workArea.x + workArea.width - width - 24;
+      y = workArea.y + 24;
+    }
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
   // Mini Mode IPC
   ipcMain.on('toggle-mini-mode', (event, enable) => {
     isMiniMode = enable;
     if (enable) {
       if (!widgetWindow) {
+        const { x, y } = getWidgetPosition(appSettings.widgetPosition, 240, 200);
         widgetWindow = new BrowserWindow({
-          width: 120, height: 120,
+          width: 240, height: 200,
+          x, y,
           transparent: true, frame: false,
           alwaysOnTop: true, resizable: false,
+          skipTaskbar: true,
           webPreferences: { nodeIntegration: true, contextIsolation: false }
         });
         widgetWindow.loadFile('widget.html');
+        widgetWindow.webContents.on('did-finish-load', () => {
+          widgetWindow.webContents.send('settings-sync', appSettings);
+        });
         widgetWindow.on('closed', () => { widgetWindow = null; });
+      } else {
+        const { x, y } = getWidgetPosition(appSettings.widgetPosition, 240, 200);
+        widgetWindow.setPosition(x, y);
       }
       mainWindow.hide();
       widgetWindow.show();
@@ -75,8 +111,25 @@ app.whenReady().then(() => {
     mainWindow.webContents.send('mini-mode-closed');
   });
 
+  // Movimiento libre del widget a cualquier parte de la pantalla
+  ipcMain.on('widget-move', (event, { deltaX, deltaY }) => {
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      const [currX, currY] = widgetWindow.getPosition();
+      widgetWindow.setPosition(Math.round(currX + deltaX), Math.round(currY + deltaY));
+    }
+  });
+
+  // Auto-encendido al posar el mouse (hover activate)
+  ipcMain.on('widget-hover-activate', () => {
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      if (appSettings.widgetHoverActivate) {
+        widgetWindow.focus();
+      }
+    }
+  });
+
   ipcMain.on('widget-keystroke', (event, keyData) => {
-    if (mainWindow) {
+    if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('simulate-keystroke', keyData);
     }
   });
@@ -93,6 +146,21 @@ app.whenReady().then(() => {
     }
   });
 
+  // Configuración IPC
+  ipcMain.on('save-settings', (event, newSettings) => {
+    appSettings = { ...appSettings, ...newSettings };
+    if (newSettings.universalShortcut) {
+      registerUniversalShortcut(newSettings.universalShortcut);
+    }
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      widgetWindow.webContents.send('settings-sync', appSettings);
+    }
+  });
+
+  ipcMain.handle('get-settings', () => {
+    return appSettings;
+  });
+
   // Window Controls IPC
   ipcMain.on('window-minimize', () => {
     if (mainWindow) mainWindow.minimize();
@@ -107,8 +175,41 @@ app.whenReady().then(() => {
     if (mainWindow) mainWindow.close();
   });
 
-  // Global Shortcut
-  const ret = globalShortcut.register('CommandOrControl+Alt+A', () => {
+  // Atajo universal alternable para activar escritura a Android (Ctrl+Shift+Insert)
+  let registeredShortcut = null;
+  function registerUniversalShortcut(keyCombo) {
+    if (registeredShortcut) {
+      try { globalShortcut.unregister(registeredShortcut); } catch(e){}
+    }
+    registeredShortcut = keyCombo || appSettings.universalShortcut;
+    try {
+      const ok = globalShortcut.register(registeredShortcut, () => {
+        if (isMiniMode && widgetWindow && !widgetWindow.isDestroyed()) {
+          if (widgetWindow.isFocused()) {
+            widgetWindow.blur();
+          } else {
+            widgetWindow.focus();
+          }
+        } else if (mainWindow && !mainWindow.isDestroyed()) {
+          if (mainWindow.isFocused()) {
+            mainWindow.webContents.send('toggle-remote-writing');
+          } else {
+            mainWindow.show();
+            mainWindow.focus();
+            mainWindow.webContents.send('toggle-remote-writing');
+          }
+        }
+      });
+      if (!ok) console.log('No se pudo registrar atajo universal:', registeredShortcut);
+    } catch(e) {
+      console.log('Error registrando atajo universal:', e.message);
+    }
+  }
+
+  registerUniversalShortcut(appSettings.universalShortcut);
+
+  // Atajo secundario clásico (Ctrl+Alt+A) para mostrar/ocultar ventana principal
+  globalShortcut.register('CommandOrControl+Alt+A', () => {
     if (mainWindow.isFocused()) {
       mainWindow.blur();
       mainWindow.hide();
@@ -117,13 +218,11 @@ app.whenReady().then(() => {
       mainWindow.focus();
     }
   });
+
 // Enable DevTools only when the app is started with a '--dev' flag
 if (process.argv.includes('--dev')) {
   mainWindow.webContents.openDevTools({ mode: 'detach' });
 }
-  if (!ret) {
-    console.log('Fallo al registrar el atajo global');
-  }
 
   // Create tray icon
   try {

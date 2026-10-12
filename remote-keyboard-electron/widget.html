@@ -16,12 +16,10 @@
       width: 100vw;
       height: 100vh;
       background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
       user-select: none;
       font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      position: relative;
     }
 
     /* Cyberpunk Fire Neon Animated Border */
@@ -40,6 +38,88 @@
       }
     }
 
+    /* Tooltip Cyberpunk Floating Card */
+    .cyber-tooltip {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      width: 224px;
+      background: rgba(10, 15, 29, 0.94);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 240, 255, 0.2);
+      border-radius: 12px;
+      padding: 10px 12px;
+      backdrop-filter: blur(12px);
+      z-index: 50;
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cyber-tooltip.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .tooltip-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 4px;
+    }
+
+    .tooltip-title {
+      font-family: 'Geist Mono', Consolas, monospace;
+      font-size: 10px;
+      font-weight: 900;
+      color: #00f0ff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tooltip-body {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tip-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #cbd5e1;
+      line-height: 1.25;
+    }
+
+    .tip-row b {
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .tip-icon {
+      font-size: 11px;
+      width: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* Circular Widget Container placed at the bottom-left */
+    .widget-anchor {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      width: 96px;
+      height: 96px;
+    }
+
     .fire-border-wrap {
       position: relative;
       width: 96px;
@@ -49,9 +129,12 @@
       background: linear-gradient(135deg, #ff1a00, #ff7b00, #00f0ff, #0077ff, #ff007b);
       background-size: 300% 300%;
       animation: cyberFire 3s ease infinite;
-      cursor: move;
-      -webkit-app-region: drag;
+      cursor: grab;
       transition: all 0.3s ease;
+    }
+
+    .fire-border-wrap:active {
+      cursor: grabbing;
     }
 
     /* Cyan-Blue vibrant gradient matching stitch design */
@@ -73,17 +156,11 @@
         inset 0 -3px 6px rgba(0, 30, 100, 0.5),
         0 4px 15px rgba(0, 150, 255, 0.4);
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      -webkit-app-region: no-drag;
-      cursor: pointer;
+      cursor: inherit;
     }
 
     .widget-btn:hover {
       filter: brightness(1.12);
-      transform: scale(0.97);
-    }
-
-    .widget-btn:active {
-      transform: scale(0.92);
     }
 
     /* State OFF Styling when window is blurred / standby */
@@ -179,20 +256,36 @@
 </head>
 <body>
 
-  <div id="widgetContainer" class="fire-border-wrap is-off-fire">
-    <button id="toggleBtn" class="widget-btn is-off" title="Mini Widget: Clic derecho/doble clic para salir. Rueda de ratón para pegar.">
-      <div class="glass-highlight"></div>
-      <div class="scanline"></div>
-      
-      <!-- Estado texto principal -->
-      <span id="statusText">OFF</span>
+  <!-- Cyberpunk Tooltip Instructivo Flotante -->
+  <div id="cyberTooltip" class="cyber-tooltip">
+    <div class="tooltip-header">
+      <span class="tooltip-title">⚡ REMOTE WIDGET</span>
+    </div>
+    <div class="tooltip-body">
+      <div class="tip-row"><span class="tip-icon">🖱️</span> <span><b>Rueda:</b> Pegar portapapeles</span></div>
+      <div class="tip-row"><span class="tip-icon">⌨️</span> <span><b>Hover:</b> Escribe directo a Android</span></div>
+      <div class="tip-row"><span class="tip-icon">✥</span> <span><b>Arrastra:</b> Mover a cualquier sitio</span></div>
+      <div class="tip-row"><span class="tip-icon">✨</span> <span><b>2x Clic:</b> Cerrar widget</span></div>
+    </div>
+  </div>
 
-      <!-- Subtítulo o indicador de enlace -->
-      <div class="sub-badge">
-        <span id="statusDot"></span>
-        <span id="subText">STANDBY</span>
-      </div>
-    </button>
+  <!-- Botón circular Cyberpunk -->
+  <div class="widget-anchor">
+    <div id="widgetContainer" class="fire-border-wrap is-off-fire">
+      <button id="toggleBtn" class="widget-btn is-off">
+        <div class="glass-highlight"></div>
+        <div class="scanline"></div>
+        
+        <!-- Estado texto principal -->
+        <span id="statusText">OFF</span>
+
+        <!-- Subtítulo o indicador de enlace -->
+        <div class="sub-badge">
+          <span id="statusDot"></span>
+          <span id="subText">STANDBY</span>
+        </div>
+      </button>
+    </div>
   </div>
 
   <script>
@@ -202,8 +295,15 @@
     const statusText = document.getElementById('statusText');
     const statusDot = document.getElementById('statusDot');
     const subText = document.getElementById('subText');
+    const tooltip = document.getElementById('cyberTooltip');
 
     let currentPing = '3ms';
+    let appConfig = {
+      widgetHoverActivate: true,
+      widgetTooltips: true,
+      wheelPasteEnabled: true,
+      wheelPasteDebounce: 350
+    };
 
     function setFocusState(focused) {
       if (focused) {
@@ -220,12 +320,77 @@
     }
 
     window.addEventListener('focus', () => setFocusState(true));
-    window.addEventListener('blur', () => setFocusState(false));
+    window.addEventListener('blur', () => {
+      setFocusState(false);
+      hideTooltip();
+    });
 
-    // Si la ventana arranca con foco
     if (document.hasFocus()) {
       setFocusState(true);
     }
+
+    // Tooltip Helpers
+    function showTooltip() {
+      if (appConfig.widgetTooltips) {
+        tooltip.classList.add('show');
+      }
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove('show');
+    }
+
+    // Auto-activación al posar el mouse (Hover Activate) y Tooltip
+    wrap.addEventListener('mouseenter', () => {
+      showTooltip();
+      if (appConfig.widgetHoverActivate) {
+        ipcRenderer.send('widget-hover-activate');
+        setFocusState(true);
+      }
+    });
+
+    wrap.addEventListener('mouseleave', () => {
+      if (!isDragging) {
+        hideTooltip();
+      }
+    });
+
+    // Arrastre Universal y Fluido a cualquier parte de la pantalla
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let hasMoved = false;
+
+    wrap.addEventListener('mousedown', (e) => {
+      if (e.button === 0) { // Clic izquierdo para arrastrar
+        isDragging = true;
+        dragStartX = e.screenX;
+        dragStartY = e.screenY;
+        hasMoved = false;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.screenX - dragStartX;
+        const deltaY = e.screenY - dragStartY;
+        if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+          hasMoved = true;
+          ipcRenderer.send('widget-move', { deltaX, deltaY });
+          dragStartX = e.screenX;
+          dragStartY = e.screenY;
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (isDragging) {
+        isDragging = false;
+        if (hasMoved) {
+          e.stopPropagation();
+        }
+      }
+    });
 
     // Doble clic o clic derecho para salir del modo mini
     window.addEventListener('dblclick', (e) => {
@@ -258,15 +423,15 @@
     // Interceptar rueda del ratón (Middle Click / Botón 1) para pegar en Android
     let lastWheelPaste = 0;
     function handleWheelClick(e) {
-      if (e.button === 1) { // 1 = Botón central / rueda
+      if (e.button === 1 && appConfig.wheelPasteEnabled) {
         e.preventDefault();
         e.stopPropagation();
         const now = Date.now();
-        if (now - lastWheelPaste < 350) return; // Anti doble-pegado
+        const debounce = appConfig.wheelPasteDebounce || 350;
+        if (now - lastWheelPaste < debounce) return;
         lastWheelPaste = now;
 
         // Feedback visual inmediato
-        const prevText = statusText.innerText;
         statusText.innerText = '📋';
         setTimeout(() => {
           statusText.innerText = document.hasFocus() ? 'ON' : 'OFF';
@@ -283,6 +448,13 @@
       currentPing = ping + 'ms';
       if (document.hasFocus()) {
         subText.innerText = currentPing;
+      }
+    });
+
+    // Sincronización de Ajustes
+    ipcRenderer.on('settings-sync', (event, settings) => {
+      if (settings) {
+        appConfig = { ...appConfig, ...settings };
       }
     });
   </script>

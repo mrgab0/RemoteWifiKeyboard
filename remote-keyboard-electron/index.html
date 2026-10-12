@@ -116,11 +116,20 @@
     <!-- Window Right Controls -->
     <div class="flex items-center space-x-1 -mr-1 titlebar-no-drag">
       <!-- Compact Mini Widget Switch -->
-      <button id="mini-widget-toggle" onclick="toggleMiniMode()" class="flex items-center space-x-1.5 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/60 rounded px-2.5 py-1 mr-2 transition-all" title="Activar Mini Widget flotante">
+      <button id="mini-widget-toggle" onclick="toggleMiniMode()" class="flex items-center space-x-1.5 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/60 rounded px-2.5 py-1 mr-1 transition-all" title="Activar Mini Widget flotante">
         <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
         </svg>
         <span>Mini Widget</span>
+      </button>
+
+      <!-- Settings Modal Button -->
+      <button id="open-settings-btn" onclick="openSettingsModal()" class="flex items-center space-x-1.5 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/60 rounded px-2.5 py-1 mr-2 transition-all" title="Configurar atajos y preferencias">
+        <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span>Ajustes</span>
       </button>
 
       <!-- Windows Chrome Controls -->
@@ -1478,7 +1487,201 @@
     setKeyboardMode(currentKeyboardMode);
     renderShortcutsPanel();
     setTimeout(connectWebSocket, 400);
+
+    // =========================================================
+    // Ajustes & Settings Management
+    // =========================================================
+    let localSettings = {
+      universalShortcut: 'CommandOrControl+Shift+Insert',
+      widgetHoverActivate: true,
+      widgetPosition: 'bottom-left',
+      widgetTooltips: true,
+      wheelPasteEnabled: true,
+      wheelPasteDebounce: 350
+    };
+
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('remote_kb_settings');
+        if (saved) {
+          localSettings = { ...localSettings, ...JSON.parse(saved) };
+        }
+      } catch(e) {}
+      
+      const scInput = document.getElementById('setting-universal-shortcut');
+      const hoverInput = document.getElementById('setting-hover-activate');
+      const tooltipsInput = document.getElementById('setting-tooltips');
+      const posSelect = document.getElementById('setting-widget-position');
+      const wheelInput = document.getElementById('setting-wheel-paste');
+      const debounceInput = document.getElementById('setting-wheel-debounce');
+      const debounceVal = document.getElementById('debounce-val');
+
+      if (scInput) scInput.value = localSettings.universalShortcut || 'CommandOrControl+Shift+Insert';
+      if (hoverInput) hoverInput.checked = localSettings.widgetHoverActivate !== false;
+      if (tooltipsInput) tooltipsInput.checked = localSettings.widgetTooltips !== false;
+      if (posSelect) posSelect.value = localSettings.widgetPosition || 'bottom-left';
+      if (wheelInput) wheelInput.checked = localSettings.wheelPasteEnabled !== false;
+      if (debounceInput) {
+        debounceInput.value = localSettings.wheelPasteDebounce || 350;
+        if (debounceVal) debounceVal.innerText = (localSettings.wheelPasteDebounce || 350) + ' ms';
+      }
+
+      ipcRenderer.send('save-settings', localSettings);
+    }
+
+    function openSettingsModal() {
+      loadSettings();
+      const modal = document.getElementById('settings-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settings-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function resetDefaultShortcut() {
+      const scInput = document.getElementById('setting-universal-shortcut');
+      if (scInput) scInput.value = 'CommandOrControl+Shift+Insert';
+    }
+
+    function saveAndApplySettings() {
+      localSettings.universalShortcut = (document.getElementById('setting-universal-shortcut').value || 'CommandOrControl+Shift+Insert').trim();
+      localSettings.widgetHoverActivate = document.getElementById('setting-hover-activate').checked;
+      localSettings.widgetTooltips = document.getElementById('setting-tooltips').checked;
+      localSettings.widgetPosition = document.getElementById('setting-widget-position').value;
+      localSettings.wheelPasteEnabled = document.getElementById('setting-wheel-paste').checked;
+      localSettings.wheelPasteDebounce = parseInt(document.getElementById('setting-wheel-debounce').value, 10) || 350;
+
+      try {
+        localStorage.setItem('remote_kb_settings', JSON.stringify(localSettings));
+      } catch(e) {}
+
+      ipcRenderer.send('save-settings', localSettings);
+      appendLog(`⚙️ Ajustes guardados: Atajo ${localSettings.universalShortcut}`, 'sys');
+      closeSettingsModal();
+    }
+
+    // Atajo universal IPC listener
+    ipcRenderer.on('toggle-remote-writing', () => {
+      const keyBox = document.getElementById('keystroke-capture-box');
+      if (keyBox) {
+        keyBox.focus();
+        keyBox.classList.add('ring-2', 'ring-cyan-400');
+        setTimeout(() => keyBox.classList.remove('ring-2', 'ring-cyan-400'), 600);
+      }
+      appendLog('⚡ Modo escritura remoto alternado por atajo universal (Ctrl+Shift+Ins)', 'sys');
+    });
+
+    // Cargar ajustes al inicio
+    loadSettings();
 </script>
+
+<!-- Settings Modal (Ajustes de la Aplicación) -->
+<div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="bg-[#0f172a] border border-cyan-500/40 rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(0,240,255,0.15)] overflow-hidden">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0c1322]">
+      <div class="flex items-center space-x-2">
+        <span class="text-cyan-400 text-lg">⚙️</span>
+        <h3 class="text-sm font-bold text-white tracking-wide uppercase font-mono">Panel de Ajustes</h3>
+      </div>
+      <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-xs">
+      
+      <!-- Seccion 1: Atajo Universal -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="font-semibold text-slate-200">Atajo Universal de Escritura</h4>
+            <p class="text-slate-400 text-[11px]">Alterna el modo de escritura a Android desde cualquier aplicación</p>
+          </div>
+          <span class="px-2 py-0.5 bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-mono text-[10px] rounded">Activo</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="setting-universal-shortcut" value="CommandOrControl+Shift+Insert" class="flex-1 bg-black/60 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none" placeholder="CommandOrControl+Shift+Insert">
+          <button onclick="resetDefaultShortcut()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 text-[11px]">Default</button>
+        </div>
+        <p class="text-[10px] text-slate-500">Formato Electron: <code>CommandOrControl+Shift+Insert</code> (teclas: Ctrl + Shift + Ins)</p>
+      </div>
+
+      <!-- Seccion 2: Mini Widget -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-4">
+        <h4 class="font-semibold text-slate-200 flex items-center space-x-1.5">
+          <span>⚡</span> <span>Mini Widget Flotante</span>
+        </h4>
+
+        <!-- Toggle: Hover Activate -->
+        <label class="flex items-center justify-between cursor-pointer">
+          <div>
+            <span class="text-slate-300 font-medium">Auto-encender al posar el mouse (Hover)</span>
+            <p class="text-slate-500 text-[10px]">Al poner el cursor sobre el widget, se enfoca y activa automáticamente</p>
+          </div>
+          <input type="checkbox" id="setting-hover-activate" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+        </label>
+
+        <!-- Toggle: Tooltips -->
+        <label class="flex items-center justify-between cursor-pointer">
+          <div>
+            <span class="text-slate-300 font-medium">Mostrar Tooltips de ayuda en Hover</span>
+            <p class="text-slate-500 text-[10px]">Muestra instrucciones de clic de rueda, arrastre y atajos al pasar el cursor</p>
+          </div>
+          <input type="checkbox" id="setting-tooltips" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+        </label>
+
+        <!-- Selector: Posición Inicial -->
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-slate-300 font-medium">Posición Inicial en Pantalla</span>
+            <p class="text-slate-500 text-[10px]">Esquina donde aparecerá al activarse</p>
+          </div>
+          <select id="setting-widget-position" class="bg-black/60 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none">
+            <option value="bottom-left">Esquina Inferior Izquierda</option>
+            <option value="bottom-right">Esquina Inferior Derecha</option>
+            <option value="top-left">Esquina Superior Izquierda</option>
+            <option value="top-right">Esquina Superior Derecha</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Seccion 3: Pegado Rueda del Ratón -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="font-semibold text-slate-200">Pegado con Rueda del Ratón (Middle Click)</h4>
+            <p class="text-slate-500 text-[10px]">Presiona la rueda para enviar el portapapeles a Android</p>
+          </div>
+          <input type="checkbox" id="setting-wheel-paste" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+        </div>
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span>Sensibilidad Anti-rebote:</span>
+            <span id="debounce-val" class="font-mono text-cyan-400">350 ms</span>
+          </div>
+          <input type="range" id="setting-wheel-debounce" min="150" max="800" step="25" value="350" class="w-full accent-cyan-500 cursor-pointer" oninput="document.getElementById('debounce-val').innerText = this.value + ' ms'">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-end space-x-3 px-6 py-4 border-t border-slate-800 bg-[#0c1322]">
+      <button onclick="closeSettingsModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium">Cancelar</button>
+      <button onclick="saveAndApplySettings()" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all">Guardar Ajustes</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
