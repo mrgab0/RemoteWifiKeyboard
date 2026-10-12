@@ -1,102 +1,290 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Widget</title>
-    <style>
-        body {
-            margin: 0; padding: 0;
-            width: 100vw; height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            background: transparent; overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Keyboard - Mini Widget Flotante Cyberpunk</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;700;900&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        #bubble {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 70px; height: 70px; border-radius: 50%; cursor: pointer;
-            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            text-align: center; color: white; font-size: 11px;
-            user-select: none; -webkit-app-region: drag; font-weight: bold;
-            border: 4px solid rgba(255, 255, 255, 0.8);
-        }
+    body {
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
 
-        #bubble:active { transform: scale(0.95); }
+    /* Cyberpunk Fire Neon Animated Border */
+    @keyframes cyberFire {
+      0% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 10px rgba(255, 60, 0, 0.7)) drop-shadow(0 0 20px rgba(0, 217, 255, 0.5));
+      }
+      50% {
+        background-position: 100% 50%;
+        filter: drop-shadow(0 0 16px rgba(255, 115, 0, 0.9)) drop-shadow(0 0 26px rgba(0, 150, 255, 0.75));
+      }
+      100% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 10px rgba(255, 60, 0, 0.7)) drop-shadow(0 0 20px rgba(0, 217, 255, 0.5));
+      }
+    }
 
-        .status-on { background: #34c759; }
-        .status-off { background: #ff3b30; }
-    </style>
+    .fire-border-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      border-radius: 9999px;
+      padding: 3.5px;
+      background: linear-gradient(135deg, #ff1a00, #ff7b00, #00f0ff, #0077ff, #ff007b);
+      background-size: 300% 300%;
+      animation: cyberFire 3s ease infinite;
+      cursor: move;
+      -webkit-app-region: drag;
+      transition: all 0.3s ease;
+    }
+
+    /* Cyan-Blue vibrant gradient matching stitch design */
+    .widget-btn {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      border: none;
+      outline: none;
+      background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.45),
+        inset 0 -3px 6px rgba(0, 30, 100, 0.5),
+        0 4px 15px rgba(0, 150, 255, 0.4);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      -webkit-app-region: no-drag;
+      cursor: pointer;
+    }
+
+    .widget-btn:hover {
+      filter: brightness(1.12);
+      transform: scale(0.97);
+    }
+
+    .widget-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* State OFF Styling when window is blurred / standby */
+    .is-off {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.1), inset 0 -2px 4px rgba(0,0,0,0.6) !important;
+    }
+
+    .is-off-fire {
+      background: linear-gradient(135deg, #334155, #64748b, #1e293b) !important;
+      animation: none !important;
+      filter: drop-shadow(0 0 6px rgba(100, 116, 139, 0.3)) !important;
+    }
+
+    /* Glossy reflection */
+    .glass-highlight {
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 100%);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+
+    /* Scanline pattern */
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.12) 0px,
+        rgba(0,0,0,0.12) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+
+    #statusText {
+      font-family: 'Geist Mono', Consolas, monospace;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 24px;
+      letter-spacing: 0.05em;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      z-index: 10;
+      line-height: 1;
+      transition: all 0.2s ease;
+    }
+
+    .sub-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 10;
+      margin-top: 4px;
+    }
+
+    #statusDot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+      transition: all 0.2s ease;
+    }
+
+    #subText {
+      font-family: 'Geist Mono', Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: all 0.2s ease;
+    }
+
+    .is-off #statusText {
+      color: #94a3b8 !important;
+    }
+
+    .is-off #statusDot {
+      background-color: #64748b !important;
+      box-shadow: none !important;
+    }
+
+    .is-off #subText {
+      color: #64748b !important;
+    }
+  </style>
 </head>
 <body>
-    <div id="bubble" class="status-off">
-        <span id="text">OFF</span>
-    </div>
 
-    <script>
-        const { ipcRenderer } = require('electron');
-        const bubble = document.getElementById('bubble');
-        const text = document.getElementById('text');
+  <div id="widgetContainer" class="fire-border-wrap is-off-fire">
+    <button id="toggleBtn" class="widget-btn is-off" title="Mini Widget: Clic derecho/doble clic para salir. Rueda de ratón para pegar.">
+      <div class="glass-highlight"></div>
+      <div class="scanline"></div>
+      
+      <!-- Estado texto principal -->
+      <span id="statusText">OFF</span>
 
-        // Focus handling for ON/OFF colors
-        window.addEventListener('focus', () => {
-            bubble.className = 'status-on';
-            text.innerText = 'ON';
-        });
+      <!-- Subtítulo o indicador de enlace -->
+      <div class="sub-badge">
+        <span id="statusDot"></span>
+        <span id="subText">STANDBY</span>
+      </div>
+    </button>
+  </div>
 
-        window.addEventListener('blur', () => {
-            bubble.className = 'status-off';
-            text.innerText = 'OFF';
-        });
+  <script>
+    const { ipcRenderer } = require('electron');
+    const wrap = document.getElementById('widgetContainer');
+    const btn = document.getElementById('toggleBtn');
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+    const subText = document.getElementById('subText');
 
-        // Double click or context menu to exit mini mode
-        window.addEventListener('dblclick', () => {
-            ipcRenderer.send('close-widget');
-        });
+    let currentPing = '3ms';
 
-        window.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            ipcRenderer.send('close-widget');
-        });
+    function setFocusState(focused) {
+      if (focused) {
+        wrap.classList.remove('is-off-fire');
+        btn.classList.remove('is-off');
+        statusText.innerText = 'ON';
+        subText.innerText = currentPing;
+      } else {
+        wrap.classList.add('is-off-fire');
+        btn.classList.add('is-off');
+        statusText.innerText = 'OFF';
+        subText.innerText = 'STANDBY';
+      }
+    }
 
-        // Intercept keys and send to main window
-        function handleWidgetKey(e) {
-            e.preventDefault();
-            const keyData = {
-                type: e.type,
-                key: e.key,
-                code: e.code,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                shiftKey: e.shiftKey,
-                metaKey: e.metaKey
-            };
-            ipcRenderer.send('widget-keystroke', keyData);
-        }
-        window.addEventListener('keydown', handleWidgetKey);
-        window.addEventListener('keyup', handleWidgetKey);
+    window.addEventListener('focus', () => setFocusState(true));
+    window.addEventListener('blur', () => setFocusState(false));
 
-        // Interceptar clic de la rueda del ratón (Middle Click) para pegar en Android
-        let lastWheelPaste = 0;
-        function handleWheelClick(e) {
-            if (e.button === 1) { // 1 = Botón de la rueda del ratón
-                e.preventDefault();
-                e.stopPropagation();
-                const now = Date.now();
-                if (now - lastWheelPaste < 350) return; // Anti-rebote / Anti doble-pegado
-                lastWheelPaste = now;
+    // Si la ventana arranca con foco
+    if (document.hasFocus()) {
+      setFocusState(true);
+    }
 
-                // Feedback visual en el widget
-                text.innerText = '📋';
-                setTimeout(() => {
-                    text.innerText = document.hasFocus() ? 'ON' : 'OFF';
-                }, 300);
+    // Doble clic o clic derecho para salir del modo mini
+    window.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      ipcRenderer.send('close-widget');
+    });
 
-                ipcRenderer.send('widget-paste');
-            }
-        }
-        window.addEventListener('mousedown', handleWheelClick);
-        window.addEventListener('auxclick', handleWheelClick);
-    </script>
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      ipcRenderer.send('close-widget');
+    });
+
+    // Interceptar pulsación de teclas y retransmitir a la ventana principal
+    function handleWidgetKey(e) {
+      e.preventDefault();
+      const keyData = {
+        type: e.type,
+        key: e.key,
+        code: e.code,
+        ctrlKey: e.ctrlKey,
+        altKey: e.altKey,
+        shiftKey: e.shiftKey,
+        metaKey: e.metaKey
+      };
+      ipcRenderer.send('widget-keystroke', keyData);
+    }
+    window.addEventListener('keydown', handleWidgetKey);
+    window.addEventListener('keyup', handleWidgetKey);
+
+    // Interceptar rueda del ratón (Middle Click / Botón 1) para pegar en Android
+    let lastWheelPaste = 0;
+    function handleWheelClick(e) {
+      if (e.button === 1) { // 1 = Botón central / rueda
+        e.preventDefault();
+        e.stopPropagation();
+        const now = Date.now();
+        if (now - lastWheelPaste < 350) return; // Anti doble-pegado
+        lastWheelPaste = now;
+
+        // Feedback visual inmediato
+        const prevText = statusText.innerText;
+        statusText.innerText = '📋';
+        setTimeout(() => {
+          statusText.innerText = document.hasFocus() ? 'ON' : 'OFF';
+        }, 300);
+
+        ipcRenderer.send('widget-paste');
+      }
+    }
+    window.addEventListener('mousedown', handleWheelClick);
+    window.addEventListener('auxclick', handleWheelClick);
+
+    // Actualización de Ping desde la ventana principal
+    ipcRenderer.on('ping-update', (event, ping) => {
+      currentPing = ping + 'ms';
+      if (document.hasFocus()) {
+        subText.innerText = currentPing;
+      }
+    });
+  </script>
 </body>
 </html>

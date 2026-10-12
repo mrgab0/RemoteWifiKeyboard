@@ -51,7 +51,7 @@ app.whenReady().then(() => {
     if (enable) {
       if (!widgetWindow) {
         widgetWindow = new BrowserWindow({
-          width: 80, height: 80,
+          width: 120, height: 120,
           transparent: true, frame: false,
           alwaysOnTop: true, resizable: false,
           webPreferences: { nodeIntegration: true, contextIsolation: false }
@@ -85,6 +85,26 @@ app.whenReady().then(() => {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('trigger-paste');
     }
+  });
+
+  ipcMain.on('update-ping', (event, ping) => {
+    if (widgetWindow && widgetWindow.webContents) {
+      widgetWindow.webContents.send('ping-update', ping);
+    }
+  });
+
+  // Window Controls IPC
+  ipcMain.on('window-minimize', () => {
+    if (mainWindow) mainWindow.minimize();
+  });
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow) {
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      else mainWindow.maximize();
+    }
+  });
+  ipcMain.on('window-close', () => {
+    if (mainWindow) mainWindow.close();
   });
 
   // Global Shortcut

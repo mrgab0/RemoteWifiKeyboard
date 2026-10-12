@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Keyboard - Mini Widget Flotante</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;700;900&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #050811;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(13, 22, 45, 0.8) 0%, rgba(5, 8, 17, 1) 100%);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Cyberpunk Fire Neon Animated Border */
+    @keyframes cyberFire {
+      0% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 12px rgba(255, 60, 0, 0.65)) drop-shadow(0 0 24px rgba(0, 217, 255, 0.45));
+      }
+      50% {
+        background-position: 100% 50%;
+        filter: drop-shadow(0 0 18px rgba(255, 115, 0, 0.85)) drop-shadow(0 0 30px rgba(0, 150, 255, 0.7));
+      }
+      100% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 12px rgba(255, 60, 0, 0.65)) drop-shadow(0 0 24px rgba(0, 217, 255, 0.45));
+      }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+
+    .fire-border-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      border-radius: 9999px;
+      padding: 3.5px;
+      background: linear-gradient(135deg, #ff1a00, #ff7b00, #00f0ff, #0077ff, #ff007b);
+      background-size: 300% 300%;
+      animation: cyberFire 3s ease infinite;
+      cursor: move; /* Simulando drag nativo de electron */
+      -webkit-app-region: drag;
+    }
+
+    /* Cyan-Blue vibrant gradient matching IMAGE_3 */
+    .widget-btn {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.45),
+        inset 0 -3px 6px rgba(0, 30, 100, 0.5),
+        0 4px 15px rgba(0, 150, 255, 0.4);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      -webkit-app-region: no-drag;
+      cursor: pointer;
+    }
+
+    .widget-btn:hover {
+      filter: brightness(1.12);
+      transform: scale(0.97);
+    }
+
+    .widget-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* State OFF Styling when toggled */
+    .is-off {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.1), inset 0 -2px 4px rgba(0,0,0,0.6) !important;
+    }
+
+    .is-off-fire {
+      background: linear-gradient(135deg, #334155, #64748b, #1e293b) !important;
+      animation: none !important;
+      filter: drop-shadow(0 0 6px rgba(100, 116, 139, 0.3)) !important;
+    }
+
+    /* Glossy reflection */
+    .glass-highlight {
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 100%);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+
+    /* Ambient particles or spark overlay */
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.12) 0px,
+        rgba(0,0,0,0.12) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center p-6 gap-8">
+
+  <!-- Demostración del widget en dos tamaños requeridos (Desktop Preview) -->
+  <div class="text-center mb-2">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-2">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+      MODO FLOTANTE ALWAYS-ON-TOP (ELECTRON COMPACT)
+    </div>
+    <h1 class="text-white font-bold text-lg tracking-tight">Mini Widget Flotante Cyberpunk</h1>
+    <p class="text-slate-400 text-xs">Haz clic en el widget para alternar entre <span class="text-cyan-400 font-bold">ON</span> y <span class="text-rose-400 font-bold">OFF</span></p>
+  </div>
+
+  <div class="flex items-center gap-12 bg-slate-900/60 p-8 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-xl">
+    
+    <!-- Opción 1: Tamaño Estándar 96x96 px (aproximado 100x100) -->
+    <div class="flex flex-col items-center gap-3">
+      <div id="widgetContainer" class="fire-border-wrap">
+        <button id="toggleBtn" onclick="toggleState()" class="widget-btn group">
+          <div class="glass-highlight"></div>
+          <div class="scanline"></div>
+          
+          <!-- Estado texto principal -->
+          <span id="statusText" class="text-white font-black text-2xl tracking-wider drop-shadow-md z-10 transition-all font-mono">
+            ON
+          </span>
+
+          <!-- Subtítulo o indicador de enlace -->
+          <div class="flex items-center gap-1 z-10 mt-0.5">
+            <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#fff]"></span>
+            <span id="subText" class="text-[9px] font-bold text-white/90 uppercase tracking-widest font-mono">3ms</span>
+          </div>
+        </button>
+      </div>
+      <div class="text-center">
+        <span class="text-xs font-mono text-slate-300 font-semibold block">96 × 96 px</span>
+        <span class="text-[10px] text-slate-500 font-mono">Fuego reactivo + Gradiente azul</span>
+      </div>
+    </div>
+
+    <!-- Opción 2: Formato Ultra Compacto 64x64 px (aproximado 60x60) -->
+    <div class="flex flex-col items-center gap-3">
+      <div class="fire-border-wrap !w-16 !h-16 !p-[2.5px]">
+        <button onclick="toggleMini(this)" class="widget-btn">
+          <div class="glass-highlight"></div>
+          <span class="text-white font-black text-base tracking-wider drop-shadow-md z-10 font-mono mini-text">
+            ON
+          </span>
+          <span class="w-1 h-1 rounded-full bg-white z-10 shadow-[0_0_4px_#fff] mt-0.5"></span>
+        </button>
+      </div>
+      <div class="text-center">
+        <span class="text-xs font-mono text-slate-300 font-semibold block">64 × 64 px</span>
+        <span class="text-[10px] text-slate-500 font-mono">Ultra compacto</span>
+      </div>
+    </div>
+
+    <!-- Estado alternativo OFF (Visual Demo) -->
+    <div class="flex flex-col items-center gap-3">
+      <div class="fire-border-wrap is-off-fire !w-16 !h-16 !p-[2.5px]">
+        <button class="widget-btn is-off">
+          <span class="text-slate-400 font-bold text-sm tracking-wider z-10 font-mono">
+            OFF
+          </span>
+          <span class="w-1 h-1 rounded-full bg-slate-500 z-10 mt-0.5"></span>
+        </button>
+      </div>
+      <div class="text-center">
+        <span class="text-xs font-mono text-slate-400 font-semibold block">OFF State</span>
+        <span class="text-[10px] text-slate-500 font-mono">Pausado / Standby</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detalles de integración para Electron -->
+  <div class="flex items-center gap-6 text-slate-400 text-xs font-mono bg-slate-950/80 px-5 py-3 rounded-xl border border-slate-800">
+    <div class="flex items-center gap-2">
+      <span class="text-cyan-400 font-bold">● Gradiente:</span>
+      <span>#00d2ff → #0066ff (Igual a 'Enviar al Teléfono')</span>
+    </div>
+    <div class="w-px h-4 bg-slate-800"></div>
+    <div class="flex items-center gap-2">
+      <span class="text-orange-400 font-bold">● Borde:</span>
+      <span>Animación continua Cyberpunk Fire</span>
+    </div>
+  </div>
+
+  <script>
+    let isOn = true;
+    function toggleState() {
+      isOn = !isOn;
+      const wrap = document.getElementById('widgetContainer');
+      const btn = document.getElementById('toggleBtn');
+      const txt = document.getElementById('statusText');
+      const sub = document.getElementById('subText');
+      const dot = document.getElementById('statusDot');
+
+      if (isOn) {
+        wrap.classList.remove('is-off-fire');
+        btn.classList.remove('is-off');
+        txt.textContent = 'ON';
+        txt.className = 'text-white font-black text-2xl tracking-wider drop-shadow-md z-10 transition-all font-mono';
+        sub.textContent = '3ms';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#fff]';
+      } else {
+        wrap.classList.add('is-off-fire');
+        btn.classList.add('is-off');
+        txt.textContent = 'OFF';
+        txt.className = 'text-slate-400 font-bold text-2xl tracking-wider z-10 transition-all font-mono';
+        sub.textContent = 'PAUSED';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-500';
+      }
+    }
+
+    function toggleMini(btn) {
+      const wrap = btn.parentElement;
+      const txt = btn.querySelector('.mini-text');
+      const isOff = btn.classList.contains('is-off');
+      if (isOff) {
+        btn.classList.remove('is-off');
+        wrap.classList.remove('is-off-fire');
+        txt.textContent = 'ON';
+      } else {
+        btn.classList.add('is-off');
+        wrap.classList.add('is-off-fire');
+        txt.textContent = 'OFF';
+      }
+    }
+  </script>
+</body>
+</html>

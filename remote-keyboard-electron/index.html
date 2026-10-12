@@ -1,1268 +1,1484 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="dark" lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote WiFi Keyboard • Windows Native Client</title>
-    <style>
-        :root {
-            --bg-color: #ffffff;
-            --card-bg: #f8fafc;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --accent: #000000;
-            --accent-hover: #333333;
-            --success: #10b981;
-            --danger: #ef4444;
-            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #0f172a;
-                --card-bg: #1e293b;
-                --text-main: #f8fafc;
-                --text-muted: #94a3b8;
-                --border-color: #334155;
-                --accent: #ffffff;
-                --accent-hover: #e2e8f0;
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Remote WiFi Keyboard - Windows Client Pro</title>
+  <!-- Tailwind CSS CDN with plugins -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Font Setup: Inter & JetBrains Mono -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+          },
+          colors: {
+            brand: {
+              dark: '#080c14',
+              surface: '#0f172a',
+              card: '#131d31',
+              border: '#1e2d4a',
+              cyan: '#00f0ff',
+              emerald: '#10b981',
+              accent: '#38bdf8'
             }
-            .key-btn {
-                background: #334155 !important;
-                color: #f8fafc !important;
-                border-color: #475569 !important;
+          },
+          animation: {
+            'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'radar': 'radar 2s linear infinite'
+          },
+          keyframes: {
+            radar: {
+              '0%': { transform: 'scale(0.8)', opacity: '0.8' },
+              '100%': { transform: 'scale(2.2)', opacity: '0' }
             }
-            .key-btn:active {
-                background: #475569 !important;
-            }
+          }
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        
-
-        body {
-            font-family: var(--font);
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        header {
-            padding: 16px 24px;
-            border-bottom: 2px solid var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-icon {
-            font-size: 24px;
-            font-weight: 900;
-        }
-
-        h1 {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        header p {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .header-badges {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .badge-ping {
-            background: var(--card-bg);
-            border: 2px solid var(--accent);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .badge-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-status::before {
-            content: '';
-            display: block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .badge-status.connected {
-            background: #dcfce7;
-            color: #166534;
-            border: 2px solid #166534;
-        }
-        .badge-status.connected::before { background: #166534; }
-
-        .badge-status.disconnected {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 2px solid #991b1b;
-        }
-        .badge-status.disconnected::before { background: #991b1b; }
-
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 24px;
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 3px solid var(--accent);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 4px 4px 0px var(--accent);
-            transition: transform 0.1s;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 12px;
-        }
-
-        input[type="text"] {
-            flex-grow: 1;
-            padding: 12px 16px;
-            font-size: 15px;
-            font-family: monospace;
-            font-weight: bold;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-main);
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            border: 2px solid var(--accent);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-main);
-            transition: all 0.1s;
-        }
-
-        button:hover {
-            background: var(--card-bg);
-            transform: translateY(-1px);
-        }
-
-        button:active {
-            transform: translateY(2px);
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg-color);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-        }
-
-        /* Área de escritura en vivo */
-        .live-area {
-            position: relative;
-        }
-
-        #live-input {
-            width: 100%;
-            height: 60px;
-            font-size: 20px;
-            padding: 16px;
-            border: 3px solid var(--border-color);
-            border-radius: 12px;
-            background: var(--bg-color);
-            color: var(--text-main);
-            font-weight: bold;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        #live-input:focus {
-            border-color: var(--success);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-        }
-
-        .focus-banner {
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 800;
-            border: 2px solid var(--accent);
-            transition: all 0.3s ease;
-        }
-
-        .focus-banner.focused {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .focus-banner.unfocused {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        /* Párrafo */
-        textarea {
-            width: 100%;
-            height: 80px;
-            padding: 12px;
-            font-size: 14px;
-            font-family: var(--font);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            resize: none;
-            margin-bottom: 12px;
-            background: var(--bg-color);
-            color: var(--text-main);
-            outline: none;
-        }
-        textarea:focus { border-color: var(--accent); }
-
-        .keys-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-        }
-
-        .key-btn {
-            padding: 12px 8px;
-            font-size: 11px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-        }
-
-        .key-icon {
-            font-size: 16px;
-        }
-
-        .terminal {
-            background: #0f172a;
-            color: #10b981;
-            padding: 12px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
-            height: 120px;
-            overflow-y: auto;
-            border: 3px solid var(--accent);
-        }
-
-        .terminal-line { margin-bottom: 4px; }
-        .terminal-time { color: #64748b; margin-right: 8px; }
-
-        .pulse-dot {
-            display: inline-block;
-            width: 8px; height: 8px;
-            background-color: #000000;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.3); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-        /* === SHORTCUTS PANEL === */
-        .shortcuts-panel { border: 3px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 0px var(--accent); }
-        .sp-header { background: var(--accent); color: var(--bg-color); padding: 12px 20px; font-weight: 800; font-size: 13px; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-        .sp-header:hover { opacity: 0.9; }
-        .sp-body { background: var(--card-bg); padding: 12px; }
-        .sp-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-        .sp-tab { padding: 5px 12px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border-color); border-radius: 20px; background: var(--bg-color); color: var(--text-muted); transition: all 0.15s; }
-        .sp-tab.active { background: var(--accent); color: var(--bg-color); border-color: var(--accent); }
-        .sp-tab:hover:not(.active) { border-color: var(--accent); color: var(--text-main); }
-        .sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 7px; }
-        .sp-btn { padding: 9px 6px 7px; font-size: 10px; font-weight: 700; text-align: center; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; background: var(--bg-color); color: var(--text-main); transition: all 0.1s; line-height: 1.3; }
-        .sp-btn:hover { border-color: var(--accent); background: var(--card-bg); transform: translateY(-1px); }
-        .sp-btn:active { transform: translateY(1px); background: var(--accent); color: var(--bg-color); }
-        .sp-combo { font-family: monospace; font-size: 9px; color: var(--text-muted); margin-top: 3px; display: block; }
-    </style>
+      }
+    }
+  </script>
+  <!-- Custom App Styling -->
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px -4px rgba(0, 240, 255, 0.25);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 16px -2px rgba(16, 185, 129, 0.25);
+    }
+    .focus-ring-cyan:focus-within {
+      box-shadow: 0 0 0 2px #00f0ff, 0 0 25px rgba(0, 240, 255, 0.2);
+    }
+    .titlebar-drag {
+      -webkit-app-region: drag;
+    }
+    .titlebar-no-drag {
+      -webkit-app-region: no-drag;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-[#070b12] text-slate-200 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden min-h-screen flex flex-col justify-between">
 
-    
+<!-- Application Window Container -->
+<div class="w-full flex-1 flex flex-col max-w-[1520px] mx-auto border-x border-[#162032] bg-[#090e17] shadow-2xl">
 
-    <header>
-        <div class="brand">
-            <div class="brand-icon">⌨️</div>
-            <div>
-                <h1>Remote WiFi Keyboard</h1>
-                <p>Cliente Windows ➔ Android</p>
-            </div>
-        </div>
-
-        <div class="header-badges">
-            <div class="mode-pill-selector" style="display:inline-flex; background:#181825; border:1px solid #313244; border-radius:8px; padding:2px; margin-right:8px;">
-                <button id="btn-mode-code" onclick="setKeyboardMode('code')" style="background:#6366f1; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Código: Máxima velocidad, keydown/keyup de todas las teclas físicas sin latencia">⚡ Modo Código</button>
-                <button id="btn-mode-daily" onclick="setKeyboardMode('daily')" style="background:transparent; color:#a6adc8; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Modo Diario: Escritura continua con commitText, tildes y borrado inteligente">📝 Modo Diario</button>
-            </div>
-            <select id="editor-profile" style="background:#1e1e2e; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; margin-right:6px;" title="Perfil de Editor">
-                <option value="default">🎯 Default</option>
-                <option value="vscode">💜 VS Code</option>
-                <option value="intellij">🟠 IntelliJ</option>
-                <option value="termux">🖥️ Termux</option>
-                <option value="acode">📝 Acode</option>
-            </select>
-            <button id="btn-mini-mode" onclick="require('electron').ipcRenderer.send('toggle-mini-mode', true)" style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-right:8px; display:inline-flex; align-items:center; gap:5px;" title="Activar Mini Player">
-                <span style="font-size:16px;">🗗</span> Mini Widget
-            </button>
-            <div class="badge-ping" id="ping-badge">⏳ -- ms</div>
-            <div class="badge-status disconnected" id="status-badge">Desconectado</div>
-        </div>
-    </header>
-
-    <div class="main-container">
-        <!-- Panel de Conexión -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📱 CONEXIÓN CON TELÉFONO</div>
-                <button onclick="runBenchmark()" style="font-size: 11px; padding: 4px 8px;">🚀 Test Ping</button>
-            </div>
-            <div class="input-group">
-                <input type="text" id="phone-ip" placeholder="Ej: 192.168.1.101:9999" value="192.168.1.101:9999">
-                <button class="btn-primary" onclick="connectPhone()">Conectar</button>
-                <button onclick="autoScan()">🔍 Auto-Detectar</button>
-            </div>
-        </div>
-
-        <!-- Panel de Escritura en Vivo -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">⚡ ESCRITURA ULTRARRÁPIDA (&lt;3MS)</div>
-                <div style="font-size: 10px; font-weight: bold; color: var(--text-muted);">Escribe directamente aquí</div>
-            </div>
-            <div class="live-area">
-                <input type="text" id="live-input" placeholder="Haz clic aquí y escribe con tu teclado..." autocomplete="off">
-                <div class="focus-banner unfocused" id="focus-banner">
-                    <span id="focus-icon">⚠️</span> <span id="focus-text">Ventana sin foco: Haz clic aquí para escribir</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel Párrafo y Dictado -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📝 PÁRRAFO O PORTAPAPELES</div>
-            </div>
-            <textarea id="paragraph-input" placeholder="Pega texto largo, notas o enlaces para enviar completo al teléfono..."></textarea>
-            <div class="input-group" style="justify-content: space-between;">
-                <button id="btn-dictate" onclick="toggleDictation()" style="display: flex; align-items: center; gap: 6px;">🎤 Dictar</button>
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="document.getElementById('paragraph-input').value=''">Limpiar</button>
-                    <button class="btn-primary" onclick="sendParagraph()">Enviar al Teléfono 🚀</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel de Shortcuts PRO (dinámico) -->
-        <div class="shortcuts-panel">
-            <div class="sp-header" onclick="toggleShortcutsPanel()">
-                ⌨️ SHORTCUTS DE DEVELOPER
-                <span id="sp-toggle">▼</span>
-            </div>
-            <div class="sp-body" id="sp-body">
-                <div class="sp-tabs" id="sp-tabs"></div>
-                <div class="sp-grid" id="sp-grid"></div>
-            </div>
-        </div>
-
-        <!-- Telemetría -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📊 TELEMETRÍA <span class="pulse-dot" id="pulse-dot" style="display:none;"></span></div>
-            </div>
-            <div class="terminal" id="terminal">
-                <div class="terminal-line"><span class="terminal-time">[SYS]</span> Interfaz inicializada.</div>
-            </div>
-        </div>
+  <!-- Windows Titlebar Chrome -->
+  <header class="h-10 bg-[#0b121e]/90 backdrop-blur-md border-b border-[#182438] flex items-center justify-between px-3 select-none sticky top-0 z-50 titlebar-drag">
+    <!-- Window Left Identity & Breadcrumb -->
+    <div class="flex items-center space-x-3 text-xs titlebar-no-drag">
+      <div class="flex items-center space-x-2 text-cyan-400 font-semibold tracking-wide">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect height="14" rx="2.5" stroke-width="2" width="20" x="2" y="5"></rect>
+          <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M8 16h8" stroke-linecap="round" stroke-width="2"></path>
+        </svg>
+        <span class="text-slate-100">Remote WiFi Keyboard</span>
+      </div>
+      <span class="text-slate-600">/</span>
+      <div class="flex items-center space-x-1.5 text-slate-400 text-[11px]">
+        <span>Windows Client v2.4</span>
+        <span class="text-cyan-400">➔</span>
+        <span id="target-device-badge" class="text-slate-200 font-medium bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">Android 14 (S23 Ultra)</span>
+      </div>
     </div>
 
-    <script>
-        const { ipcRenderer } = require('electron');
-        const dgram = require('dgram');
-        
-        const phoneIpInput = document.getElementById('phone-ip');
-        const statusBadge = document.getElementById('status-badge');
-        const pingBadge = document.getElementById('ping-badge');
-        const terminal = document.getElementById('terminal');
-        const pulseDot = document.getElementById('pulse-dot');
-        const liveInput = document.getElementById('live-input');
-        
-        const focusBanner = document.getElementById('focus-banner');
-        const focusIcon = document.getElementById('focus-icon');
-        const focusText = document.getElementById('focus-text');
-        const paragraphInput = document.getElementById('paragraph-input');
+    <!-- Window Center: Quick Global Ping Stat -->
+    <div class="hidden md:flex items-center space-x-2 bg-emerald-950/40 border border-emerald-500/30 rounded-full px-3 py-0.5 text-[11px] text-emerald-300 shadow-sm titlebar-no-drag">
+      <span class="relative flex h-2 w-2">
+        <span id="ping-ping-dot" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span id="ping-static-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      <span id="titlebar-ping-text" class="font-mono font-medium tracking-tight">-- ms</span>
+      <span class="text-emerald-500/40">•</span>
+      <span id="titlebar-conn-text" class="font-medium text-emerald-200">WiFi Enlazado Directo</span>
+    </div>
 
-        let ws = null;
-        let pendingPings = new Map();
-        let pingSeq = 0;
+    <!-- Window Right Controls -->
+    <div class="flex items-center space-x-1 -mr-1 titlebar-no-drag">
+      <!-- Compact Mini Widget Switch -->
+      <button id="mini-widget-toggle" onclick="toggleMiniMode()" class="flex items-center space-x-1.5 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/60 rounded px-2.5 py-1 mr-2 transition-all" title="Activar Mini Widget flotante">
+        <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>Mini Widget</span>
+      </button>
 
-        // =========================================================
-        // FASE 3 — Optimización: appendLog con buffer + rAF
-        // =========================================================
-        const logBuffer = [];
-        let logFlushScheduled = false;
-        function appendLog(msg) {
-            logBuffer.push(msg);
-            if (!logFlushScheduled) {
-                logFlushScheduled = true;
-                requestAnimationFrame(flushLogs);
-            }
+      <!-- Windows Chrome Controls -->
+      <button onclick="windowMinimize()" class="w-8 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors" title="Minimizar">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-linecap="round" stroke-width="2"></path></svg>
+      </button>
+      <button onclick="windowMaximize()" class="w-8 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors" title="Maximizar">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect height="16" rx="2" stroke-width="2" width="16" x="4" y="4"></rect></svg>
+      </button>
+      <button onclick="windowClose()" class="w-8 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-red-600 rounded transition-colors" title="Cerrar">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Pro-tier Action Bar: Modes, Profile, Quick Ping -->
+  <section class="border-b border-[#182438] bg-[#0c1322] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <!-- Left: App Brand & Mode Segmented Control -->
+    <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-inner">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+            Remote WiFi Keyboard Pro
+            <span class="text-[10px] bg-cyan-500/20 text-cyan-300 font-mono px-1.5 py-0.5 rounded border border-cyan-500/30">ULTRA-LOW LATENCY</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">Stream directo de pulsaciones USB HID por socket local</p>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-slate-800 hidden md:block"></div>
+      
+      <!-- Mode Segmented Switch -->
+      <div class="inline-flex p-1 bg-[#131d2e] rounded-xl border border-slate-700/60 shadow-inner">
+        <button id="mode-code-btn" onclick="setKeyboardMode('code')" class="flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-300 bg-amber-500/20 border border-amber-500/40 shadow-sm transition-all">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <span>Modo Código (Pro)</span>
+        </button>
+        <button id="mode-daily-btn" onclick="setKeyboardMode('daily')" class="flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <span>Modo Diario</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Layout Profile, Test Ping, Connection Indicator -->
+    <div class="flex items-center space-x-3">
+      <!-- Layout Preset Dropdown -->
+      <div class="flex items-center space-x-2 bg-[#121c2c] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16m-7 6h7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span class="text-slate-400 text-[11px]">Perfil:</span>
+        <select id="layout-select" onchange="changeProfile(this.value)" class="bg-transparent border-0 p-0 text-xs font-medium text-slate-200 focus:ring-0 cursor-pointer">
+          <option value="code" class="bg-slate-900 text-slate-200">Modo Código (Macros + Rolling Window)</option>
+          <option value="daily" class="bg-slate-900 text-slate-200">Modo Diario (Acentos + Dead Keys)</option>
+        </select>
+      </div>
+
+      <!-- Ping Tester Button -->
+      <button onclick="runBenchmark()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition active:scale-95">
+        <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>Test Ping</span>
+      </button>
+
+      <!-- Connection Pill -->
+      <div id="connection-pill" class="flex items-center space-x-2 bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-lg transition-all">
+        <span id="connection-dot" class="h-2 w-2 rounded-full bg-rose-500"></span>
+        <span id="connection-text" class="text-xs font-semibold text-rose-300">Desconectado</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Grid -->
+  <main class="p-6 space-y-6 flex-1">
+    <!-- SECTION 1: Device Connection & Discovery Card -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg relative overflow-hidden">
+      <div class="absolute -top-16 -right-16 w-52 h-52 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Conexión con Teléfono Móvil</h2>
+            <span class="text-[11px] text-slate-400">Canal WebSocket cifrado vía red local Wi-Fi</span>
+          </div>
+        </div>
+
+        <!-- Active Device Spec Chips -->
+        <div class="flex items-center flex-wrap gap-2 text-xs">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300 font-mono text-[11px]">
+            <span id="spec-dot" class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <span id="spec-device-text">Esperando conexión...</span>
+          </span>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-400 text-[11px]">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            Puerto: <strong class="text-slate-200 font-medium">9999</strong>
+          </span>
+          <span id="spec-latency-chip" class="px-2 py-1 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-400 font-mono text-[11px]">
+            RTT: -- ms
+          </span>
+        </div>
+      </div>
+
+      <!-- IP Address Field & Primary Connection Triggers -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+        <!-- IP Input Container with Monospace Font -->
+        <div class="lg:col-span-7 flex items-center bg-[#090f19] border border-slate-700/80 focus-within:border-cyan-500 rounded-xl px-3.5 py-2.5 transition shadow-inner">
+          <span class="text-slate-500 font-mono text-xs mr-2 select-none">ws://</span>
+          <input id="endpoint-ip" class="w-full bg-transparent border-0 text-slate-100 font-mono text-sm tracking-wide focus:ring-0 p-0 placeholder-slate-600" placeholder="192.168.x.x:9999" type="text" value="192.168.1.101:9999">
+          <div class="flex items-center space-x-1.5 ml-2">
+            <button onclick="copyIpAddress()" class="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition" title="Copiar IP">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </button>
+            <button onclick="reconnectWebSocket()" class="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded transition" title="Reiniciar socket">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Buttons Group -->
+        <div class="lg:col-span-5 flex items-center space-x-2">
+          <!-- Connect / Disconnect Toggle Button -->
+          <button id="btn-connect-toggle" onclick="toggleConnect()" class="flex-1 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-medium text-xs px-4 py-3 rounded-xl border border-cyan-500/40 shadow-sm transition active:scale-[0.98] flex items-center justify-center space-x-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span id="btn-connect-text">Conectar</span>
+          </button>
+          
+          <!-- Auto Discovery via UDP Beacon -->
+          <button onclick="autoScan()" class="flex-1 bg-slate-800 hover:bg-slate-700/90 text-slate-100 font-medium text-xs px-4 py-3 rounded-xl border border-slate-700 transition active:scale-[0.98] flex items-center justify-center space-x-2" title="Descubrimiento UDP en red local">
+            <svg id="scan-icon" class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span>Auto-Detectar</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Ultra-Fast Keystroke Capture Zone (<3ms) -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg relative">
+      <div class="flex items-center justify-between mb-3.5">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              Escritura Ultrarrápida en Tiempo Real
+              <span class="text-[10px] text-cyan-400 font-mono font-normal">(&lt;3ms latencia HID)</span>
+            </h2>
+            <span class="text-[11px] text-slate-400">Modo de captura raw con retransmisión instantánea de scancodes y macros</span>
+          </div>
+        </div>
+        <!-- Focus State Indicator Pill -->
+        <div id="capture-focus-badge" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="capture-focus-text">Ventana sin foco: Haz clic para escribir</span>
+        </div>
+      </div>
+
+      <!-- Keystroke Interactive Live Canvas Container -->
+      <div id="keystroke-capture-box" tabindex="0" class="relative w-full min-h-[110px] bg-[#070d17] border-2 border-emerald-500/40 rounded-xl p-4 flex flex-col justify-between cursor-text focus:outline-none focus:border-cyan-400 focus:glow-cyan transition duration-200 group">
+        <!-- Live Keystroke Display Text / Placeholder -->
+        <div id="live-typing-display" class="font-mono text-base tracking-wide flex items-center flex-wrap gap-1.5">
+          <span class="text-slate-400 select-none">Escribe directamente con tu teclado físico...</span>
+          <span class="inline-block w-2.5 h-5 bg-cyan-400 animate-pulse ml-1 rounded-sm"></span>
+        </div>
+
+        <!-- Helper badges and keyboard shortcuts inside capture box -->
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 select-none">
+          <div class="flex items-center space-x-3">
+            <span class="flex items-center gap-1.5">
+              <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">Rueda Ratón</kbd>
+              <span class="text-[11px] text-slate-400 font-medium">Pegar portapapeles</span>
+            </span>
+            <span class="text-slate-700">•</span>
+            <span class="flex items-center gap-1.5">
+              <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">ESC</kbd>
+              <span class="text-[11px] text-slate-500">Liberar foco</span>
+            </span>
+          </div>
+          <!-- Last Key Indicator -->
+          <div class="flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
+            <span class="text-slate-500">Última tecla:</span>
+            <span id="last-key-badge" class="bg-cyan-950/70 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">--</span>
+            <span id="last-ack-badge" class="text-emerald-400 text-[10px]">ACK &lt;2ms</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Large Text Buffer & Clipboard Manager -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Párrafo o Portapapeles Masivo</h2>
+            <span class="text-[11px] text-slate-400">Envía textos extensos, código fuente, URLs o notas con un solo comando</span>
+          </div>
+        </div>
+        <!-- Quick Text Stats -->
+        <div class="flex items-center space-x-3 text-xs font-mono text-slate-400">
+          <span>Líneas: <strong id="lines-counter" class="text-slate-200">1</strong></span>
+          <span class="text-slate-700">•</span>
+          <span>Caracteres: <strong id="chars-counter" class="text-slate-200">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Textarea with Clean Dark UI -->
+      <div class="relative">
+        <textarea id="clipboard-textarea" rows="3" class="w-full bg-[#080d17] border border-slate-700/80 rounded-xl p-3.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition resize-y min-h-[90px]" placeholder="Pega texto largo, notas, enlaces o códigos para enviar íntegro a tu teléfono..."></textarea>
+      </div>
+
+      <!-- Action Bar for Text Operations -->
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <!-- Secondary Action Badges -->
+        <div class="flex items-center space-x-2">
+          <!-- Voice Dictate Button -->
+          <button id="btn-dictate" onclick="toggleDictation()" class="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95">
+            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span id="btn-dictate-text">Dictar por Voz</span>
+          </button>
+          
+          <!-- Paste Windows Clipboard Button -->
+          <button onclick="pasteClipboardToTextarea()" class="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95" id="paste-clipboard-btn">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span>Pegar de Windows</span>
+          </button>
+
+          <!-- Clear Button -->
+          <button onclick="clearTextarea()" class="inline-flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition" id="clear-text-btn">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
+        <!-- Primary Submit Button -->
+        <div class="flex items-center space-x-2">
+          <span class="text-[11px] text-slate-500 hidden sm:inline-block">Acceso rápido: <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px] border border-slate-700">Ctrl + Enter</kbd></span>
+          <button onclick="sendParagraph()" id="send-to-phone-btn" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform active:scale-95 flex items-center space-x-2">
+            <span>Enviar al Teléfono</span>
+            <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Chips of Recent Buffer Sent Items -->
+      <div id="recent-chips-container" class="mt-3 pt-3 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto text-[11px]">
+        <span class="text-slate-500 font-medium whitespace-nowrap">Recientes:</span>
+        <button onclick="insertRecentText(this.innerText)" class="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 truncate max-w-[200px]">https://github.com/mrgab0/RemoteWifiKeyboard</button>
+        <button onclick="insertRecentText(this.innerText)" class="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 truncate max-w-[140px]">console.log("Remote");</button>
+        <button onclick="insertRecentText(this.innerText)" class="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 truncate max-w-[160px]">cd ~/codespaces</button>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Developer Shortcuts Catalog (Collapsible) -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl shadow-lg overflow-hidden">
+      <div onclick="toggleShortcutsPanel()" class="p-4 bg-[#0c1322] border-b border-[#182438] flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/40 transition">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm">⌨️</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Shortcuts de Developer & Edición Rápida</span>
+        </div>
+        <span id="sp-toggle" class="text-slate-400 text-xs">▼</span>
+      </div>
+      <div id="sp-body" class="p-4 space-y-3">
+        <div id="sp-tabs" class="flex items-center gap-2 overflow-x-auto pb-1 text-xs"></div>
+        <div id="sp-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 pt-2"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: Live Telemetry & Event Log Terminal -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg flex flex-col">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Telemetría en Tiempo Real</h2>
+            <span class="text-[11px] text-slate-400">Consola de depuración, eventos HID y tramas de red</span>
+          </div>
+        </div>
+        <!-- Log Filters and Actions -->
+        <div class="flex items-center space-x-2">
+          <div class="flex items-center bg-[#0a101b] p-1 rounded-lg border border-slate-800 text-[11px]">
+            <button onclick="setLogFilter('all')" id="filter-all" class="px-2.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-medium">Todos</button>
+            <button onclick="setLogFilter('key')" id="filter-key" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-white">Teclas</button>
+            <button onclick="setLogFilter('clip')" id="filter-clip" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-white">Portapapeles</button>
+            <button onclick="setLogFilter('err')" id="filter-err" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-white">Errores</button>
+          </div>
+          <button onclick="copyLogs()" class="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-700 rounded-lg border border-slate-700/60 transition" title="Copiar historial">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          </button>
+          <button onclick="clearLogs()" class="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-700 rounded-lg border border-slate-700/60 transition" title="Limpiar logs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Terminal Console View -->
+      <div id="terminal" class="h-44 bg-[#050810] border border-[#172236] rounded-xl p-3 font-mono text-xs overflow-y-auto space-y-1 text-slate-300">
+        <div class="flex items-center space-x-2 text-slate-500">
+          <span>[SYSTEM]</span>
+          <span class="text-cyan-400">[READY]</span>
+          <span class="text-slate-400">Remote WiFi Keyboard Client listo. Haz clic en Captura para escribir.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pro Footer Status Bar & Remote App Launcher -->
+  <footer class="bg-[#090e17] border-t border-[#182438] select-none text-[11px] text-slate-400 z-50 relative">
+    <!-- TOP BAR: Remote Android App Launcher Bar -->
+    <div class="border-b border-[#182438]/80 bg-[#080d17] px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
+      <!-- Left: Launcher Title & App Quick Shortcuts -->
+      <div class="flex items-center flex-wrap gap-2">
+        <div class="flex items-center space-x-1.5 mr-2 text-cyan-400 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="5" y="2" width="14" height="20" rx="2" stroke-width="2"></rect>
+            <path d="M12 18h.01" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <span class="text-slate-300 font-semibold tracking-wide text-[11px] uppercase">Lanzador de Apps Remotas:</span>
+        </div>
+
+        <!-- Termux -->
+        <button onclick="launchRemoteApp('com.termux', 'Termux')" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 border border-slate-700/70 hover:border-cyan-500/50 transition-all group active:scale-95 shadow-sm" title="Lanzar Termux en Android">
+          <svg class="w-3 h-3 text-emerald-400 group-hover:text-emerald-300 font-mono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M4 17l6-5-6-5M12 19h8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span class="font-mono text-xs font-semibold">Termux</span>
+          <span class="text-[9px] bg-emerald-950/60 text-emerald-400 px-1 rounded font-mono border border-emerald-500/30">CLI</span>
+        </button>
+
+        <!-- Acode -->
+        <button onclick="launchRemoteApp('com.foxdebug.acode', 'Acode')" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 border border-slate-700/70 hover:border-cyan-500/50 transition-all group active:scale-95 shadow-sm" title="Lanzar Acode Editor en Android">
+          <svg class="w-3 h-3 text-cyan-400 group-hover:text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span class="text-xs font-medium">Acode</span>
+          <span class="text-[9px] bg-cyan-950/70 text-cyan-300 px-1 rounded font-mono border border-cyan-500/30">IDE</span>
+        </button>
+
+        <!-- SPDK Editor -->
+        <button onclick="launchRemoteApp('com.spdk.editor', 'SPDK Editor')" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 border border-slate-700/70 hover:border-amber-500/50 transition-all group active:scale-95 shadow-sm" title="Lanzar SPDK Editor en Android">
+          <svg class="w-3 h-3 text-amber-400 group-hover:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span class="text-xs font-medium">SPDK Editor</span>
+          <span class="text-[9px] bg-amber-950/60 text-amber-300 px-1 rounded font-mono border border-amber-500/30">DEV</span>
+        </button>
+
+        <!-- VS Code Mobile -->
+        <button onclick="launchRemoteApp('com.vscode.mobile', 'VS Code Mobile')" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 border border-slate-700/70 hover:border-blue-500/50 transition-all group active:scale-95 shadow-sm" title="Lanzar VS Code Mobile en Android">
+          <svg class="w-3 h-3 text-blue-400 group-hover:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M16.5 3.5L7.5 12l9 8.5 4.5-2V5.5l-4.5-2zM7.5 12l-4 3 4 3V12z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span class="text-xs font-medium">VS Code Mobile</span>
+          <span class="text-[9px] bg-blue-500/15 text-blue-400 px-1 rounded font-mono border border-blue-500/30">CODE</span>
+        </button>
+
+        <!-- Tasker -->
+        <button onclick="launchRemoteApp('net.dinglisch.android.taskerm', 'Tasker')" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 border border-slate-700/70 hover:border-purple-500/50 transition-all group active:scale-95 shadow-sm" title="Disparar Automatización Tasker">
+          <svg class="w-3 h-3 text-purple-400 group-hover:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="1.8"></path>
+            <circle cx="12" cy="12" r="2.5" stroke-width="1.8"></circle>
+          </svg>
+          <span class="text-xs font-medium">Tasker</span>
+          <span class="text-[9px] bg-indigo-500/15 text-indigo-400 px-1 rounded font-mono border border-indigo-500/30">AUTO</span>
+        </button>
+
+        <!-- Add App / Custom Picker Toggle -->
+        <div class="relative">
+          <button id="add-app-picker-btn" onclick="toggleAppPicker()" class="flex items-center space-x-1 px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 transition active:scale-95 text-xs font-medium" title="Explorar y vincular más aplicaciones de Android">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"></path>
+            </svg>
+            <span>Añadir App</span>
+            <svg class="w-3 h-3 text-cyan-400 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+
+          <!-- Android App Picker Contextual Menu / Dropdown -->
+          <div id="android-app-picker-menu" class="hidden absolute bottom-9 left-0 w-80 bg-[#0c1322] border border-[#1e2d4a] rounded-xl shadow-2xl p-3 z-50 backdrop-blur-md">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+              <div class="flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-semibold text-slate-100">Apps Detectadas en Android</span>
+              </div>
+              <span class="text-[10px] text-cyan-400 font-mono">Intent Bridge</span>
+            </div>
+
+            <!-- Detected Apps List -->
+            <div class="space-y-1 max-h-48 overflow-y-auto pr-1 text-xs">
+              <div onclick="launchRemoteApp('md.obsidian', 'Obsidian')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-[10px] border border-purple-500/40">OB</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Obsidian</p>
+                    <p class="text-[10px] text-slate-500 font-mono">md.obsidian</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <div onclick="launchRemoteApp('com.android.chrome', 'Google Chrome')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-[10px] border border-cyan-500/40">CR</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Google Chrome</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.android.chrome</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <div onclick="launchRemoteApp('org.telegram.messenger', 'Telegram')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-[10px] border border-blue-500/40">TG</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Telegram</p>
+                    <p class="text-[10px] text-slate-500 font-mono">org.telegram.messenger</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <div onclick="launchRemoteApp('com.termux.api', 'Termux:API')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px] border border-emerald-500/40">API</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Termux:API</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.termux.api</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <div onclick="launchRemoteApp('com.alacritty.terminal', 'Alacritty Mobile')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-[10px] border border-amber-500/40">AL</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Alacritty Mobile</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.alacritty.terminal</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+            </div>
+
+            <div class="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Transmisión vía WebSocket intent</span>
+              <button onclick="toggleAppPicker()" class="text-slate-400 hover:text-slate-200">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Quick Activity Info -->
+      <div class="flex items-center space-x-2 text-[10px] text-slate-400 font-mono">
+        <span class="text-emerald-400 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Intent Bridge Activo
+        </span>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR: Network & Protocol Telemetry Status -->
+    <div class="h-7 px-4 flex items-center justify-between text-[11px] text-slate-400">
+      <div class="flex items-center space-x-4">
+        <span class="flex items-center space-x-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+          <span class="font-mono text-slate-300">TCP Frame Buffer: OK</span>
+        </span>
+        <span class="text-slate-700">|</span>
+        <span>Modo de sincronización: <strong class="text-slate-200 font-mono">Bilateral (Low-Jitter)</strong></span>
+        <span class="text-slate-700 hidden sm:inline">|</span>
+        <span class="hidden sm:inline">Cifrado: <span class="text-emerald-400 font-mono">TLS-PSK Local</span></span>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="font-mono text-slate-400">Pulsaciones: <strong id="total-keys-counter" class="text-slate-200">0</strong></span>
+        <span class="text-slate-700">|</span>
+        <span class="text-cyan-400 hover:underline cursor-pointer" onclick="toggleShortcutsPanel()">Documentación &amp; Atajos</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Core Application Logic Script -->
+<script>
+    const { ipcRenderer, clipboard } = require('electron');
+    const dgram = require('dgram');
+    const fs = require('fs');
+    const path = require('path');
+
+    // DOM Elements
+    const endpointIpInput = document.getElementById('endpoint-ip');
+    const connectionPill = document.getElementById('connection-pill');
+    const connectionDot = document.getElementById('connection-dot');
+    const connectionText = document.getElementById('connection-text');
+    const btnConnectToggle = document.getElementById('btn-connect-toggle');
+    const btnConnectText = document.getElementById('btn-connect-text');
+
+    const titlebarPingText = document.getElementById('titlebar-ping-text');
+    const specDot = document.getElementById('spec-dot');
+    const specDeviceText = document.getElementById('spec-device-text');
+    const specLatencyChip = document.getElementById('spec-latency-chip');
+
+    const captureBox = document.getElementById('keystroke-capture-box');
+    const liveDisplay = document.getElementById('live-typing-display');
+    const focusBadge = document.getElementById('capture-focus-badge');
+    const focusText = document.getElementById('capture-focus-text');
+    const lastKeyBadge = document.getElementById('last-key-badge');
+    const lastAckBadge = document.getElementById('last-ack-badge');
+
+    const textarea = document.getElementById('clipboard-textarea');
+    const linesCounter = document.getElementById('lines-counter');
+    const charsCounter = document.getElementById('chars-counter');
+    const terminal = document.getElementById('terminal');
+    const totalKeysCounter = document.getElementById('total-keys-counter');
+
+    let ws = null;
+    let pendingPings = new Map();
+    let pingSeq = 0;
+    let reconnectDelay = 1000;
+    let reconnectTimer = null;
+    let manualDisconnect = false;
+    let totalKeysTypedCount = 0;
+
+    // Window Controls
+    function windowMinimize() { ipcRenderer.send('window-minimize'); }
+    function windowMaximize() { ipcRenderer.send('window-maximize'); }
+    function windowClose() { ipcRenderer.send('window-close'); }
+    function toggleMiniMode() { ipcRenderer.send('toggle-mini-mode', true); }
+
+    // =========================================================
+    // Append Log & Real-time Console
+    // =========================================================
+    let activeLogFilter = 'all';
+    const allLogsList = [];
+
+    function appendLog(msg, category = 'all') {
+      const time = new Date().toLocaleTimeString('es-ES', { hour12: false });
+      allLogsList.push({ time, msg, category });
+      renderLogLine(time, msg, category);
+    }
+
+    function renderLogLine(time, msg, category) {
+      if (activeLogFilter !== 'all' && category !== 'all' && activeLogFilter !== category) return;
+      const line = document.createElement('div');
+      line.className = 'flex items-center space-x-2 text-slate-300';
+      
+      let badge = '<span class="text-cyan-400">[LOG]</span>';
+      if (msg.includes('WebSocket') || msg.includes('Socket')) badge = '<span class="text-cyan-400">[NET]</span>';
+      else if (msg.includes('Texto') || msg.includes('KeyDown') || msg.includes('Tecla')) badge = '<span class="text-blue-400">[INPUT]</span>';
+      else if (msg.includes('Portapapeles') || msg.includes('Pegado')) badge = '<span class="text-purple-400">[CLIPBOARD]</span>';
+      else if (msg.includes('Error') || msg.includes('⚠️') || msg.includes('❌')) badge = '<span class="text-rose-400">[ERROR]</span>';
+      else if (msg.includes('Macro')) badge = '<span class="text-amber-400">[MACRO]</span>';
+
+      line.innerHTML = `<span class="text-slate-500">[${time}]</span> ${badge} <span class="text-slate-200">${msg}</span>`;
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function setLogFilter(cat) {
+      activeLogFilter = cat;
+      ['all', 'key', 'clip', 'err'].forEach(f => {
+        const btn = document.getElementById('filter-' + f);
+        if (btn) {
+          if (f === cat) {
+            btn.className = "px-2.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-medium";
+          } else {
+            btn.className = "px-2.5 py-0.5 rounded text-slate-400 hover:text-white";
+          }
         }
-        function flushLogs() {
-            const frag = document.createDocumentFragment();
-            logBuffer.splice(0).forEach(msg => {
-                const time = new Date().toLocaleTimeString('es-ES', {hour12: false});
-                const line = document.createElement('div');
-                line.className = 'terminal-line';
-                line.innerHTML = `<span class="terminal-time">[${time}]</span> ${msg}`;
-                frag.appendChild(line);
-            });
-            terminal.appendChild(frag);
-            terminal.scrollTop = terminal.scrollHeight;
-            logFlushScheduled = false;
-        }
+      });
+      terminal.innerHTML = '';
+      allLogsList.forEach(item => renderLogLine(item.time, item.msg, item.category));
+    }
 
-        function triggerPulse() {
-            pulseDot.style.display = 'inline-block';
-            setTimeout(() => { pulseDot.style.display = 'none'; }, 200);
-        }
+    function clearLogs() {
+      allLogsList.length = 0;
+      terminal.innerHTML = '<div class="text-slate-500 font-mono">[LOGS LIMPIADOS]</div>';
+    }
 
-        function updatePingUI(rtt) {
-            pingBadge.innerText = `${rtt} ms`;
-            if (rtt < 20) pingBadge.style.color = '#10b981';
-            else if (rtt < 50) pingBadge.style.color = '#f59e0b';
-            else pingBadge.style.color = '#ef4444';
-        }
+    function copyLogs() {
+      const text = allLogsList.map(l => `[${l.time}] ${l.msg}`).join('\n');
+      clipboard.writeText(text);
+      appendLog('📋 Historial de logs copiado al portapapeles');
+    }
 
-        function getBaseHost() {
-            let host = phoneIpInput.value.trim();
-            if (host.startsWith('http://')) host = host.substring(7);
-            if (!host.includes(':')) host += ':9999';
-            return host;
-        }
+    // =========================================================
+    // WebSocket Connection & Network Layer
+    // =========================================================
+    function getBaseHost() {
+      let host = endpointIpInput.value.trim();
+      if (host.startsWith('ws://')) host = host.substring(5);
+      if (host.startsWith('http://')) host = host.substring(7);
+      if (!host.includes(':')) host += ':9999';
+      return host;
+    }
 
-        // =========================================================
-        // FASE 3 — Optimización: WebSocket con reconexión automática
-        // =========================================================
-        let reconnectDelay = 1000;
-        let reconnectTimer = null;
-        let manualDisconnect = false;
+    function updateConnectionUI(connected) {
+      if (connected) {
+        connectionPill.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg";
+        connectionDot.className = "h-2 w-2 rounded-full bg-emerald-400 animate-pulse";
+        connectionText.className = "text-xs font-semibold text-emerald-300";
+        connectionText.innerText = "Conectado";
 
-        function connectWebSocket() {
-            if (ws) {
-                manualDisconnect = true;
-                ws.close();
-            }
-            manualDisconnect = false;
-            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-            
-            const host = getBaseHost();
-            const wsUrl = `ws://${host}/ws`;
-            
-            appendLog(`Intentando WebSocket en ${wsUrl}...`);
-            
-            try {
-                ws = new WebSocket(wsUrl);
-                
-                ws.onopen = () => {
-                    reconnectDelay = 1000; // reset backoff en éxito
-                    appendLog('✅ Conectado a ' + host);
-                    statusBadge.className = 'badge-status connected';
-                    statusBadge.innerText = 'Conectado';
-                    liveInput.focus();
-                };
-                
-                ws.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'pong') {
-                            const sentTime = pendingPings.get(data.id);
-                            if (sentTime) {
-                                const rtt = Math.round(performance.now() - sentTime);
-                                updatePingUI(rtt);
-                                pendingPings.delete(data.id);
-                            }
-                                                } else if (data.type === 'logcat') {
-                            const fs = require('fs');
-                            const path = require('path');
-                            const logPath = path.join(__dirname, 'android_crash_logs.txt');
-                            fs.writeFileSync(logPath, data.logs, {flag: 'w'});
-                            appendLog('🐞 Logs de Android guardados en ' + logPath);
-                        } else if (data.type === 'clipboard_sync') {
-                            const { clipboard, nativeImage } = require('electron');
-                            if (data.contentType === 'text') {
-                                window._lastClipboardText = data.content; // evitar bucle
-                                clipboard.writeText(data.content);
-                                appendLog('📋 Portapapeles actualizado desde el teléfono');
-                            } else if (data.contentType === 'image') {
-                                const img = nativeImage.createFromDataURL(data.content);
-                                window._lastClipboardImageHash = window._getImageHash(img); // evitar bucle
-                                clipboard.writeImage(img);
-                                appendLog('📸 Imagen del portapapeles actualizada desde el teléfono');
-                            }
-                        }
-                    } catch(e) {}
-                };
-                
-                ws.onclose = () => {
-                    appendLog('❌ Desconectado');
-                    statusBadge.className = 'badge-status disconnected';
-                    statusBadge.innerText = 'Desconectado';
-                    ws = null;
-                    // Reconexión automática con backoff exponencial (max 30s)
-                    if (!manualDisconnect && reconnectDelay <= 30000) {
-                        appendLog(`🔄 Reconectando en ${reconnectDelay/1000}s...`);
-                        reconnectTimer = setTimeout(() => {
-                            reconnectDelay = Math.min(reconnectDelay * 2, 30000);
-                            connectWebSocket();
-                        }, reconnectDelay);
-                    }
-                };
-                
-                ws.onerror = () => {
-                    appendLog('⚠️ Error de conexión WebSocket');
-                };
-            } catch (e) {
-                appendLog('⚠️ Error creando WebSocket: ' + e);
-            }
-        }
+        btnConnectToggle.className = "flex-1 bg-gradient-to-r from-red-600/80 to-rose-700/80 hover:from-red-600 hover:to-rose-600 text-white font-medium text-xs px-4 py-3 rounded-xl border border-red-500/40 shadow-sm transition active:scale-[0.98] flex items-center justify-center space-x-2";
+        btnConnectText.innerText = "Desconectar";
 
-        function sendPayload(payload) {
-            triggerPulse();
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
-                return true;
-            } else {
-                // Fallback a HTTP
-                const host = getBaseHost();
-                let endpoint = 'type';
-                if (payload.type === 'key') endpoint = 'key';
-                if (payload.type === 'key_event') endpoint = 'key_event';
-                fetch(`http://${host}/api/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).catch(() => {});
-                return false;
-            }
-        }
+        specDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+        specDeviceText.innerText = "Samsung Galaxy S23 Ultra (Enlazado)";
+      } else {
+        connectionPill.className = "flex items-center space-x-2 bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-lg";
+        connectionDot.className = "h-2 w-2 rounded-full bg-rose-500";
+        connectionText.className = "text-xs font-semibold text-rose-300";
+        connectionText.innerText = "Desconectado";
 
-        function sendText(text) {
-            if (!text) return;
-            sendPayload({ type: 'type', text });
-            appendLog(`Texto enviado: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`);
-        }
+        btnConnectToggle.className = "flex-1 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-medium text-xs px-4 py-3 rounded-xl border border-cyan-500/40 shadow-sm transition active:scale-[0.98] flex items-center justify-center space-x-2";
+        btnConnectText.innerText = "Conectar";
 
-        function sendKey(key) {
-            sendPayload({ type: 'key', key });
-            appendLog(`Tecla: ${key}`);
-        }
+        specDot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
+        specDeviceText.innerText = "Esperando conexión...";
+        specLatencyChip.innerText = "RTT: -- ms";
+        titlebarPingText.innerText = "-- ms";
+      }
+    }
 
-        async function connectPhone() {
-            appendLog(`Conectando a ${phoneIpInput.value}...`);
-            connectWebSocket();
-        }
+    function connectWebSocket() {
+      if (ws) {
+        manualDisconnect = true;
+        try { ws.close(); } catch(e) {}
+        ws = null;
+      }
 
-        async function runBenchmark() {
-            appendLog('🚀 Ejecutando test de latencia en ráfaga (10 paquetes)...');
-            for (let i = 0; i < 10; i++) {
-                const id = ++pingSeq;
-                const start = performance.now();
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'ping', id: id, t: start }));
-                    pendingPings.set(id, start);
-                } else {
-                    const host = getBaseHost();
-                    const res = await fetch(`http://${host}/api/ping`).catch(() => null);
-                    if (res && res.ok) {
-                        updatePingUI(Math.round(performance.now() - start));
-                    }
-                }
-                await new Promise(r => setTimeout(r, 80));
-            }
-            appendLog('✅ Test completado.');
-        }
+      manualDisconnect = false;
+      const host = getBaseHost();
+      const wsUrl = `ws://${host}/ws`;
+      appendLog(`Conectando WebSocket a ${wsUrl}...`);
 
+      try {
+        ws = new WebSocket(wsUrl);
 
-        // =========================================================
-        // FASE 3 — Optimización: Ping con requestIdleCallback
-        // (No compite con keystrokes en el hilo de render)
-        // =========================================================
-        function schedulePing() {
-            requestIdleCallback(() => {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    const id = ++pingSeq;
-                    const now = performance.now();
-                    pendingPings.set(id, now);
-                    // JSON literal pre-armado: evita JSON.stringify por ping
-                    ws.send(`{"type":"ping","id":${id},"t":${now}}`);
-                }
-                setTimeout(schedulePing, 5000); // cada 5s, no 1.5s
-            }, { timeout: 3000 });
-        }
-        schedulePing();
-
-        async function autoScan() {
-            appendLog("🔍 Escaneando red local en busca de tu teléfono Android...");
-            statusBadge.className = 'badge-status disconnected';
-            statusBadge.innerText = 'Escaneando...';
-            
-            const subnets = ['192.168.1.', '192.168.0.', '192.168.100.'];
-            let found = false;
-
-            for (const sub of subnets) {
-                if (found) break;
-                const promises = [];
-                for (let i = 2; i <= 254; i++) {
-                    const testUrl = `http://${sub}${i}:9999/api/ping`;
-                    promises.push(
-                        fetch(testUrl, { signal: AbortSignal.timeout(600) })
-                            .then(r => r.ok ? `${sub}${i}:9999` : null)
-                            .catch(() => null)
-                    );
-                }
-                const results = await Promise.all(promises);
-                for (const r of results) {
-                    if (r) {
-                        found = true;
-                        phoneIpInput.value = r;
-                        connectPhone();
-                        break;
-                    }
-                }
-            }
-
-            if (!found) {
-                appendLog("⚠️ No se detectó automáticamente. Ingresa la IP que muestra la app de tu teléfono.");
-            }
-        }
-
-        // Focus handling
-        window.addEventListener('focus', () => {
-            focusBanner.className = 'focus-banner focused';
-            focusIcon.innerText = '🟢';
-            focusText.innerText = 'Capturando Teclas Físicas';
-            liveInput.focus();
-        });
-
-        window.addEventListener('blur', () => {
-            focusBanner.className = 'focus-banner unfocused';
-            focusIcon.innerText = '⚠️';
-            focusText.innerText = 'Ventana sin foco: Haz clic aquí para escribir';
-        });
-
-        const PROFILES = {
-            default: {},
-            vscode: {
-                'CTRL+SHIFT+KeyP': { type: 'raw', key: 'p', code: 'KeyP', mods: ['CTRL', 'SHIFT'] },
-                'CTRL+Backquote': { type: 'raw', key: '`', code: 'Backquote', mods: ['CTRL'] },
-                'ALT+ArrowUp': { type: 'raw', key: 'ArrowUp', code: 'ArrowUp', mods: ['ALT'] },
-                'ALT+ArrowDown': { type: 'raw', key: 'ArrowDown', code: 'ArrowDown', mods: ['ALT'] }
-            },
-            intellij: {
-                'CTRL+SHIFT+KeyA': { type: 'raw', key: 'a', code: 'KeyA', mods: ['CTRL', 'SHIFT'] },
-                'ALT+Enter': { type: 'raw', key: 'Enter', code: 'Enter', mods: ['ALT'] },
-                'CTRL+KeyD': { type: 'raw', key: 'd', code: 'KeyD', mods: ['CTRL'] }
-            },
-            termux: {},
-            acode: {}
+        ws.onopen = () => {
+          appendLog(`⚡ Conexión establecida con ${host}`);
+          updateConnectionUI(true);
+          reconnectDelay = 1000;
+          runBenchmark();
         };
 
-        function sendRawKey(action, key, code, modifiers) {
-            triggerPulse();
-            const payload = {
-                type: 'key_event',
-                action: action,
-                key: key,
-                code: code,
-                modifiers: modifiers,
-                timestamp: Date.now()
-            };
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
-                // Solo loguear keydown para no spamear el log
-                if (action === 'keydown') appendLog(`⌨️ ${code}${modifiers.length ? ' ['+modifiers.join('+')+']' : ''}`);
-            } else {
-                const host = getBaseHost();
-                fetch(`http://${host}/api/key_event`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).catch(() => {});
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'pong') {
+              const rtt = Date.now() - data.t;
+              titlebarPingText.innerText = `${rtt} ms`;
+              specLatencyChip.innerText = `RTT: ${rtt} ms`;
+              ipcRenderer.send('update-ping', rtt);
+            } else if (data.type === 'clipboard_sync') {
+              if (data.contentType === 'text') {
+                window._lastClipboardText = data.content;
+                clipboard.writeText(data.content);
+                appendLog('📋 Portapapeles sincronizado desde Android (texto)', 'clip');
+              }
             }
-        }
-
-        // =========================================================
-        // FASE 1 — Fix: handleKey unificado — SIEMPRE sendRawKey
-        // para teclas especiales (preserva keyup + metaState completo)
-        // =========================================================
-
-        // Teclas que son "especiales" y necesitan pasar por sendRawKey
-        // El 'code' del evento ya tiene el valor correcto (ShiftLeft, etc.)
-        const SPECIAL_CODES = new Set([
-            'Backspace', 'Delete', 'Insert', 'Enter', 'NumpadEnter',
-            'Tab', 'Space', 'Escape',
-            'Home', 'End', 'PageUp', 'PageDown',
-            'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-            'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
-            'PrintScreen', 'ScrollLock', 'Pause', 'CapsLock', 'NumLock',
-            'ContextMenu',
-            'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
-            'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
-            'NumpadAdd', 'NumpadSubtract', 'NumpadMultiply', 'NumpadDivide',
-            'NumpadDecimal', 'NumpadEnter',
-        ]);
-
-        let currentKeyboardMode = localStorage.getItem('rk_keyboard_mode') || 'code';
-
-        let composeMap = {};
-        let composePrefixes = new Set();
-        let macroWindow = "";
-        let deadKeyBuffer = "";
-
-        function loadComposeMap(mode) {
-            const fs = require('fs');
-            const path = require('path');
-            try {
-                const activePath = path.join(__dirname, 'config', 'active_layouts.json');
-                const activeLayouts = JSON.parse(fs.readFileSync(activePath, 'utf8'));
-                const files = mode === 'code' ? activeLayouts.codigo_pro_mode : activeLayouts.diario_mode;
-                
-                composeMap = {};
-                composePrefixes.clear();
-                deadKeyBuffer = "";
-                macroWindow = "";
-
-                if (files) {
-                    files.forEach(file => {
-                        const layoutPath = path.join(__dirname, 'config', 'layouts', file);
-                        if (fs.existsSync(layoutPath)) {
-                            const data = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
-                            if (data.compose_map) Object.assign(composeMap, data.compose_map);
-                            if (data.macros) Object.assign(composeMap, data.macros);
-                        }
-                    });
-                }
-
-                // If in Diario mode, compute dead key prefixes
-                if (mode === 'daily') {
-                    for (let key in composeMap) {
-                        for (let i = 1; i < key.length; i++) {
-                            composePrefixes.add(key.substring(0, i));
-                        }
-                    }
-                }
-
-                appendLog(`📖 Layouts cargados (${mode}): ${files ? files.length : 0} archivo(s), ${Object.keys(composeMap).length} secuencias`);
-            } catch(e) {
-                appendLog(`⚠️ Error cargando layouts: ${e.message}`);
-            }
-        }
-
-        function setKeyboardMode(mode) {
-            currentKeyboardMode = mode;
-            localStorage.setItem('rk_keyboard_mode', mode);
-            updateKeyboardModeUI();
-            appendLog(`🔄 Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario (Normal)'}`);
-            loadComposeMap(mode);
-            try {
-                sendPayload({
-                    type: "set_theme",
-                    theme: mode === 'code' ? 'pro' : 'daily'
-                });
-            } catch (e) {}
-        }
-
-
-        function updateKeyboardModeUI() {
-            const btnCode = document.getElementById('btn-mode-code');
-            const btnDaily = document.getElementById('btn-mode-daily');
-            if (!btnCode || !btnDaily) return;
-            if (currentKeyboardMode === 'code') {
-                btnCode.style.background = '#6366f1';
-                btnCode.style.color = '#fff';
-                btnDaily.style.background = 'transparent';
-                btnDaily.style.color = '#a6adc8';
-            } else {
-                btnDaily.style.background = '#10b981';
-                btnDaily.style.color = '#fff';
-                btnCode.style.background = 'transparent';
-                btnCode.style.color = '#a6adc8';
-            }
-        }
-        updateKeyboardModeUI();
-
-        function executeMacro(macroStr) {
-            // Process macro string which may contain text and escape sequences
-            // E.g., "console.log();\u001B[D\u001B[D"
-            let i = 0;
-            let currentText = "";
-            while (i < macroStr.length) {
-                if (macroStr[i] === '\u001B' && macroStr[i+1] === '[') {
-                    if (currentText) {
-                        sendText(currentText);
-                        currentText = "";
-                    }
-                    const action = macroStr[i+2];
-                    if (action === 'D') sendRawKey('keydown', 'ArrowLeft', 'ArrowLeft', []);
-                    else if (action === 'C') sendRawKey('keydown', 'ArrowRight', 'ArrowRight', []);
-                    else if (action === 'A') sendRawKey('keydown', 'ArrowUp', 'ArrowUp', []);
-                    else if (action === 'B') sendRawKey('keydown', 'ArrowDown', 'ArrowDown', []);
-                    i += 3;
-                } else if (macroStr[i] === '\n') {
-                    if (currentText) {
-                        sendText(currentText);
-                        currentText = "";
-                    }
-                    sendRawKey('keydown', 'Enter', 'Enter', []);
-                    i++;
-                } else {
-                    currentText += macroStr[i];
-                    i++;
-                }
-            }
-            if (currentText) sendText(currentText);
-        }
-
-        function handleKey(e) {
-            e.preventDefault();
-            
-            const key   = e.key;
-            const code  = e.code;
-            const action = e.type === 'keyup' ? 'keyup' : 'keydown';
-            
-            let mods = [];
-            if (e.ctrlKey)  mods.push('CTRL');
-            if (e.shiftKey) mods.push('SHIFT');
-            if (e.altKey)   mods.push('ALT');
-            if (e.metaKey)  mods.push('META');
-            
-            // ⚡ MODO CÓDIGO (Programador / Turbo)
-            if (currentKeyboardMode === 'code') {
-                sendRawKey(action, key, code, mods);
-
-                if (action === 'keydown' && key.length === 1 && mods.length === 0) {
-                    macroWindow += key;
-                    if (macroWindow.length > 20) macroWindow = macroWindow.substring(macroWindow.length - 20);
-                    
-                    for (let macroKey in composeMap) {
-                        if (macroWindow.endsWith(macroKey)) {
-                            // Backspace the macro key length
-                            for (let i = 0; i < macroKey.length; i++) {
-                                sendRawKey('keydown', 'Backspace', 'Backspace', []);
-                            }
-                            executeMacro(composeMap[macroKey]);
-                            macroWindow = ""; // reset
-                            appendLog(`🪄 Macro ejecutado: ${macroKey}`);
-                            break;
-                        }
-                    }
-                }
-                return;
-            }
-            
-            // 📝 MODO DIARIO (Normal)
-            if (e.ctrlKey || e.altKey || e.metaKey) {
-                if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
-                sendRawKey(action, key, code, mods);
-                return;
-            }
-            
-            if (SPECIAL_CODES.has(code)) {
-                if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
-                sendRawKey(action, key, code, mods);
-                return;
-            }
-            
-            if (key.length === 1 && action === 'keydown') {
-                let candidate = deadKeyBuffer + key;
-                if (composeMap[candidate]) {
-                    sendText(composeMap[candidate]);
-                    deadKeyBuffer = "";
-                } else if (composePrefixes.has(candidate)) {
-                    deadKeyBuffer = candidate; // hold it
-                } else {
-                    if (deadKeyBuffer) {
-                        sendText(deadKeyBuffer);
-                        deadKeyBuffer = "";
-                    }
-                    sendText(key);
-                }
-                return;
-            }
-            
-            if (action === 'keydown') {
-                sendRawKey(action, key, code, mods);
-            }
-        }
-
-        liveInput.addEventListener('keydown', handleKey);
-        liveInput.addEventListener('keyup', handleKey);
-
-        ipcRenderer.on('simulate-keystroke', (event, keyData) => {
-            const mockEvent = {
-                preventDefault: () => {},
-                type: keyData.type || 'keydown',
-                key: keyData.key,
-                code: keyData.code,
-                ctrlKey: keyData.ctrlKey || false,
-                altKey: keyData.altKey || false,
-                shiftKey: keyData.shiftKey || false,
-                metaKey: keyData.metaKey || false
-            };
-            handleKey(mockEvent);
-        });
-
-        // =========================================================
-        // Pegado desde rueda del ratón (PC -> Android)
-        // =========================================================
-        function pasteClipboardToPhone() {
-            try {
-                const electronClipboard = require('electron').clipboard;
-                const text = electronClipboard.readText();
-                if (!text) {
-                    appendLog('📋 Portapapeles vacío en Windows');
-                    return;
-                }
-                // Actualizar cache para no duplicar en el sync periódico de 500ms
-                window._lastClipboardText = text;
-                sendPayload({ type: 'clipboard_sync', contentType: 'text', content: text });
-                sendText(text);
-                appendLog(`📋 Pegado (rueda ratón): "${text.length > 25 ? text.substring(0, 25) + '...' : text}"`);
-            } catch (e) {
-                appendLog('⚠️ Error al pegar portapapeles: ' + e.message);
-            }
-        }
-
-        ipcRenderer.on('trigger-paste', () => {
-            pasteClipboardToPhone();
-        });
-
-        // Soporte de clic de rueda en la ventana principal
-        let lastMainWheelPaste = 0;
-        function handleMainWheelClick(e) {
-            if (e.button === 1) { // 1 = Botón central / rueda
-                e.preventDefault();
-                const now = Date.now();
-                if (now - lastMainWheelPaste < 350) return; // Anti doble-pegado
-                lastMainWheelPaste = now;
-                pasteClipboardToPhone();
-            }
-        }
-        window.addEventListener('mousedown', handleMainWheelClick);
-        window.addEventListener('auxclick', handleMainWheelClick);
-
-        // =========================================================
-        // FASE 2 — Panel de Shortcuts (dinámico desde shortcuts.js)
-        // =========================================================
-        const SHORTCUTS_CATALOG = require('./shortcuts.js');
-        let activeShortcutTab = SHORTCUTS_CATALOG[0].id;
-        let shortcutsPanelOpen = true;
-
-        function toggleShortcutsPanel() {
-            shortcutsPanelOpen = !shortcutsPanelOpen;
-            const body = document.getElementById('sp-body');
-            const toggle = document.getElementById('sp-toggle');
-            body.style.display = shortcutsPanelOpen ? '' : 'none';
-            toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
-        }
-
-        function renderShortcutsPanel() {
-            const tabsEl = document.getElementById('sp-tabs');
-            const gridEl = document.getElementById('sp-grid');
-
-            // Render tabs
-            tabsEl.innerHTML = '';
-            SHORTCUTS_CATALOG.forEach(cat => {
-                const tab = document.createElement('button');
-                tab.className = 'sp-tab' + (cat.id === activeShortcutTab ? ' active' : '');
-                tab.textContent = cat.label;
-                tab.onclick = () => {
-                    activeShortcutTab = cat.id;
-                    renderShortcutsPanel();
-                };
-                tabsEl.appendChild(tab);
-            });
-
-            // Render grid for active tab
-            gridEl.innerHTML = '';
-            const activeCat = SHORTCUTS_CATALOG.find(c => c.id === activeShortcutTab);
-            if (!activeCat) return;
-
-            activeCat.shortcuts.forEach(sc => {
-                const btn = document.createElement('button');
-                btn.className = 'sp-btn';
-                btn.innerHTML = `${sc.label}<span class="sp-combo">${sc.combo}</span>`;
-                btn.title = `Enviar: ${sc.combo}`;
-                btn.onclick = () => sendShortcut(sc);
-                gridEl.appendChild(btn);
-            });
-        }
-
-        function sendShortcut(sc) {
-            if (sc.type === 'key') {
-                sendKey(sc.key);
-            } else if (sc.type === 'key_event') {
-                // Simular keydown + keyup
-                sendRawKey('keydown', sc.code, sc.code, sc.mods || []);
-                setTimeout(() => sendRawKey('keyup', sc.code, sc.code, sc.mods || []), 50);
-            } else if (sc.type === 'text') {
-                sendText(sc.text);
-            }
-            appendLog(`🖱️ Shortcut: ${sc.combo}`);
-            liveInput.focus();
-        }
-
-        // Inicializar panel
-        renderShortcutsPanel();
-
-
-
-
-
-        // --- Párrafo Largo y Dictado por Voz ---
-        let recognition = null;
-        let isDictating = false;
-        const btnDictate = document.getElementById('btn-dictate');
-
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'es-ES';
-
-            recognition.onstart = () => {
-                isDictating = true;
-                btnDictate.style.background = '#fecaca'; // Rojo clarito
-                btnDictate.style.color = '#ef4444';
-                btnDictate.innerText = '🔴 Escuchando...';
-                appendLog('🎤 Dictado iniciado');
-            };
-
-            recognition.onresult = (event) => {
-                let finalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-
-                if (finalTranscript) {
-                    if (paragraphInput.value && !paragraphInput.value.endsWith(' ')) {
-                        paragraphInput.value += ' ';
-                    }
-                    paragraphInput.value += finalTranscript;
-                }
-            };
-
-            recognition.onerror = (e) => {
-                appendLog('⚠️ Error de dictado: ' + e.error);
-                stopDictation();
-            };
-
-            recognition.onend = () => {
-                stopDictation();
-            };
-        }
-
-        function toggleDictation() {
-            if (!recognition) {
-                alert("Tu sistema no soporta el reconocimiento de voz nativo.");
-                return;
-            }
-            if (isDictating) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
-        }
-
-        function stopDictation() {
-            isDictating = false;
-            btnDictate.style.background = '#ffffff';
-            btnDictate.style.color = 'var(--text-main)';
-            btnDictate.innerText = '🎤 Dictar';
-        }
-        function sendParagraph() {
-            const text = paragraphInput.value;
-            if (!text.trim()) return;
-            sendText(text);
-            paragraphInput.value = '';
-            liveInput.focus();
-        }
-
-        paragraphInput.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                sendParagraph();
-            }
-        });
-
-        let udpServer = null;
-        function startUdpDiscovery() {
-            try {
-                udpServer = dgram.createSocket('udp4');
-                udpServer.on('error', (err) => {
-                    appendLog(`⚠️ Error UDP: ${err.message}`);
-                    udpServer.close();
-                });
-                udpServer.on('message', (msg, rinfo) => {
-                    try {
-                        const data = JSON.parse(msg.toString());
-                        if (data.app === 'remote-keyboard') {
-                            const newIp = `${rinfo.address}:${data.port}`;
-                            if (phoneIpInput.value !== newIp && (!ws || ws.readyState !== WebSocket.OPEN)) {
-                                appendLog(`📡 Auto-conectando a: ${data.device} en ${newIp}`);
-                                phoneIpInput.value = newIp;
-                                connectPhone();
-                            }
-                        }
-                    } catch (e) {}
-                });
-                udpServer.bind(9998, () => {
-                    appendLog('🎧 Escuchando auto-descubrimiento en puerto 9998');
-                });
-            } catch (e) {
-                appendLog(`⚠️ No se pudo iniciar UDP: ${e.message}`);
-            }
-        }
-        startUdpDiscovery();
-
-        setTimeout(connectPhone, 500);
-
-        // =========================================================
-        // PORTAPAPELES MÁGICO: Polling y Envío (PC -> Móvil)
-        // =========================================================
-        const { clipboard, nativeImage } = require('electron');
-        window._lastClipboardText = clipboard.readText() || '';
-        
-        window._getImageHash = function(nativeImg) {
-            if (!nativeImg || nativeImg.isEmpty()) return '';
-            const size = nativeImg.getSize();
-            try {
-                const bmp = nativeImg.getBitmap();
-                const len = bmp.length;
-                if (len === 0) return '';
-                // Hash ligero con algunos bytes
-                const s = bmp[0] + ',' + bmp[Math.floor(len/2)] + ',' + bmp[len-1];
-                return `${size.width}x${size.height}_${len}_${s}`;
-            } catch(e) {
-                return `${size.width}x${size.height}`;
-            }
+          } catch(e) {}
         };
 
-        window._lastClipboardImageHash = '';
-        try { window._lastClipboardImageHash = window._getImageHash(clipboard.readImage()); } catch(e) {}
+        ws.onclose = () => {
+          appendLog('❌ WebSocket desconectado', 'err');
+          updateConnectionUI(false);
+          ws = null;
+          if (!manualDisconnect && reconnectDelay <= 30000) {
+            appendLog(`🔄 Reconectando en ${reconnectDelay / 1000}s...`);
+            reconnectTimer = setTimeout(() => {
+              reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+              connectWebSocket();
+            }, reconnectDelay);
+          }
+        };
 
-        setInterval(() => {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.onerror = () => {
+          appendLog('⚠️ Error de conexión en socket local', 'err');
+        };
+      } catch (e) {
+        appendLog('⚠️ Error iniciando WebSocket: ' + e.message, 'err');
+      }
+    }
 
-            try {
-                // 1. Text Sync
-                const currentText = clipboard.readText();
-                if (currentText && currentText !== window._lastClipboardText) {
-                    window._lastClipboardText = currentText;
-                    appendLog('📋 Sincronizando texto copiado...');
-                    sendPayload({ type: 'clipboard_sync', contentType: 'text', content: currentText });
-                }
+    function toggleConnect() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        manualDisconnect = true;
+        ws.close();
+        ws = null;
+        updateConnectionUI(false);
+        appendLog('Desconectado manualmente');
+      } else {
+        connectWebSocket();
+      }
+    }
 
-                // 2. Image Sync (solo si hay imágenes disponibles para no sobrecargar)
-                const formats = clipboard.availableFormats();
-                if (formats.some(f => f.includes('image/'))) {
-                    const currentImg = clipboard.readImage();
-                    const currentHash = window._getImageHash(currentImg);
-                    if (currentHash && currentHash !== window._lastClipboardImageHash) {
-                        window._lastClipboardImageHash = currentHash;
-                        appendLog('📸 Sincronizando imagen copiada...');
-                        sendPayload({ type: 'clipboard_sync', contentType: 'image', content: currentImg.toDataURL() });
-                    }
-                }
-            } catch(e) {}
-        }, 500);
+    function reconnectWebSocket() {
+      connectWebSocket();
+    }
 
-    </script>
+    function copyIpAddress() {
+      clipboard.writeText(endpointIpInput.value);
+      appendLog('IP copiada al portapapeles');
+    }
+
+    function sendPayload(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+        return true;
+      } else {
+        // HTTP fallback
+        const host = getBaseHost();
+        let endpoint = 'type';
+        if (payload.type === 'key') endpoint = 'key';
+        if (payload.type === 'key_event') endpoint = 'key_event';
+        fetch(`http://${host}/api/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+        return false;
+      }
+    }
+
+    function sendText(text) {
+      if (!text) return;
+      sendPayload({ type: 'type', text });
+      totalKeysTypedCount += text.length;
+      totalKeysCounter.innerText = totalKeysTypedCount;
+    }
+
+    function sendRawKey(action, key, code, modifiers) {
+      const payload = {
+        type: 'key_event',
+        action,
+        key,
+        code,
+        modifiers,
+        timestamp: Date.now()
+      };
+      sendPayload(payload);
+      totalKeysTypedCount++;
+      totalKeysCounter.innerText = totalKeysTypedCount;
+    }
+
+    function runBenchmark() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const id = ++pingSeq;
+      const t = Date.now();
+      sendPayload({ type: 'ping', id, t });
+    }
+
+    // UDP Auto-Discovery Beacon
+    function autoScan() {
+      appendLog('🔍 Buscando teléfono en la red local (UDP Broadcast)...');
+      const scanIcon = document.getElementById('scan-icon');
+      if (scanIcon) scanIcon.classList.add('animate-spin');
+
+      try {
+        const socket = dgram.createSocket('udp4');
+        socket.bind(9998, () => {
+          socket.setBroadcast(true);
+        });
+
+        const timer = setTimeout(() => {
+          try { socket.close(); } catch(e) {}
+          if (scanIcon) scanIcon.classList.remove('animate-spin');
+          appendLog('Auto-detección completada.');
+        }, 3500);
+
+        socket.on('message', (msg, rinfo) => {
+          try {
+            const data = JSON.parse(msg.toString());
+            if (data.service === 'remote-wifi-keyboard' || data.port) {
+              const discovered = `${rinfo.address}:${data.port || 9999}`;
+              endpointIpInput.value = discovered;
+              appendLog(`🎉 Teléfono detectado: ${discovered} (${data.device || 'Android'})`);
+              clearTimeout(timer);
+              socket.close();
+              if (scanIcon) scanIcon.classList.remove('animate-spin');
+              connectWebSocket();
+            }
+          } catch(e) {}
+        });
+      } catch(e) {
+        if (scanIcon) scanIcon.classList.remove('animate-spin');
+        appendLog('⚠️ Error en escaneo UDP: ' + e.message, 'err');
+      }
+    }
+
+    // =========================================================
+    // Layouts, Dead Keys & Macro Engine
+    // =========================================================
+    let currentKeyboardMode = localStorage.getItem('rk_keyboard_mode') || 'code';
+    let composeMap = {};
+    let composePrefixes = new Set();
+    let macroWindow = "";
+    let deadKeyBuffer = "";
+
+    const SPECIAL_CODES = new Set([
+      'Backspace', 'Delete', 'Enter', 'Tab', 'Escape',
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+      'Home', 'End', 'PageUp', 'PageDown',
+      'Insert', 'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'
+    ]);
+
+    function loadComposeMap(mode) {
+      try {
+        const activePath = path.join(__dirname, 'config', 'active_layouts.json');
+        const activeLayouts = JSON.parse(fs.readFileSync(activePath, 'utf8'));
+        const files = mode === 'code' ? activeLayouts.codigo_pro_mode : activeLayouts.diario_mode;
+        
+        composeMap = {};
+        composePrefixes.clear();
+        deadKeyBuffer = "";
+        macroWindow = "";
+
+        if (files) {
+          files.forEach(file => {
+            const layoutPath = path.join(__dirname, 'config', 'layouts', file);
+            if (fs.existsSync(layoutPath)) {
+              const data = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
+              if (data.compose_map) Object.assign(composeMap, data.compose_map);
+              if (data.macros) Object.assign(composeMap, data.macros);
+            }
+          });
+        }
+
+        if (mode === 'daily') {
+          for (let key in composeMap) {
+            for (let i = 1; i < key.length; i++) {
+              composePrefixes.add(key.substring(0, i));
+            }
+          }
+        }
+        appendLog(`📖 Layout cargado (${mode}): ${Object.keys(composeMap).length} secuencias`);
+      } catch(e) {
+        appendLog(`⚠️ Error cargando layouts: ${e.message}`, 'err');
+      }
+    }
+
+    function setKeyboardMode(mode) {
+      currentKeyboardMode = mode;
+      localStorage.setItem('rk_keyboard_mode', mode);
+      
+      const codeBtn = document.getElementById('mode-code-btn');
+      const dailyBtn = document.getElementById('mode-daily-btn');
+      const layoutSelect = document.getElementById('layout-select');
+
+      if (mode === 'code') {
+        codeBtn.className = "flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-300 bg-amber-500/20 border border-amber-500/40 shadow-sm transition-all";
+        dailyBtn.className = "flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all";
+        if (layoutSelect) layoutSelect.value = 'code';
+      } else {
+        dailyBtn.className = "flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 shadow-sm transition-all";
+        codeBtn.className = "flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all";
+        if (layoutSelect) layoutSelect.value = 'daily';
+      }
+
+      loadComposeMap(mode);
+      appendLog(`Perfil cambiado a: ${mode === 'code' ? '⚡ Modo Código (Pro)' : '📝 Modo Diario'}`);
+    }
+
+    function changeProfile(val) {
+      setKeyboardMode(val);
+    }
+
+    function executeMacro(macroStr) {
+      let i = 0;
+      let currentText = "";
+      while (i < macroStr.length) {
+        if (macroStr[i] === '\u001B' && macroStr[i+1] === '[') {
+          if (currentText) {
+            sendText(currentText);
+            currentText = "";
+          }
+          const action = macroStr[i+2];
+          if (action === 'D') sendRawKey('keydown', 'ArrowLeft', 'ArrowLeft', []);
+          else if (action === 'C') sendRawKey('keydown', 'ArrowRight', 'ArrowRight', []);
+          else if (action === 'A') sendRawKey('keydown', 'ArrowUp', 'ArrowUp', []);
+          else if (action === 'B') sendRawKey('keydown', 'ArrowDown', 'ArrowDown', []);
+          i += 3;
+        } else if (macroStr[i] === '\n') {
+          if (currentText) {
+            sendText(currentText);
+            currentText = "";
+          }
+          sendRawKey('keydown', 'Enter', 'Enter', []);
+          i++;
+        } else {
+          currentText += macroStr[i];
+          i++;
+        }
+      }
+      if (currentText) sendText(currentText);
+    }
+
+    function handleKey(e) {
+      e.preventDefault();
+      const action = e.type === 'keyup' ? 'keyup' : 'keydown';
+      const key = e.key;
+      const code = e.code;
+
+      const mods = [];
+      if (e.ctrlKey)  mods.push('CTRL');
+      if (e.altKey)   mods.push('ALT');
+      if (e.shiftKey) mods.push('SHIFT');
+      if (e.metaKey)  mods.push('META');
+
+      // Update UI last key display
+      if (action === 'keydown') {
+        lastKeyBadge.innerText = `${key.length === 1 ? key : code}`;
+        renderLiveKeyTag(key, code);
+      }
+
+      // ⚡ MODO CÓDIGO (Programador / Turbo + Rolling Macro Window)
+      if (currentKeyboardMode === 'code') {
+        sendRawKey(action, key, code, mods);
+
+        if (action === 'keydown' && key.length === 1 && mods.length === 0) {
+          macroWindow += key;
+          if (macroWindow.length > 20) macroWindow = macroWindow.substring(macroWindow.length - 20);
+
+          for (let macroKey in composeMap) {
+            if (macroWindow.endsWith(macroKey)) {
+              for (let i = 0; i < macroKey.length; i++) {
+                sendRawKey('keydown', 'Backspace', 'Backspace', []);
+              }
+              executeMacro(composeMap[macroKey]);
+              macroWindow = "";
+              appendLog(`🪄 Macro ejecutado: ${macroKey}`, 'key');
+              break;
+            }
+          }
+        }
+        return;
+      }
+
+      // 📝 MODO DIARIO (Dead Keys)
+      if (e.ctrlKey || e.altKey || e.metaKey) {
+        if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
+        sendRawKey(action, key, code, mods);
+        return;
+      }
+
+      if (SPECIAL_CODES.has(code)) {
+        if (deadKeyBuffer) { sendText(deadKeyBuffer); deadKeyBuffer = ""; }
+        sendRawKey(action, key, code, mods);
+        return;
+      }
+
+      if (key.length === 1 && action === 'keydown') {
+        let candidate = deadKeyBuffer + key;
+        if (composeMap[candidate]) {
+          sendText(composeMap[candidate]);
+          deadKeyBuffer = "";
+        } else if (composePrefixes.has(candidate)) {
+          deadKeyBuffer = candidate;
+        } else {
+          if (deadKeyBuffer) {
+            sendText(deadKeyBuffer);
+            deadKeyBuffer = "";
+          }
+          sendText(key);
+        }
+        return;
+      }
+
+      if (action === 'keydown') {
+        sendRawKey(action, key, code, mods);
+      }
+    }
+
+    function renderLiveKeyTag(key, code) {
+      if (liveDisplay.querySelector('.text-slate-400')) {
+        liveDisplay.innerHTML = '';
+      }
+      const tag = document.createElement('span');
+      tag.className = 'bg-cyan-900/60 text-cyan-200 border border-cyan-500/40 px-2 py-0.5 rounded text-xs font-mono inline-block animate-pulse';
+      tag.textContent = key.length === 1 ? key : `[${code}]`;
+      liveDisplay.appendChild(tag);
+
+      // Keep cursor dot
+      const existingCursor = liveDisplay.querySelector('.cursor-dot');
+      if (existingCursor) existingCursor.remove();
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor-dot inline-block w-2.5 h-4 bg-cyan-400 animate-pulse ml-1 rounded-sm';
+      liveDisplay.appendChild(cursor);
+
+      if (liveDisplay.children.length > 25) {
+        liveDisplay.removeChild(liveDisplay.children[0]);
+      }
+    }
+
+    // Capture Box Focus/Blur Listeners
+    captureBox.addEventListener('focus', () => {
+      focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-[11px] text-cyan-300 font-medium glow-cyan";
+      focusText.innerText = "Captura activa directa (< 3ms)";
+    });
+
+    captureBox.addEventListener('blur', () => {
+      focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-medium";
+      focusText.innerText = "Ventana sin foco: Haz clic para escribir";
+    });
+
+    captureBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        captureBox.blur();
+        return;
+      }
+      handleKey(e);
+    });
+    captureBox.addEventListener('keyup', handleKey);
+
+    // Global Key Listener when window has focus
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === textarea || document.activeElement === endpointIpInput) return;
+      if (document.activeElement !== captureBox) {
+        handleKey(e);
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (document.activeElement === textarea || document.activeElement === endpointIpInput) return;
+      if (document.activeElement !== captureBox) {
+        handleKey(e);
+      }
+    });
+
+    // Keystroke forwarding from Mini Widget
+    ipcRenderer.on('simulate-keystroke', (event, keyData) => {
+      const mockEvent = {
+        preventDefault: () => {},
+        type: keyData.type || 'keydown',
+        key: keyData.key,
+        code: keyData.code,
+        ctrlKey: keyData.ctrlKey || false,
+        altKey: keyData.altKey || false,
+        shiftKey: keyData.shiftKey || false,
+        metaKey: keyData.metaKey || false
+      };
+      handleKey(mockEvent);
+    });
+
+    // =========================================================
+    // Mouse Wheel Middle Click Paste (Anti Doble-Pegado)
+    // =========================================================
+    function pasteClipboardToPhone() {
+      try {
+        const text = clipboard.readText();
+        if (!text) {
+          appendLog('📋 Portapapeles vacío en Windows', 'clip');
+          return;
+        }
+        window._lastClipboardText = text;
+        sendPayload({ type: 'clipboard_sync', contentType: 'text', content: text });
+        sendText(text);
+        appendLog(`📋 Pegado (rueda ratón): "${text.length > 25 ? text.substring(0, 25) + '...' : text}"`, 'clip');
+      } catch (e) {
+        appendLog('⚠️ Error al pegar portapapeles: ' + e.message, 'err');
+      }
+    }
+
+    ipcRenderer.on('trigger-paste', () => {
+      pasteClipboardToPhone();
+    });
+
+    let lastMainWheelPaste = 0;
+    function handleMainWheelClick(e) {
+      if (e.button === 1) { // 1 = Botón central / rueda
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastMainWheelPaste < 350) return;
+        lastMainWheelPaste = now;
+        pasteClipboardToPhone();
+      }
+    }
+    window.addEventListener('mousedown', handleMainWheelClick);
+    window.addEventListener('auxclick', handleMainWheelClick);
+
+    // =========================================================
+    // Large Text Buffer / Paragraph Operations
+    // =========================================================
+    textarea.addEventListener('input', () => {
+      const text = textarea.value;
+      charsCounter.innerText = text.length;
+      linesCounter.innerText = text.length === 0 ? 1 : text.split('\n').length;
+    });
+
+    textarea.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        sendParagraph();
+      }
+    });
+
+    function clearTextarea() {
+      textarea.value = '';
+      charsCounter.innerText = '0';
+      linesCounter.innerText = '1';
+      textarea.focus();
+    }
+
+    function pasteClipboardToTextarea() {
+      try {
+        const text = clipboard.readText();
+        if (text) {
+          textarea.value = text;
+          charsCounter.innerText = text.length;
+          linesCounter.innerText = text.split('\n').length;
+        }
+      } catch(e) {}
+    }
+
+    function sendParagraph() {
+      const text = textarea.value;
+      if (!text.trim()) return;
+
+      sendText(text);
+      appendLog(`📤 Párrafo masivo enviado (${text.length} caracteres)`);
+
+      const sendBtn = document.getElementById('send-to-phone-btn');
+      const originalHTML = sendBtn.innerHTML;
+      sendBtn.innerHTML = `<span>¡Enviado con éxito!</span>`;
+      sendBtn.classList.remove('from-cyan-500', 'to-blue-600');
+      sendBtn.classList.add('from-emerald-500', 'to-teal-600');
+
+      setTimeout(() => {
+        sendBtn.innerHTML = originalHTML;
+        sendBtn.classList.add('from-cyan-500', 'to-blue-600');
+        sendBtn.classList.remove('from-emerald-500', 'to-teal-600');
+      }, 1200);
+    }
+
+    function insertRecentText(txt) {
+      textarea.value = txt;
+      charsCounter.innerText = txt.length;
+      linesCounter.innerText = txt.split('\n').length;
+      textarea.focus();
+    }
+
+    // Voice Dictation
+    let recognition = null;
+    let isDictating = false;
+    function toggleDictation() {
+      const btn = document.getElementById('btn-dictate');
+      const btnText = document.getElementById('btn-dictate-text');
+
+      if (!('webkitSpeechRecognition' in window)) {
+        appendLog('⚠️ El reconocimiento de voz no está disponible en este motor.', 'err');
+        return;
+      }
+
+      if (!recognition) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'es-ES';
+
+        recognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+          }
+          textarea.value = transcript;
+          charsCounter.innerText = transcript.length;
+          linesCounter.innerText = transcript.split('\n').length;
+        };
+
+        recognition.onerror = (e) => {
+          appendLog('⚠️ Error en dictado: ' + e.error, 'err');
+          stopDictating();
+        };
+
+        recognition.onend = () => {
+          stopDictating();
+        };
+      }
+
+      if (isDictating) {
+        recognition.stop();
+        stopDictating();
+      } else {
+        recognition.start();
+        isDictating = true;
+        btn.classList.add('border-rose-500', 'bg-rose-950/40');
+        btnText.innerText = 'Grabando...';
+        appendLog('🎤 Dictado por voz iniciado');
+      }
+    }
+
+    function stopDictating() {
+      isDictating = false;
+      const btn = document.getElementById('btn-dictate');
+      const btnText = document.getElementById('btn-dictate-text');
+      btn.classList.remove('border-rose-500', 'bg-rose-950/40');
+      btnText.innerText = 'Dictar por Voz';
+    }
+
+    // =========================================================
+    // Remote Android App Launcher Bar
+    // =========================================================
+    function toggleAppPicker() {
+      const menu = document.getElementById('android-app-picker-menu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    function launchRemoteApp(packageName, appName) {
+      const payload = {
+        type: 'launch_app',
+        package: packageName
+      };
+      sendPayload(payload);
+      appendLog(`🚀 Lanzando ${appName} (${packageName}) en Android...`);
+      toggleAppPicker();
+    }
+
+    // =========================================================
+    // Developer Shortcuts Catalog
+    // =========================================================
+    let shortcutsPanelOpen = true;
+    const SHORTCUTS_CATALOG = require('./shortcuts.js');
+    let activeShortcutTab = SHORTCUTS_CATALOG[0].id;
+
+    function toggleShortcutsPanel() {
+      shortcutsPanelOpen = !shortcutsPanelOpen;
+      const body = document.getElementById('sp-body');
+      const toggle = document.getElementById('sp-toggle');
+      body.style.display = shortcutsPanelOpen ? '' : 'none';
+      toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
+    }
+
+    function renderShortcutsPanel() {
+      const tabsEl = document.getElementById('sp-tabs');
+      const gridEl = document.getElementById('sp-grid');
+      tabsEl.innerHTML = '';
+
+      SHORTCUTS_CATALOG.forEach(cat => {
+        const tab = document.createElement('button');
+        tab.className = `px-3 py-1 rounded-lg text-xs font-medium transition ${
+          cat.id === activeShortcutTab 
+            ? 'bg-slate-700 text-cyan-300 border border-cyan-500/40' 
+            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+        }`;
+        tab.textContent = cat.category;
+        tab.onclick = () => {
+          activeShortcutTab = cat.id;
+          renderShortcutsPanel();
+        };
+        tabsEl.appendChild(tab);
+      });
+
+      const current = SHORTCUTS_CATALOG.find(c => c.id === activeShortcutTab) || SHORTCUTS_CATALOG[0];
+      gridEl.innerHTML = '';
+      current.shortcuts.forEach(sc => {
+        const card = document.createElement('button');
+        card.className = 'p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-left transition active:scale-95 group flex flex-col justify-between';
+        card.innerHTML = `
+          <span class="text-[11px] font-semibold text-slate-200 group-hover:text-cyan-300 leading-tight">${sc.label}</span>
+          <kbd class="mt-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 font-mono text-[9px] border border-slate-700/60 self-start">${sc.combo}</kbd>
+        `;
+        card.onclick = () => {
+          if (sc.type === 'key') {
+            sendPayload({ type: 'key', key: sc.key });
+          } else if (sc.type === 'key_event') {
+            sendRawKey('keydown', sc.key || sc.code, sc.code, sc.mods || []);
+            setTimeout(() => sendRawKey('keyup', sc.key || sc.code, sc.code, sc.mods || []), 40);
+          }
+          appendLog(`⚡ Shortcut disparado: ${sc.label} (${sc.combo})`);
+        };
+        gridEl.appendChild(card);
+      });
+    }
+
+    // =========================================================
+    // Clipboard Polling & Sync (PC -> Android)
+    // =========================================================
+    window._lastClipboardText = clipboard.readText() || '';
+    window._lastClipboardImageHash = '';
+
+    window._getImageHash = function(nativeImg) {
+      if (!nativeImg || nativeImg.isEmpty()) return '';
+      const size = nativeImg.getSize();
+      try {
+        const bmp = nativeImg.getBitmap();
+        const len = bmp.length;
+        if (len === 0) return '';
+        const s = bmp[0] + ',' + bmp[Math.floor(len/2)] + ',' + bmp[len-1];
+        return `${size.width}x${size.height}_${len}_${s}`;
+      } catch(e) {
+        return `${size.width}x${size.height}`;
+      }
+    };
+
+    setInterval(() => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      try {
+        const currentText = clipboard.readText();
+        if (currentText && currentText !== window._lastClipboardText) {
+          window._lastClipboardText = currentText;
+          appendLog('📋 Sincronizando portapapeles con Android...', 'clip');
+          sendPayload({ type: 'clipboard_sync', contentType: 'text', content: currentText });
+        }
+
+        const formats = clipboard.availableFormats();
+        if (formats.some(f => f.includes('image/'))) {
+          const currentImg = clipboard.readImage();
+          const currentHash = window._getImageHash(currentImg);
+          if (currentHash && currentHash !== window._lastClipboardImageHash) {
+            window._lastClipboardImageHash = currentHash;
+            appendLog('📸 Sincronizando imagen del portapapeles...', 'clip');
+            sendPayload({ type: 'clipboard_sync', contentType: 'image', content: currentImg.toDataURL() });
+          }
+        }
+      } catch(e) {}
+    }, 500);
+
+    // Initial setup on boot
+    setKeyboardMode(currentKeyboardMode);
+    renderShortcutsPanel();
+    setTimeout(connectWebSocket, 400);
+</script>
+
 </body>
 </html>

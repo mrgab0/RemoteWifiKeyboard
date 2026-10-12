@@ -18,7 +18,7 @@
   "build": {
     "appId": "com.mrgab0.remotewifikeyboard",
     "productName": "Remote WiFi Keyboard",
-    "compression": "store",
+    "compression": "normal",
     "win": {
       "target": "portable"
     }
