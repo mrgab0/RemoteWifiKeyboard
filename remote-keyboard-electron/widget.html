@@ -75,6 +75,28 @@
         }
         window.addEventListener('keydown', handleWidgetKey);
         window.addEventListener('keyup', handleWidgetKey);
+
+        // Interceptar clic de la rueda del ratón (Middle Click) para pegar en Android
+        let lastWheelPaste = 0;
+        function handleWheelClick(e) {
+            if (e.button === 1) { // 1 = Botón de la rueda del ratón
+                e.preventDefault();
+                e.stopPropagation();
+                const now = Date.now();
+                if (now - lastWheelPaste < 350) return; // Anti-rebote / Anti doble-pegado
+                lastWheelPaste = now;
+
+                // Feedback visual en el widget
+                text.innerText = '📋';
+                setTimeout(() => {
+                    text.innerText = document.hasFocus() ? 'ON' : 'OFF';
+                }, 300);
+
+                ipcRenderer.send('widget-paste');
+            }
+        }
+        window.addEventListener('mousedown', handleWheelClick);
+        window.addEventListener('auxclick', handleWheelClick);
     </script>
 </body>
 </html>

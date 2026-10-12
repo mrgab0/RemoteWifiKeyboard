@@ -81,6 +81,12 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('widget-paste', () => {
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('trigger-paste');
+    }
+  });
+
   // Global Shortcut
   const ret = globalShortcut.register('CommandOrControl+Alt+A', () => {
     if (mainWindow.isFocused()) {

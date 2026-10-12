@@ -996,6 +996,45 @@
         });
 
         // =========================================================
+        // Pegado desde rueda del ratón (PC -> Android)
+        // =========================================================
+        function pasteClipboardToPhone() {
+            try {
+                const electronClipboard = require('electron').clipboard;
+                const text = electronClipboard.readText();
+                if (!text) {
+                    appendLog('📋 Portapapeles vacío en Windows');
+                    return;
+                }
+                // Actualizar cache para no duplicar en el sync periódico de 500ms
+                window._lastClipboardText = text;
+                sendPayload({ type: 'clipboard_sync', contentType: 'text', content: text });
+                sendText(text);
+                appendLog(`📋 Pegado (rueda ratón): "${text.length > 25 ? text.substring(0, 25) + '...' : text}"`);
+            } catch (e) {
+                appendLog('⚠️ Error al pegar portapapeles: ' + e.message);
+            }
+        }
+
+        ipcRenderer.on('trigger-paste', () => {
+            pasteClipboardToPhone();
+        });
+
+        // Soporte de clic de rueda en la ventana principal
+        let lastMainWheelPaste = 0;
+        function handleMainWheelClick(e) {
+            if (e.button === 1) { // 1 = Botón central / rueda
+                e.preventDefault();
+                const now = Date.now();
+                if (now - lastMainWheelPaste < 350) return; // Anti doble-pegado
+                lastMainWheelPaste = now;
+                pasteClipboardToPhone();
+            }
+        }
+        window.addEventListener('mousedown', handleMainWheelClick);
+        window.addEventListener('auxclick', handleMainWheelClick);
+
+        // =========================================================
         // FASE 2 — Panel de Shortcuts (dinámico desde shortcuts.js)
         // =========================================================
         const SHORTCUTS_CATALOG = require('./shortcuts.js');
