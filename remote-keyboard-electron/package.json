@@ -18,6 +18,13 @@
   "build": {
     "appId": "com.mrgab0.remotewifikeyboard",
     "productName": "Remote WiFi Keyboard",
+    "files": [
+      "main.js",
+      "index.html",
+      "widget.html",
+      "shortcuts.js",
+      "package.json"
+    ],
     "compression": "normal",
     "win": {
       "target": "portable"
