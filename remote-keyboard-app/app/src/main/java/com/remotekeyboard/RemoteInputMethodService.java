@@ -71,14 +71,25 @@ public class RemoteInputMethodService extends InputMethodService {
     private java.util.HashMap<String, Button> keyButtons = new java.util.HashMap<>();
     private String pcClipboardText = "";
 
+    public static final String[] THEME_NAMES = {
+        "Cyber-Dark",
+        "Matrix Terminal",
+        "Minimalist Light",
+        "Tokyo Night",
+        "Dracula Purple",
+        "AMOLED Dark Battery Saver",
+        "Cyberpunk Gold"
+    };
+
     // Themes: {Bg, KeyBg, KeyPressed, Text}
     private final int[][] THEMES = {
-        {Color.parseColor("#0B0D14"), Color.parseColor("#1E2337"), Color.parseColor("#818CF8"), Color.WHITE},
-        {Color.parseColor("#000000"), Color.parseColor("#003300"), Color.parseColor("#00FF00"), Color.parseColor("#00FF00")},
-        {Color.parseColor("#F5F5F7"), Color.parseColor("#FFFFFF"), Color.parseColor("#007AFF"), Color.BLACK},
-        {Color.parseColor("#1A1B26"), Color.parseColor("#24283B"), Color.parseColor("#7AA2F7"), Color.parseColor("#C0CAF5")},
-        {Color.parseColor("#282A36"), Color.parseColor("#44475A"), Color.parseColor("#FF79C6"), Color.parseColor("#F8F8F2")},
-        {Color.BLACK, Color.parseColor("#121212"), Color.parseColor("#333333"), Color.WHITE} // 5: Pure Black (External)
+        {Color.parseColor("#060E20"), Color.parseColor("#0F1A34"), Color.parseColor("#00F0FF"), Color.WHITE}, // 0: Cyber-Dark
+        {Color.parseColor("#000000"), Color.parseColor("#002200"), Color.parseColor("#00FF00"), Color.parseColor("#00FF00")}, // 1: Matrix Terminal
+        {Color.parseColor("#F1F5F9"), Color.parseColor("#FFFFFF"), Color.parseColor("#0284C7"), Color.parseColor("#0F172A")}, // 2: Minimalist Light
+        {Color.parseColor("#1A1B26"), Color.parseColor("#24283B"), Color.parseColor("#7AA2F7"), Color.parseColor("#C0CAF5")}, // 3: Tokyo Night
+        {Color.parseColor("#282A36"), Color.parseColor("#44475A"), Color.parseColor("#FF79C6"), Color.parseColor("#F8F8F2")}, // 4: Dracula Purple
+        {Color.BLACK, Color.parseColor("#111114"), Color.parseColor("#00F0FF"), Color.WHITE}, // 5: AMOLED Dark Battery Saver
+        {Color.BLACK, Color.parseColor("#1A1800"), Color.parseColor("#FFD700"), Color.parseColor("#FFD700")}  // 6: Cyberpunk Gold
     };
 
     public static synchronized RemoteInputMethodService getInstance() {
@@ -100,6 +111,8 @@ public class RemoteInputMethodService extends InputMethodService {
         DebugLogger.log("RemoteInputMethodService onCreate iniciado.");
         instance = this;
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        currentThemeIndex = prefs.getInt("keyboard_theme_index", 0);
+        if (currentThemeIndex < 0 || currentThemeIndex >= THEMES.length) currentThemeIndex = 0;
         try {
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         } catch (Exception ignored) {}
@@ -280,7 +293,13 @@ public class RemoteInputMethodService extends InputMethodService {
         btnTheme.setPadding(0,0,0,0);
         btnTheme.setOnClickListener(v -> {
             currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
+            if (prefs != null) {
+                prefs.edit().putInt("keyboard_theme_index", currentThemeIndex).apply();
+            }
             applyTheme(layout);
+            if (tvLiveFeedback != null) {
+                tvLiveFeedback.setText("🎨 " + THEME_NAMES[currentThemeIndex]);
+            }
         });
 
         pastePillButton = new Button(this);
@@ -422,6 +441,7 @@ public class RemoteInputMethodService extends InputMethodService {
                     buildVisualKeyboard();
                     applyTheme(mainLayout);
                 });
+                keyButtons.put("SHIFT", btnShift);
                 row.addView(btnShift);
             }
 
@@ -517,38 +537,79 @@ public class RemoteInputMethodService extends InputMethodService {
 
     public void setExternalTheme(String mode) {
         mainHandler.post(() -> {
-            if ("pro".equals(mode)) {
-                currentThemeIndex = 5; // Pure Black
+            if ("amoled".equalsIgnoreCase(mode) || "pro".equalsIgnoreCase(mode)) {
+                currentThemeIndex = 5; // AMOLED Dark Battery Saver
+            } else if ("light".equalsIgnoreCase(mode)) {
+                currentThemeIndex = 2; // Minimalist Light
             } else {
-                currentThemeIndex = 0; // Default
+                currentThemeIndex = 0; // Cyber-Dark Default
+            }
+            if (prefs != null) {
+                prefs.edit().putInt("keyboard_theme_index", currentThemeIndex).apply();
             }
             if (mainLayout != null) {
                 applyTheme(mainLayout);
             }
+            if (tvLiveFeedback != null) {
+                tvLiveFeedback.setText("🎨 " + THEME_NAMES[currentThemeIndex]);
+            }
         });
+    }
+
+    private String resolveKeyButtonName(String keyStr, String codeStr) {
+        if (codeStr != null) {
+            String cUpper = codeStr.toUpperCase();
+            if (cUpper.equals("CONTROLLEFT") || cUpper.equals("CONTROLRIGHT")) return "CTRL";
+            if (cUpper.equals("SHIFTLEFT") || cUpper.equals("SHIFTRIGHT")) return "SHIFT";
+            if (cUpper.equals("ALTLEFT") || cUpper.equals("ALTRIGHT")) return "ALT";
+            if (cUpper.equals("METALEFT") || cUpper.equals("METARIGHT")) return "META";
+            if (cUpper.startsWith("KEY") && cUpper.length() == 4) return cUpper.substring(3);
+            if (cUpper.startsWith("DIGIT") && cUpper.length() == 6) return cUpper.substring(5);
+            if (cUpper.equals("SPACE")) return "SPACE";
+            if (cUpper.equals("ENTER")) return "ENTER";
+            if (cUpper.equals("BACKSPACE")) return "BACKSPACE";
+        }
+        if (keyStr == null) return null;
+        String upper = keyStr.toUpperCase();
+        if (upper.equals(" ")) return "SPACE";
+        if (upper.equals("CONTROL") || upper.equals("CTRL")) return "CTRL";
+        if (upper.equals("SHIFT")) return "SHIFT";
+        if (upper.equals("CONTEXTMENU")) return "MENU";
+        if (upper.equals("WIN") || upper.equals("SUPER") || upper.equals("OS")) return "META";
+        if (upper.equals("FUNCTION")) return "FN";
+        return upper;
+    }
+
+    private void setKeyVisualState(String keyStr, String codeStr, boolean isPressed) {
+        if (!isVisualKeyboardVisible) return;
+        String name = resolveKeyButtonName(keyStr, codeStr);
+        if (name == null) return;
+        Button btn = keyButtons.get(name);
+        if (btn == null) {
+            if (name.startsWith("CTRL")) btn = keyButtons.get("CTRL");
+            else if (name.startsWith("SHIFT")) btn = keyButtons.get("SHIFT");
+        }
+        if (btn != null) {
+            final Button targetBtn = btn;
+            mainHandler.post(() -> {
+                int[] theme = THEMES[currentThemeIndex];
+                if (isPressed) {
+                    targetBtn.setBackgroundColor(theme[2]); // Pressed color
+                    targetBtn.setTextColor(theme[0]);
+                } else {
+                    targetBtn.setBackgroundColor(theme[1]); // Normal color
+                    targetBtn.setTextColor(theme[3]);
+                }
+            });
+        }
     }
 
     private void animateKey(String keyStr) {
         if (!isVisualKeyboardVisible || keyStr == null) return;
-        String upper = keyStr.toUpperCase();
-        if (upper.equals(" ")) upper = "SPACE";
-        else if (upper.equals("CONTROL")) upper = "CTRL";
-        else if (upper.equals("CONTEXTMENU")) upper = "MENU";
-        else if (upper.equals("WIN") || upper.equals("SUPER") || upper.equals("OS")) upper = "META";
-        else if (upper.equals("FUNCTION")) upper = "FN";
-        
-        Button btn = keyButtons.get(upper);
-        if (btn != null) {
-            mainHandler.post(() -> {
-                int[] theme = THEMES[currentThemeIndex];
-                btn.setBackgroundColor(theme[2]); // Pressed color
-                btn.setTextColor(theme[0]);
-                mainHandler.postDelayed(() -> {
-                    btn.setBackgroundColor(theme[1]); // Normal color
-                    btn.setTextColor(theme[3]);
-                }, 100);
-            });
-        }
+        setKeyVisualState(keyStr, null, true);
+        mainHandler.postDelayed(() -> {
+            setKeyVisualState(keyStr, null, false);
+        }, 120);
     }
 
     @Override
@@ -946,7 +1007,11 @@ public class RemoteInputMethodService extends InputMethodService {
             performHapticFeedbackAsync();
         }
         final int keyCode = mapWebCodeToAndroidKeyCode(code, key);
-        if (androidAction == KeyEvent.ACTION_DOWN) animateKey(key);
+        if (androidAction == KeyEvent.ACTION_DOWN) {
+            setKeyVisualState(key, code, true);
+        } else {
+            setKeyVisualState(key, code, false);
+        }
 
         mainHandler.post(new Runnable() {
             @Override

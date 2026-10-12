@@ -1,0 +1,253 @@
+<!DOCTYPE html><html class="h-full bg-[#020502]" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Remote WiFi Keyboard - Matrix Green Edition</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Custom Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            matrix: {
+              bg: '#020703',
+              surface: '#041307',
+              panel: '#071f0d',
+              key: '#081a0b',
+              keyHover: '#0e2b14',
+              border: '#133a1a',
+              glow: '#00ff41',
+              bright: '#10e050',
+              accent: '#22c55e',
+              muted: '#1b5e28',
+              dim: '#0f3818'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace']
+          },
+          boxShadow: {
+            'matrix-glow': '0 0 15px rgba(0, 255, 65, 0.35)',
+            'matrix-key': 'inset 0 1px 0 rgba(0, 255, 65, 0.15), 0 3px 0 #020904, 0 4px 6px rgba(0,0,0,0.6)',
+            'matrix-key-active': 'inset 0 2px 4px rgba(0,0,0,0.8), 0 1px 0 #020904'
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Matrix Aesthetics -->
+<style data-purpose="matrix-theme-styles">
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+
+    /* Scanline effect */
+    .scanlines {
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.3) 50%,
+        rgba(0, 0, 0, 0.3)
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    /* Phosphor CRT bloom */
+    .text-phosphor {
+      color: #00ff41;
+      text-shadow: 0 0 6px rgba(0, 255, 65, 0.65), 0 0 12px rgba(0, 255, 65, 0.25);
+    }
+    
+    .text-phosphor-subtle {
+      color: #10e050;
+      text-shadow: 0 0 4px rgba(16, 224, 80, 0.4);
+    }
+
+    /* Key active feedback state */
+    .matrix-key-cap:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 255, 65, 0.4) !important;
+      background-color: #0d3815 !important;
+    }
+  </style>
+</head>
+<body class="h-full w-full select-none overflow-hidden bg-[#020502] font-mono text-green-400 antialiased flex flex-col justify-between">
+<!-- Subtle CRT Scanline Overlay -->
+<div class="scanlines absolute inset-0 z-50 pointer-events-none opacity-40"></div>
+<!-- BEGIN: TopNavigation -->
+<!-- Header displaying connection status and protocol info -->
+
+<!-- END: TopNavigation -->
+<!-- BEGIN: TerminalMonitorArea -->
+<!-- Middle section simulating the active payload and status counters -->
+<main class="flex-1 flex flex-col justify-end px-4 pb-2 z-10" data-purpose="status-terminal-area">
+
+<!-- State Indicator Row directly aligned with screenshot design -->
+<div class="flex flex-col items-center justify-center py-1">
+<div class="flex items-center space-x-2 text-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-matrix-glow inline-block shadow-matrix-glow animate-pulse"></span>
+<span class="text-phosphor-subtle font-medium text-xs">Listo para recibir teclas...</span>
+</div>
+<div class="text-[11px] text-matrix-muted font-semibold mt-0.5">
+        Pulsaciones: <span class="text-matrix-glow font-bold" id="keystroke-counter">0</span>
+</div>
+</div>
+</main>
+<!-- END: TerminalMonitorArea -->
+<!-- BEGIN: MatrixVirtualKeyboard -->
+<!-- Primary Virtual Keyboard Container adhering to visual references -->
+<section class="w-full bg-[#020b04] border-t border-[#0d3013] p-1.5 sm:p-2 pb-2 z-20 flex flex-col gap-1.5" data-purpose="virtual-keyboard">
+<!-- Keyboard Row 1: Numbers -->
+<div class="grid grid-cols-10 gap-1 sm:gap-1.5 h-11" data-purpose="keyboard-row-numbers">
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="1" type="button">1</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="2" type="button">2</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="3" type="button">3</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="4" type="button">4</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="5" type="button">5</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="6" type="button">6</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="7" type="button">7</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="8" type="button">8</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="9" type="button">9</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="0" type="button">0</button>
+</div>
+<!-- Keyboard Row 2: QWERTY -->
+<div class="grid grid-cols-10 gap-1 sm:gap-1.5 h-11" data-purpose="keyboard-row-qwerty">
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="q" type="button">q</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="w" type="button">w</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="e" type="button">e</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="r" type="button">r</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="t" type="button">t</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="y" type="button">y</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="u" type="button">u</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="i" type="button">i</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="o" type="button">o</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="p" type="button">p</button>
+</div>
+<!-- Keyboard Row 3: ASDFGHJKLÑ -->
+<div class="grid grid-cols-10 gap-1 sm:gap-1.5 h-11" data-purpose="keyboard-row-home">
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="a" type="button">a</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="s" type="button">s</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="d" type="button">d</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="f" type="button">f</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="g" type="button">g</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="h" type="button">h</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="j" type="button">j</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="k" type="button">k</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="l" type="button">l</button>
+<button class="matrix-key-cap rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="ñ" type="button">ñ</button>
+</div>
+<!-- Keyboard Row 4: Shift, ZXCVBNM, Backspace -->
+<div class="flex gap-1 sm:gap-1.5 h-11" data-purpose="keyboard-row-bottom">
+<!-- Highlighted Shift Key (Inspired by references) -->
+<button class="matrix-key-cap basis-[14%] rounded bg-[#e2e8f0] text-[#0f172a] font-black text-lg flex items-center justify-center shadow-md active:bg-gray-300 transition-colors" data-key="SHIFT" title="Mayús" type="button">
+<svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="z" type="button">z</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="x" type="button">x</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="c" type="button">c</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="v" type="button">v</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="b" type="button">b</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="n" type="button">n</button>
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="m" type="button">m</button>
+<!-- Backspace key with back icon as seen in screenshot -->
+<button class="matrix-key-cap basis-[14%] rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-base flex items-center justify-center shadow-matrix-key" data-key="BACKSPACE" title="Borrar" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Keyboard Row 5: Actions & Wide Space Bar -->
+<div class="flex gap-1.5 h-12" data-purpose="keyboard-row-actions">
+<!-- Symbols toggle button -->
+<button class="matrix-key-cap basis-[14%] rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-xs sm:text-sm flex items-center justify-center shadow-matrix-key" data-key="?123" type="button">
+        ?123
+      </button>
+<!-- Control modifier button -->
+<button class="matrix-key-cap basis-[14%] rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-xs sm:text-sm flex items-center justify-center shadow-matrix-key" data-key="CTRL" type="button">
+        CTRL
+      </button>
+<!-- Broad Space Bar Key -->
+<button class="matrix-key-cap flex-1 rounded bg-[#061909] border border-[#143e1c] text-phosphor font-bold text-xs tracking-widest uppercase flex items-center justify-center shadow-matrix-key" data-key="SPACE" type="button">
+        SPACE
+      </button>
+<!-- Glowing Neon Green Enter Button -->
+<button class="matrix-key-cap basis-[22%] rounded bg-gradient-to-r from-[#00b32c] to-[#00ff41] text-[#021305] font-black text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center shadow-[0_0_12px_rgba(0,255,65,0.4)] active:brightness-125 transition" data-key="ENTER" type="button">
+<span class="">ENTER</span>
+<svg class="w-3.5 h-3.5 ml-1 inline stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M3 10h10a4 4 0 014 4v4m0 0l-3-3m3 3l3-3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- END: MatrixVirtualKeyboard -->
+<!-- BEGIN: BottomActionControls -->
+<!-- Floating bottom menu buttons replicating screenshot layout -->
+<footer class="w-full bg-[#030904] border-t border-[#0d2a13] py-3 px-4 z-20" data-purpose="bottom-controls">
+<div class="max-w-md mx-auto grid grid-cols-2 gap-3">
+<!-- Change Keyboard Button -->
+<button class="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-lg bg-[#141e2e]/90 hover:bg-[#1a293f] active:bg-[#0f1724] border border-[#24354d] text-cyan-200 text-xs font-semibold shadow-md transition-all active:scale-[0.98]" type="button">
+<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="">Cambiar Teclado</span>
+</button>
+<!-- Panel / Settings Button -->
+<button class="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-lg bg-[#141e2e]/90 hover:bg-[#1a293f] active:bg-[#0f1724] border border-[#24354d] text-cyan-200 text-xs font-semibold shadow-md transition-all active:scale-[0.98]" type="button">
+<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="">Panel</span>
+</button>
+</div>
+</footer>
+<!-- END: BottomActionControls -->
+<!-- BEGIN: InteractiveScript -->
+<!-- Handles key tapping effects, counters, sound synthesis (mock), and buffer output -->
+<script data-purpose="keyboard-interactivity">
+    document.addEventListener('DOMContentLoaded', () => {
+      let strokeCount = 0;
+      const counterElement = document.getElementById('keystroke-counter');
+      const lastKeyElement = document.getElementById('last-key');
+      const outputTextElement = document.getElementById('output-text');
+      const keys = document.querySelectorAll('.matrix-key-cap');
+
+      keys.forEach((keyButton) => {
+        keyButton.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          const keyValue = keyButton.getAttribute('data-key');
+          
+          // Increment stroke counter
+          strokeCount += 1;
+          counterElement.textContent = strokeCount;
+          lastKeyElement.textContent = keyValue;
+
+          // Haptic vibration feedback if supported
+          if (navigator.vibrate) {
+            navigator.vibrate(15);
+          }
+
+          // Buffer simulation
+          if (keyValue === 'BACKSPACE') {
+            outputTextElement.textContent = outputTextElement.textContent.slice(0, -1);
+          } else if (keyValue === 'SPACE') {
+            outputTextElement.textContent += ' ';
+          } else if (keyValue === 'ENTER') {
+            outputTextElement.textContent = '';
+          } else if (keyValue !== 'SHIFT' && keyValue !== 'CTRL' && keyValue !== '?123') {
+            if (outputTextElement.textContent.length > 32) {
+              outputTextElement.textContent = outputTextElement.textContent.slice(-24);
+            }
+            outputTextElement.textContent += keyValue;
+          }
+        });
+      });
+    });
+  </script>
+<!-- END: InteractiveScript -->
+
+
+</body></html>

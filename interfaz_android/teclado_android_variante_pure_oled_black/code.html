@@ -1,0 +1,215 @@
+<!DOCTYPE html><html class="h-full bg-black" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Remote WiFi Keyboard - Pure OLED Stealth</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oled: '#000000',
+            carbon: {
+              DEFAULT: '#111114',
+              hover: '#19191d',
+              active: '#27272a',
+              border: '#232328'
+            },
+            stealth: {
+              surface: '#0d0e12',
+              card: '#161922',
+              accent: '#38bdf8'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+<!-- BEGIN: Custom Key Styling -->
+<style data-purpose="keyboard-styles">
+    /* Prevent selection and default tap delays */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* Key press active effect */
+    .key-btn {
+      touch-action: manipulation;
+      transition: transform 0.05s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.08s ease, box-shadow 0.08s ease;
+      will-change: transform;
+    }
+
+    .key-btn:active {
+      transform: scale(0.94) translateY(1px);
+      background-color: #26272e !important;
+      border-color: #3f3f46 !important;
+    }
+
+    /* Specific active state for bright keys like shift */
+    .shift-active:active {
+      background-color: #cbd5e1 !important;
+      transform: scale(0.94);
+    }
+
+    /* Subtle OLED glow */
+    .oled-glow {
+      box-shadow: 0 0 15px -3px rgba(34, 197, 94, 0.15);
+    }
+  </style>
+<!-- END: Custom Key Styling -->
+</head>
+<body class="h-full bg-black text-white font-sans antialiased overflow-hidden flex flex-col justify-between select-none">
+<!-- BEGIN: TopBar and Status Area -->
+
+<!-- END: TopBar and Status Area -->
+<!-- BEGIN: Main Keyboard Layout -->
+<main class="w-full max-w-lg mx-auto px-1.5 pb-2 flex-1 flex flex-col justify-end" data-purpose="virtual-keyboard">
+<!-- Keyboard Container Frame -->
+<div class="w-full bg-black flex flex-col gap-1.5 p-1 rounded-2xl border border-zinc-900/60">
+<!-- ROW 1: Numbers (1 - 0) -->
+<section class="grid grid-cols-10 gap-1 h-12" data-purpose="row-numbers">
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="1">1</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="2">2</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="3">3</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="4">4</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="5">5</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="6">6</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="7">7</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="8">8</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="9">9</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="0">0</button>
+</section>
+<!-- ROW 2: QWERTYUIOP -->
+<section class="grid grid-cols-10 gap-1 h-12" data-purpose="row-qwerty">
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="q">q</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="w">w</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="e">e</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="r">r</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="t">t</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="y">y</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="u">u</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="i">i</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="o">o</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="p">p</button>
+</section>
+<!-- ROW 3: ASDFGHJKL -->
+<section class="grid grid-cols-9 gap-1 h-12 px-2.5" data-purpose="row-asdf">
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="a">a</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="s">s</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="d">d</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="f">f</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="g">g</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="h">h</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="j">j</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="k">k</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="l">l</button>
+</section>
+<!-- ROW 4: Shift, ZXCVBNM, Backspace -->
+<section class="flex gap-1 h-12" data-purpose="row-zxcv">
+<!-- High Contrast Light Shift Button (as in reference image) -->
+<button class="key-btn shift-active w-12 flex items-center justify-center rounded-md bg-[#e4e4e7] text-zinc-950 font-bold shadow-md shrink-0" data-key="shift">
+<!-- Upward Bold Arrow Glyph -->
+<svg class="w-5 h-5 text-zinc-900" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<line x1="12" x2="12" y1="19" y2="5"></line>
+<polyline points="5 12 12 5 19 12"></polyline>
+</svg>
+</button>
+<div class="grid grid-cols-7 gap-1 flex-1">
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="z">z</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="x">x</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="c">c</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="v">v</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="b">b</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="n">n</button>
+<button class="key-btn flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-base font-semibold text-white shadow-sm" data-key="m">m</button>
+</div>
+<!-- Backspace/Delete Button -->
+<button class="key-btn w-12 flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-zinc-200 shadow-sm shrink-0" data-key="backspace">
+<!-- Backspace Icon -->
+<svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+<line x1="18" x2="12" y1="9" y2="15"></line>
+<line x1="12" x2="18" y1="9" y2="15"></line>
+</svg>
+</button>
+</section>
+<!-- ROW 5: Special Keys, Space, Stealth Enter -->
+<section class="flex gap-1 h-12" data-purpose="row-bottom-controls">
+<!-- Numbers/Symbols Toggle -->
+<button class="key-btn w-[18%] flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-xs font-bold tracking-tight text-zinc-300 shadow-sm" data-key="?123">
+          ?123
+        </button>
+<!-- CTRL Key -->
+<button class="key-btn w-[14%] flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-xs font-bold tracking-tight text-zinc-300 shadow-sm" data-key="ctrl">
+          CTRL
+        </button>
+<!-- Wide Spacebar -->
+<button class="key-btn flex-1 flex items-center justify-center rounded-md bg-[#111114] border border-[#232328] text-xs font-bold tracking-widest text-zinc-300 shadow-sm" data-key="space">
+          SPACE
+        </button>
+<!-- Stealth High-Impact Enter Key -->
+<button class="key-btn w-[22%] flex items-center justify-center rounded-md bg-[#14151a] border border-cyan-900/50 hover:border-cyan-500/70 text-xs font-black tracking-wider text-white shadow-[0_0_12px_rgba(6,182,212,0.15)] active:bg-cyan-950/60 transition-all" data-key="enter">
+          ENTER
+        </button>
+</section>
+</div>
+</main>
+<!-- END: Main Keyboard Layout -->
+<!-- BEGIN: Bottom Action Controls -->
+<footer class="w-full max-w-lg mx-auto pb-4 pt-1 px-3" data-purpose="action-buttons-dock">
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Change Keyboard Button -->
+<button class="key-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-[#181d28] hover:bg-[#202738] active:bg-[#121620] border border-[#283247] shadow-sm" data-purpose="switch-keyboard-btn">
+<!-- Globe Icon -->
+<svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="2" x2="22" y1="12" y2="12"></line>
+<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+<span class="text-xs font-bold text-zinc-100 tracking-normal">Cambiar Teclado</span>
+</button>
+<!-- Panel / Settings Button -->
+<button class="key-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-[#181d28] hover:bg-[#202738] active:bg-[#121620] border border-[#283247] shadow-sm" data-purpose="settings-panel-btn">
+<!-- Cog / Settings Icon -->
+<svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+</svg>
+<span class="text-xs font-bold text-zinc-100 tracking-normal">Panel</span>
+</button>
+</div>
+</footer>
+<!-- END: Bottom Action Controls -->
+<!-- BEGIN: Interactive Pulse & Sound/Count Handler -->
+<script data-purpose="keyboard-interaction">
+    document.addEventListener('DOMContentLoaded', () => {
+      let count = 0;
+      const counterElement = document.getElementById('tap-counter');
+      const keys = document.querySelectorAll('.key-btn');
+
+      keys.forEach(key => {
+        key.addEventListener('pointerdown', () => {
+          // Increment and update stroke counter
+          count++;
+          if (counterElement) {
+            counterElement.textContent = count;
+          }
+          
+          // Trigger subtle haptic feedback if browser permits
+          if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(8);
+          }
+        });
+      });
+    });
+  </script>
+<!-- END: Interactive Pulse & Sound/Count Handler -->
+
+
+</body></html>

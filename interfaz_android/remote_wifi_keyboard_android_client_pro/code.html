@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Remote Keyboard Android App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #060a12;
+      color: #e2e8f0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-mono-code {
+      font-family: 'Geist Mono', monospace;
+    }
+    .key-btn {
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 3px 0 0 rgba(4, 9, 20, 0.9), 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .key-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 0 rgba(4, 9, 20, 0.9), 0 2px 4px rgba(0,0,0,0.6);
+      filter: brightness(1.25);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 24px -4px rgba(0, 240, 255, 0.25);
+    }
+    .glow-green {
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+    }
+    .cyan-blue-gradient {
+      background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+    }
+    .surface-card {
+      background: linear-gradient(180deg, rgba(16, 26, 46, 0.85) 0%, rgba(10, 16, 30, 0.95) 100%);
+      border: 1px solid rgba(0, 240, 255, 0.14);
+      backdrop-filter: blur(16px);
+    }
+    /* Key styles corresponding exactly to screenshot layout */
+    .key-dark {
+      background: linear-gradient(180deg, #162035 0%, #0e1626 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      color: #f1f5f9;
+    }
+    .key-dark:hover {
+      border-color: rgba(0, 240, 255, 0.35);
+      color: #38bdf8;
+    }
+    .key-modifier {
+      background: linear-gradient(180deg, #1e293b 0%, #111a2e 100%);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #94a3b8;
+    }
+    .key-shift-active {
+      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+      border: 1px solid #ffffff;
+      color: #0f172a;
+      box-shadow: 0 3px 0 0 rgba(100, 116, 139, 0.8), 0 0 16px rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen w-full bg-[#060a12] flex flex-col justify-between overflow-x-hidden p-2 sm:p-4">
+
+  <!-- Top App Bar / Connection Header matching Electron Theme -->
+  <header class="w-full max-w-4xl mx-auto surface-card rounded-2xl px-4 py-3 mb-2 flex items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg cyan-blue-gradient flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-xs uppercase tracking-wider font-mono-code text-cyan-400 font-semibold">Remote WiFi Keyboard</span>
+          <span class="text-[10px] bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800 font-mono-code">Android HID v2.4</span>
+        </div>
+        <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+          <span>Servidor:</span>
+          <span class="text-slate-200 font-mono-code font-medium">192.168.1.101:9999</span>
+          <span class="text-emerald-400 font-mono-code font-semibold">• 2.4ms RTT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme quick presets / Action triggers from original upper controls -->
+    <div class="flex items-center space-x-2">
+      <!-- Mode toggles: Standard Dark, Matrix Green, High Contrast Light -->
+      <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+        <button id="themeCyber" onclick="switchTheme('cyber')" title="Tema Cyberpunk Console" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-cyan-500/20 border border-cyan-400/50 text-cyan-400">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
+        </button>
+        <button id="themeMatrix" onclick="switchTheme('matrix')" title="Tema Matrix Terminal" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all text-slate-400 hover:text-emerald-400">
+          <span class="text-xs font-mono-code font-bold">M</span>
+        </button>
+        <button id="themeOled" onclick="switchTheme('oled')" title="Tema OLED Pure Pitch" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all text-slate-400 hover:text-white">
+          <span class="text-xs font-mono-code font-bold">#</span>
+        </button>
+      </div>
+
+      <!-- Quick status indicator -->
+      <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium font-mono-code">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>LINK ACTIVO</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Keyboard Container: Preserves 100% exact key layout, rows, and disposition from original screenshots -->
+  <main class="w-full max-w-4xl mx-auto flex-1 flex flex-col justify-center py-1">
+    <div id="keyboardWrapper" class="surface-card rounded-2xl sm:rounded-3xl p-2 sm:p-4 shadow-2xl relative border border-cyan-500/20">
+      
+      <!-- Scanline / Grid Subtle Cyber Overlay -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#00f0ff03_1px,transparent_1px),linear-gradient(to_bottom,#00f0ff03_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none rounded-2xl"></div>
+
+      <!-- Keyboard Grid -->
+      <div class="flex flex-col gap-1.5 sm:gap-2 relative z-10">
+
+        <!-- ROW 1: Numbers (1, 2, 3, 4, 5, 6, 7, 8, 9, 0) -->
+        <div class="grid grid-cols-10 gap-1 sm:gap-1.5">
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('1')">1</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('2')">2</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('3')">3</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('4')">4</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('5')">5</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('6')">6</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('7')">7</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('8')">8</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('9')">9</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-bold flex items-center justify-center" onclick="sendKey('0')">0</button>
+        </div>
+
+        <!-- ROW 2: Letters Q to P -->
+        <div class="grid grid-cols-10 gap-1 sm:gap-1.5">
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('q')">q</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('w')">w</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('e')">e</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('r')">r</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('t')">t</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('y')">y</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('u')">u</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('i')">i</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('o')">o</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('p')">p</button>
+        </div>
+
+        <!-- ROW 3: Letters A to L -->
+        <div class="grid grid-cols-10 gap-1 sm:gap-1.5">
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('a')">a</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('s')">s</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('d')">d</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('f')">f</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('g')">g</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('h')">h</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('j')">j</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('k')">k</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('l')">l</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center text-slate-400" onclick="sendKey('ñ')">ñ</button>
+        </div>
+
+        <!-- ROW 4: SHIFT | Z X C V B N M | BACKSPACE -->
+        <div class="grid grid-cols-10 gap-1 sm:gap-1.5">
+          <!-- Shift Key (larger width as in screenshot) -->
+          <button id="shiftBtn" class="key-btn key-shift-active h-11 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center col-span-2 font-bold" onclick="toggleShift()">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 4l-8 8h5v8h6v-8h5l-8-8z"/>
+            </svg>
+          </button>
+
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('z')">z</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('x')">x</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('c')">c</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('v')">v</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('b')">b</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('n')">n</button>
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl font-mono-code text-sm sm:text-base font-semibold flex items-center justify-center lowercase" onclick="sendKey('m')">m</button>
+
+          <!-- Backspace Key -->
+          <button class="key-btn key-modifier h-11 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center text-slate-300 hover:text-rose-400" onclick="sendKey('backspace')">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-7h12a2 2 0 012 2v10a2 2 0 01-2 2H9l-6-7z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ROW 5: ?123 | CTRL | SPACE (wide) | ENTER -->
+        <div class="grid grid-cols-12 gap-1 sm:gap-1.5">
+          <button class="key-btn key-modifier h-11 sm:h-14 rounded-lg sm:rounded-xl col-span-2 font-mono-code text-xs sm:text-sm font-bold flex items-center justify-center text-slate-300" onclick="sendKey('?123')">
+            ?123
+          </button>
+          <button id="ctrlBtn" class="key-btn key-modifier h-11 sm:h-14 rounded-lg sm:rounded-xl col-span-2 font-mono-code text-xs sm:text-sm font-bold flex items-center justify-center text-cyan-400 border-cyan-500/40" onclick="toggleCtrl()">
+            CTRL
+          </button>
+          <!-- SPACE (Exact prominent width as in original) -->
+          <button class="key-btn key-dark h-11 sm:h-14 rounded-lg sm:rounded-xl col-span-5 font-mono-code text-xs sm:text-sm tracking-widest font-bold flex items-center justify-center text-slate-400 hover:text-white" onclick="sendKey('space')">
+            SPACE
+          </button>
+          <!-- ENTER (Styled with the vibrant gradient from 'Enviar al Teléfono') -->
+          <button class="key-btn cyan-blue-gradient h-11 sm:h-14 rounded-lg sm:rounded-xl col-span-3 font-mono-code text-xs sm:text-sm font-bold flex items-center justify-center text-white tracking-wider shadow-lg shadow-cyan-500/25 border border-cyan-300/40" onclick="sendKey('enter')">
+            ENTER ↵
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Status & Interactive Footer Bar matching the exact original structure:
+       - Status bullet "Listo para recibir teclas..."
+       - Counter "Pulsaciones: 0"
+       - Bottom dual buttons: "Cambiar Teclado" and "Panel" -->
+  <footer class="w-full max-w-4xl mx-auto flex flex-col items-center gap-2.5 mt-2">
+    
+    <!-- Status message & Pulsaciones counter -->
+    <div class="flex flex-col items-center justify-center text-center">
+      <div class="flex items-center gap-2 text-emerald-400 font-medium text-xs sm:text-sm">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 glow-green animate-pulse"></span>
+        <span class="tracking-wide">Listo para recibir teclas...</span>
+      </div>
+      <div class="text-[11px] font-mono-code text-slate-400 mt-0.5">
+        Pulsaciones: <span id="strokeCount" class="text-cyan-400 font-bold">0</span> | Última: <span id="lastStroke" class="text-slate-200">Ninguna</span>
+      </div>
+    </div>
+
+    <!-- Dual Action Buttons: "Cambiar Teclado" and "Panel" with high-end pro styling -->
+    <div class="w-full grid grid-cols-2 gap-2.5 sm:gap-3 max-w-md">
+      <!-- Cambiar Teclado Button -->
+      <button onclick="cambiarTecladoAction()" class="key-btn h-12 sm:h-14 surface-card hover:bg-slate-800/90 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 border border-cyan-500/30 text-white font-medium text-xs sm:text-sm shadow-lg group">
+        <div class="w-6 h-6 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <span class="tracking-wide font-semibold">Cambiar Teclado</span>
+      </button>
+
+      <!-- Panel Button -->
+      <button onclick="panelAction()" class="key-btn h-12 sm:h-14 surface-card hover:bg-slate-800/90 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 border border-slate-700 hover:border-cyan-500/40 text-white font-medium text-xs sm:text-sm shadow-lg group">
+        <div class="w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:rotate-45 transition-transform duration-300">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </div>
+        <span class="tracking-wide font-semibold">Panel</span>
+      </button>
+    </div>
+
+  </footer>
+
+  <script>
+    let strokeCount = 0;
+    let shiftActive = true;
+    let ctrlActive = false;
+
+    function sendKey(key) {
+      strokeCount++;
+      document.getElementById('strokeCount').innerText = strokeCount;
+      document.getElementById('lastStroke').innerText = key.toUpperCase();
+      
+      // Haptic feedback simulation
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(10);
+      }
+    }
+
+    function toggleShift() {
+      shiftActive = !shiftActive;
+      const shiftBtn = document.getElementById('shiftBtn');
+      if (shiftActive) {
+        shiftBtn.className = "key-btn key-shift-active h-11 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center col-span-2 font-bold";
+      } else {
+        shiftBtn.className = "key-btn key-modifier h-11 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center col-span-2 font-bold";
+      }
+    }
+
+    function toggleCtrl() {
+      ctrlActive = !ctrlActive;
+      const ctrlBtn = document.getElementById('ctrlBtn');
+      if (ctrlActive) {
+        ctrlBtn.classList.add('cyan-blue-gradient', 'text-white', 'border-cyan-300');
+        ctrlBtn.classList.remove('key-modifier');
+      } else {
+        ctrlBtn.classList.remove('cyan-blue-gradient', 'text-white', 'border-cyan-300');
+        ctrlBtn.classList.add('key-modifier');
+      }
+    }
+
+    function switchTheme(theme) {
+      const keys = document.querySelectorAll('.key-dark');
+      const wrapper = document.getElementById('keyboardWrapper');
+      
+      if (theme === 'matrix') {
+        document.body.style.backgroundColor = "#021208";
+        wrapper.style.borderColor = "rgba(34, 197, 94, 0.4)";
+        wrapper.style.background = "linear-gradient(180deg, rgba(6, 26, 14, 0.9) 0%, rgba(2, 14, 8, 0.95) 100%)";
+        keys.forEach(k => {
+          k.style.color = "#22c55e";
+          k.style.borderColor = "rgba(34, 197, 94, 0.25)";
+        });
+      } else if (theme === 'oled') {
+        document.body.style.backgroundColor = "#000000";
+        wrapper.style.borderColor = "rgba(255, 255, 255, 0.1)";
+        wrapper.style.background = "#050505";
+        keys.forEach(k => {
+          k.style.color = "#ffffff";
+          k.style.borderColor = "rgba(255, 255, 255, 0.12)";
+        });
+      } else {
+        document.body.style.backgroundColor = "#060a12";
+        wrapper.style.borderColor = "rgba(0, 240, 255, 0.2)";
+        wrapper.style.background = "linear-gradient(180deg, rgba(16, 26, 46, 0.85) 0%, rgba(10, 16, 30, 0.95) 100%)";
+        keys.forEach(k => {
+          k.style.color = "#f1f5f9";
+          k.style.borderColor = "rgba(255, 255, 255, 0.07)";
+        });
+      }
+    }
+
+    function cambiarTecladoAction() {
+      sendKey('switch_keyboard');
+      alert("Selector de Teclado del Sistema / IME activado");
+    }
+
+    function panelAction() {
+      sendKey('open_panel');
+      alert("Abriendo Panel de Configuración y Diagnóstico de Red");
+    }
+  </script>
+</body>
+</html>

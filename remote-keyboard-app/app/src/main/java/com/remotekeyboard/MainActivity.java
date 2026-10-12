@@ -6,12 +6,14 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -19,11 +21,11 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.HapticFeedbackConstants;
 
 import com.remotekeyboard.server.RemoteWebServer;
 import com.remotekeyboard.server.RemoteWebServerManager;
@@ -41,27 +43,57 @@ public class MainActivity extends Activity {
     private static final String KEY_VIBRATION = "vibration_enabled";
     private static final String KEY_VIBRATION_INTENSITY = "vibration_intensity";
     private static final String KEY_VIBRATION_DURATION = "vibration_duration";
+    private static final String KEY_APP_THEME = "app_theme";
 
-    private TextView tvStatus;
-    private TextView tvUrl;
+    // Containers & Cards
+    private ScrollView rootScrollView;
+    private LinearLayout cardServer;
+    private LinearLayout cardIme;
+    private LinearLayout cardTheme;
+    private LinearLayout cardTelemetry;
+    private LinearLayout cardTest;
+    private LinearLayout layoutProUpgrade;
+    private LinearLayout adContainer;
+
+    // Theme Switcher Buttons
+    private LinearLayout themeDarkBtn;
+    private LinearLayout themeAmoledBtn;
+    private LinearLayout themeLightBtn;
+    private TextView tvThemeBadge;
+    private TextView tvLabelDark;
+    private TextView tvLabelAmoled;
+    private TextView tvLabelLight;
+
+    // Headers & Labels
+    private TextView tvAppTitle;
     private TextView tvAppSubtitle;
+    private TextView tvServerCardSubtitle;
+    private TextView tvUrl;
     private Button btnCopyUrl;
+
+    private TextView tvImeCardHeader;
+    private TextView tvImeStatus;
     private Button btnEnableIme;
     private Button btnSelectIme;
-    private EditText etTestInput;
 
-    // Telemetría & Debug
+    private TextView tvThemeCardHeader;
+    private TextView tvTelemetryHeader;
+    private TextView tvPingBadge;
     private TextView tvWsClients;
-    private TextView tvImeStatus;
+    private TextView tvStatus;
     private TextView tvKeystrokes;
+
+    private TextView tvVibSwitchLabel;
     private Switch switchVibration;
     private SeekBar seekBarVibration;
     private TextView tvVibIntensity;
     private SeekBar seekBarVibrationDuration;
     private TextView tvVibDuration;
 
-    private LinearLayout layoutProUpgrade;
-    private LinearLayout adContainer;
+    private TextView tvTestAreaHeader;
+    private TextView tvTestAreaHint;
+    private EditText etTestInput;
+
     private Button btnBuyPro;
     private SharedPreferences prefs;
     private final Handler telemetryHandler = new Handler(Looper.getMainLooper());
@@ -74,7 +106,6 @@ public class MainActivity extends Activity {
         DebugLogger.init(this);
         DebugLogger.log("MainActivity onCreate iniciado.");
 
-        // Protección global contra cierres inesperados
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable throwable) {
@@ -87,7 +118,6 @@ public class MainActivity extends Activity {
             setContentView(R.layout.activity_main);
             prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
-            // Iniciar servidor HTTP & WebSocket en segundo plano
             RemoteWebServerManager.ensureServerStarted(this);
 
             initViews();
@@ -102,26 +132,61 @@ public class MainActivity extends Activity {
     }
 
     private void initViews() {
-        tvStatus = findViewById(R.id.tvStatus);
-        tvUrl = findViewById(R.id.tvUrl);
+        rootScrollView = findViewById(R.id.rootScrollView);
+        cardServer = findViewById(R.id.cardServer);
+        cardIme = findViewById(R.id.cardIme);
+        cardTheme = findViewById(R.id.cardTheme);
+        cardTelemetry = findViewById(R.id.cardTelemetry);
+        cardTest = findViewById(R.id.cardTest);
+        layoutProUpgrade = findViewById(R.id.layoutProUpgrade);
+        adContainer = findViewById(R.id.adContainer);
+
+        themeDarkBtn = findViewById(R.id.themeDarkBtn);
+        themeAmoledBtn = findViewById(R.id.themeAmoledBtn);
+        themeLightBtn = findViewById(R.id.themeLightBtn);
+        tvThemeBadge = findViewById(R.id.tvThemeBadge);
+        tvLabelDark = findViewById(R.id.tvLabelDark);
+        tvLabelAmoled = findViewById(R.id.tvLabelAmoled);
+        tvLabelLight = findViewById(R.id.tvLabelLight);
+
+        tvAppTitle = findViewById(R.id.tvAppTitle);
         tvAppSubtitle = findViewById(R.id.tvAppSubtitle);
+        tvServerCardSubtitle = findViewById(R.id.tvServerCardSubtitle);
+        tvUrl = findViewById(R.id.tvUrl);
         btnCopyUrl = findViewById(R.id.btnCopyUrl);
+
+        tvImeCardHeader = findViewById(R.id.tvImeCardHeader);
+        tvImeStatus = findViewById(R.id.tvImeStatus);
         btnEnableIme = findViewById(R.id.btnEnableIme);
         btnSelectIme = findViewById(R.id.btnSelectIme);
-        etTestInput = findViewById(R.id.etTestInput);
 
+        tvThemeCardHeader = findViewById(R.id.tvThemeCardHeader);
+        tvTelemetryHeader = findViewById(R.id.tvTelemetryHeader);
+        tvPingBadge = findViewById(R.id.tvPingBadge);
         tvWsClients = findViewById(R.id.tvWsClients);
-        tvImeStatus = findViewById(R.id.tvImeStatus);
+        tvStatus = findViewById(R.id.tvStatus);
         tvKeystrokes = findViewById(R.id.tvKeystrokes);
+
+        tvVibSwitchLabel = findViewById(R.id.tvVibSwitchLabel);
         switchVibration = findViewById(R.id.switchVibration);
         seekBarVibration = findViewById(R.id.seekBarVibration);
         tvVibIntensity = findViewById(R.id.tvVibIntensity);
         seekBarVibrationDuration = findViewById(R.id.seekBarVibrationDuration);
         tvVibDuration = findViewById(R.id.tvVibDuration);
 
-        layoutProUpgrade = findViewById(R.id.layoutProUpgrade);
-        adContainer = findViewById(R.id.adContainer);
+        tvTestAreaHeader = findViewById(R.id.tvTestAreaHeader);
+        tvTestAreaHint = findViewById(R.id.tvTestAreaHint);
+        etTestInput = findViewById(R.id.etTestInput);
         btnBuyPro = findViewById(R.id.btnBuyPro);
+
+        // Theme Switcher listeners
+        themeDarkBtn.setOnClickListener(v -> applyAppTheme("dark", true));
+        themeAmoledBtn.setOnClickListener(v -> applyAppTheme("amoled", true));
+        themeLightBtn.setOnClickListener(v -> applyAppTheme("light", true));
+
+        // Cargar tema guardado
+        String savedTheme = prefs.getString(KEY_APP_THEME, "dark");
+        applyAppTheme(savedTheme, false);
 
         // Configuración de Switch de Vibración
         boolean vibEnabled = prefs.getBoolean(KEY_VIBRATION, true);
@@ -142,7 +207,7 @@ public class MainActivity extends Activity {
         int currentIntensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
         seekBarVibration.setProgress(currentIntensity);
         tvVibIntensity.setText("Intensidad: " + currentIntensity + "%");
-        
+
         int currentDuration = prefs.getInt(KEY_VIBRATION_DURATION, 50);
         seekBarVibrationDuration.setProgress(currentDuration);
         tvVibDuration.setText("Duración: " + currentDuration + "%");
@@ -180,6 +245,7 @@ public class MainActivity extends Activity {
                 testVibration();
             }
         });
+
         btnCopyUrl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -233,6 +299,208 @@ public class MainActivity extends Activity {
         });
     }
 
+    public void applyAppTheme(String themeKey, boolean userTriggered) {
+        if (themeKey == null) themeKey = "dark";
+
+        if (userTriggered) {
+            prefs.edit().putString(KEY_APP_THEME, themeKey).apply();
+            RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+            if (ime != null) {
+                ime.setExternalTheme(themeKey);
+            }
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                if ("amoled".equalsIgnoreCase(themeKey)) {
+                    getWindow().setStatusBarColor(Color.BLACK);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        getWindow().getDecorView().setSystemUiVisibility(0);
+                    }
+                } else if ("light".equalsIgnoreCase(themeKey)) {
+                    getWindow().setStatusBarColor(Color.parseColor("#F1F5F9"));
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    }
+                } else {
+                    getWindow().setStatusBarColor(Color.parseColor("#060E20"));
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        getWindow().getDecorView().setSystemUiVisibility(0);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if ("amoled".equalsIgnoreCase(themeKey)) {
+            // --- TEMA AMOLED DARK BATTERY SAVER (Negros puros #000000) ---
+            if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.BLACK);
+            if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (layoutProUpgrade != null) layoutProUpgrade.setBackgroundResource(R.drawable.bg_card_amoled);
+
+            if (tvAppTitle != null) tvAppTitle.setTextColor(Color.WHITE);
+            if (tvAppSubtitle != null) tvAppSubtitle.setTextColor(Color.parseColor("#A3A3A3"));
+            if (tvServerCardSubtitle != null) tvServerCardSubtitle.setTextColor(Color.parseColor("#A3A3A3"));
+            if (tvUrl != null) tvUrl.setTextColor(Color.parseColor("#00F0FF"));
+            if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.BLACK);
+
+            if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
+            if (btnEnableIme != null) {
+                btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
+                btnEnableIme.setTextColor(Color.WHITE);
+            }
+            if (btnSelectIme != null) {
+                btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
+                btnSelectIme.setTextColor(Color.WHITE);
+            }
+
+            if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00FF88"));
+            if (tvThemeBadge != null) {
+                tvThemeBadge.setText("AMOLED SAVER");
+                tvThemeBadge.setTextColor(Color.parseColor("#00FF88"));
+            }
+
+            if (tvTelemetryHeader != null) tvTelemetryHeader.setTextColor(Color.parseColor("#00F0FF"));
+            if (tvVibSwitchLabel != null) tvVibSwitchLabel.setTextColor(Color.parseColor("#E2E8F0"));
+            if (tvVibIntensity != null) tvVibIntensity.setTextColor(Color.parseColor("#A3A3A3"));
+            if (tvVibDuration != null) tvVibDuration.setTextColor(Color.parseColor("#A3A3A3"));
+
+            if (tvTestAreaHeader != null) tvTestAreaHeader.setTextColor(Color.parseColor("#00F0FF"));
+            if (tvTestAreaHint != null) tvTestAreaHint.setTextColor(Color.parseColor("#737373"));
+            if (etTestInput != null) {
+                etTestInput.setBackgroundColor(Color.parseColor("#050505"));
+                etTestInput.setTextColor(Color.WHITE);
+                etTestInput.setHintTextColor(Color.parseColor("#444444"));
+            }
+
+            if (themeDarkBtn != null) themeDarkBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelDark != null) tvLabelDark.setTextColor(Color.parseColor("#94A3B8"));
+            if (themeAmoledBtn != null) themeAmoledBtn.setBackgroundResource(R.drawable.btn_theme_selected);
+            if (tvLabelAmoled != null) tvLabelAmoled.setTextColor(Color.parseColor("#00FF88"));
+            if (themeLightBtn != null) themeLightBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelLight != null) tvLabelLight.setTextColor(Color.parseColor("#94A3B8"));
+
+            if (userTriggered) {
+                Toast.makeText(this, "Tema AMOLED Dark Battery Saver activado (Negros puros)", Toast.LENGTH_SHORT).show();
+            }
+
+        } else if ("light".equalsIgnoreCase(themeKey)) {
+            // --- TEMA CLARO (Minimalist Light #F1F5F9) ---
+            if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#F1F5F9"));
+            if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_light);
+            if (layoutProUpgrade != null) layoutProUpgrade.setBackgroundResource(R.drawable.bg_card_light);
+
+            if (tvAppTitle != null) tvAppTitle.setTextColor(Color.parseColor("#0F172A"));
+            if (tvAppSubtitle != null) tvAppSubtitle.setTextColor(Color.parseColor("#64748B"));
+            if (tvServerCardSubtitle != null) tvServerCardSubtitle.setTextColor(Color.parseColor("#64748B"));
+            if (tvUrl != null) tvUrl.setTextColor(Color.parseColor("#0284C7"));
+            if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.WHITE);
+
+            if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#0F172A"));
+            if (btnEnableIme != null) {
+                btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
+                btnEnableIme.setTextColor(Color.parseColor("#0F172A"));
+            }
+            if (btnSelectIme != null) {
+                btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
+                btnSelectIme.setTextColor(Color.parseColor("#0F172A"));
+            }
+
+            if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#0284C7"));
+            if (tvThemeBadge != null) {
+                tvThemeBadge.setText("LIGHT THEME");
+                tvThemeBadge.setTextColor(Color.parseColor("#0284C7"));
+            }
+
+            if (tvTelemetryHeader != null) tvTelemetryHeader.setTextColor(Color.parseColor("#0284C7"));
+            if (tvVibSwitchLabel != null) tvVibSwitchLabel.setTextColor(Color.parseColor("#0F172A"));
+            if (tvVibIntensity != null) tvVibIntensity.setTextColor(Color.parseColor("#64748B"));
+            if (tvVibDuration != null) tvVibDuration.setTextColor(Color.parseColor("#64748B"));
+
+            if (tvTestAreaHeader != null) tvTestAreaHeader.setTextColor(Color.parseColor("#4F46E5"));
+            if (tvTestAreaHint != null) tvTestAreaHint.setTextColor(Color.parseColor("#64748B"));
+            if (etTestInput != null) {
+                etTestInput.setBackgroundColor(Color.parseColor("#F8FAFC"));
+                etTestInput.setTextColor(Color.parseColor("#0F172A"));
+                etTestInput.setHintTextColor(Color.parseColor("#94A3B8"));
+            }
+
+            if (themeDarkBtn != null) themeDarkBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelDark != null) tvLabelDark.setTextColor(Color.parseColor("#64748B"));
+            if (themeAmoledBtn != null) themeAmoledBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelAmoled != null) tvLabelAmoled.setTextColor(Color.parseColor("#64748B"));
+            if (themeLightBtn != null) themeLightBtn.setBackgroundResource(R.drawable.btn_theme_selected);
+            if (tvLabelLight != null) tvLabelLight.setTextColor(Color.parseColor("#0284C7"));
+
+            if (userTriggered) {
+                Toast.makeText(this, "Tema Claro (Light Theme) activado", Toast.LENGTH_SHORT).show();
+            }
+
+        } else {
+            // --- TEMA OSCURO NORMAL (Cyber-Dark / Electron Style #060E20) ---
+            if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#060E20"));
+            if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (layoutProUpgrade != null) layoutProUpgrade.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+
+            if (tvAppTitle != null) tvAppTitle.setTextColor(Color.WHITE);
+            if (tvAppSubtitle != null) tvAppSubtitle.setTextColor(Color.parseColor("#94A3B8"));
+            if (tvServerCardSubtitle != null) tvServerCardSubtitle.setTextColor(Color.parseColor("#94A3B8"));
+            if (tvUrl != null) tvUrl.setTextColor(Color.parseColor("#00F0FF"));
+            if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.parseColor("#060E20"));
+
+            if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
+            if (btnEnableIme != null) {
+                btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
+                btnEnableIme.setTextColor(Color.WHITE);
+            }
+            if (btnSelectIme != null) {
+                btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
+                btnSelectIme.setTextColor(Color.WHITE);
+            }
+
+            if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00F0FF"));
+            if (tvThemeBadge != null) {
+                tvThemeBadge.setText("CYBER-DARK");
+                tvThemeBadge.setTextColor(Color.parseColor("#00F0FF"));
+            }
+
+            if (tvTelemetryHeader != null) tvTelemetryHeader.setTextColor(Color.parseColor("#38BDF8"));
+            if (tvVibSwitchLabel != null) tvVibSwitchLabel.setTextColor(Color.parseColor("#E2E8F0"));
+            if (tvVibIntensity != null) tvVibIntensity.setTextColor(Color.parseColor("#94A3B8"));
+            if (tvVibDuration != null) tvVibDuration.setTextColor(Color.parseColor("#94A3B8"));
+
+            if (tvTestAreaHeader != null) tvTestAreaHeader.setTextColor(Color.parseColor("#818CF8"));
+            if (tvTestAreaHint != null) tvTestAreaHint.setTextColor(Color.parseColor("#64748B"));
+            if (etTestInput != null) {
+                etTestInput.setBackgroundColor(Color.parseColor("#0A1224"));
+                etTestInput.setTextColor(Color.WHITE);
+                etTestInput.setHintTextColor(Color.parseColor("#475569"));
+            }
+
+            if (themeDarkBtn != null) themeDarkBtn.setBackgroundResource(R.drawable.btn_theme_selected);
+            if (tvLabelDark != null) tvLabelDark.setTextColor(Color.parseColor("#00F0FF"));
+            if (themeAmoledBtn != null) themeAmoledBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelAmoled != null) tvLabelAmoled.setTextColor(Color.parseColor("#94A3B8"));
+            if (themeLightBtn != null) themeLightBtn.setBackgroundResource(R.drawable.btn_theme_unselected);
+            if (tvLabelLight != null) tvLabelLight.setTextColor(Color.parseColor("#94A3B8"));
+
+            if (userTriggered) {
+                Toast.makeText(this, "Tema Oscuro Cyber-Dark activado", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void setupTelemetryLoop() {
         telemetryRunnable = new Runnable() {
             @Override
@@ -252,11 +520,12 @@ public class MainActivity extends Activity {
             if (server != null) {
                 int wsCount = server.getActiveWebSocketCount();
                 if (wsCount > 0) {
-                    tvWsClients.setText("• Conexión PC: 🟢 " + wsCount + " Cliente(s) WebSocket Activo(s) (<3ms)");
+                    tvWsClients.setText("• Conexión PC: 🟢 " + wsCount + " Cliente(s) Conectado(s) (<3ms)");
                     tvWsClients.setTextColor(Color.parseColor("#34D399"));
                 } else {
                     tvWsClients.setText("• Conexión PC: ⚪ Esperando conexión desde PC / Navegador...");
-                    tvWsClients.setTextColor(Color.parseColor("#94A3B8"));
+                    String curTheme = prefs.getString(KEY_APP_THEME, "dark");
+                    tvWsClients.setTextColor("light".equalsIgnoreCase(curTheme) ? Color.parseColor("#64748B") : Color.parseColor("#94A3B8"));
                 }
             }
 
@@ -265,7 +534,8 @@ public class MainActivity extends Activity {
                 tvImeStatus.setText("• Teclado IME: 🟢 Servicio Activo y Vinculado");
                 tvImeStatus.setTextColor(Color.parseColor("#34D399"));
                 tvKeystrokes.setText("• Pulsaciones Recibidas: " + ime.getTotalKeysTyped() + " teclas");
-                tvKeystrokes.setTextColor(Color.parseColor("#E2E8F0"));
+                String curTheme = prefs.getString(KEY_APP_THEME, "dark");
+                tvKeystrokes.setTextColor("light".equalsIgnoreCase(curTheme) ? Color.parseColor("#0F172A") : Color.parseColor("#E2E8F0"));
             } else {
                 boolean isEnabled = isImeEnabled();
                 if (isEnabled) {
@@ -282,10 +552,10 @@ public class MainActivity extends Activity {
     private void testVibration() {
         int intensity = prefs.getInt(KEY_VIBRATION_INTENSITY, 100);
         int durationPercent = prefs.getInt(KEY_VIBRATION_DURATION, 50);
-        
+
         android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator() && intensity > 0) {
-            int duration = 5 + (int) (145 * (durationPercent / 100.0f)); // 5ms to 150ms
+            int duration = 5 + (int) (145 * (durationPercent / 100.0f)); // 5ms a 150ms
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 int amplitude = 1 + (int) (254 * (intensity / 100.0f));
                 vibrator.vibrate(android.os.VibrationEffect.createOneShot(duration, amplitude));
@@ -314,13 +584,13 @@ public class MainActivity extends Activity {
         try {
             String ip = getDeviceIpAddress();
             if (ip != null) {
-                String fullUrl = "http://" + ip + ":9999";
+                String fullUrl = "http://" + ip + ":" + RemoteWebServerManager.SERVER_PORT;
                 tvUrl.setText(fullUrl);
-                tvStatus.setText("● Servidor Activo (HTTP + WebSocket)");
+                tvStatus.setText("• Servidor: 🟢 Activo (NanoHTTPD + WebSocket)");
                 tvStatus.setTextColor(0xFF10B981);
             } else {
                 tvUrl.setText("Sin conexión Wi-Fi");
-                tvStatus.setText("○ Conéctate a una red Wi-Fi");
+                tvStatus.setText("• Servidor: ○ Conéctate a una red Wi-Fi");
                 tvStatus.setTextColor(0xFFEF4444);
             }
         } catch (Exception ignored) {}

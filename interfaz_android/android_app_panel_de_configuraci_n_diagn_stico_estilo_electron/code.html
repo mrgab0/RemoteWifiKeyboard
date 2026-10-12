@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Remote Keyboard - Server &amp; Diagnóstico</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration for Cyber-Dark Electron Theme -->
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            deepNavy: '#060e20',
+            surfaceNavy: '#0b1326',
+            panelNavy: '#0f1a34',
+            borderNavy: '#1b2a4a',
+            borderGlow: '#00f0ff33',
+            neonCyan: '#00f0ff',
+            neonBlue: '#0066ff',
+            neonYellow: '#ffd600',
+            neonGreen: '#00ff88',
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 15px -3px rgba(0, 240, 255, 0.35)',
+            'glow-amber': '0 0 18px -2px rgba(255, 214, 0, 0.4)',
+            'glow-blue': '0 0 16px -2px rgba(0, 102, 255, 0.45)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styling for Sliders and UI Details -->
+<style data-purpose="custom-inputs">
+    /* Range Slider Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: #162444;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #00f0ff;
+      margin-top: -6px;
+      box-shadow: 0 0 10px #00f0ff;
+      border: 2px solid #ffffff;
+      cursor: pointer;
+    }
+    /* Blinking Caret Simulation */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .caret-blink {
+      animation: blink 1s infinite;
+    }
+  </style>
+<!-- END: Custom Styling for Sliders and UI Details -->
+</head>
+<body class="bg-deepNavy text-slate-200 font-sans min-h-screen select-none antialiased flex flex-col justify-between items-center p-0 m-0">
+<!-- Mobile Container (Max width constraint matching Android screen ratio) -->
+<div class="w-full max-w-md min-h-screen bg-deepNavy border-x border-borderNavy/40 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+<!-- BEGIN: Top Bar & Server URL Header -->
+<header class="pt-4 px-4 pb-3 bg-gradient-to-b from-surfaceNavy/90 to-deepNavy/40 backdrop-blur-md sticky top-0 z-30 border-b border-borderNavy/60" data-purpose="connection-panel">
+<!-- Android App Title and Network Indicator -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center space-x-2">
+<div class="w-2.5 h-2.5 rounded-full bg-neonGreen animate-pulse shadow-[0_0_8px_#00ff88]"></div>
+<span class="text-xs font-mono font-semibold tracking-wider text-slate-400 uppercase">Daemon: Activo (v2.4)</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-panelNavy/90 border border-borderNavy px-2.5 py-1 rounded-full">
+<span class="text-[10px] font-mono text-neonCyan font-bold tracking-tight">PORT: 9999</span>
+</div>
+</div>
+<!-- IP / Host Address Box -->
+<div class="p-3 bg-surfaceNavy/80 border border-borderNavy rounded-xl text-center shadow-inner relative group mb-3">
+<p class="text-[11px] text-slate-400 uppercase tracking-widest font-mono mb-1 font-medium">Abre esta dirección en tu PC / Navegador</p>
+<div class="flex items-center justify-center space-x-2">
+<span class="text-neonCyan font-mono font-bold text-lg tracking-wider drop-shadow-[0_0_6px_rgba(0,240,255,0.4)]" id="server-url">
+            http://192.168.1.101:9999
+          </span>
+</div>
+</div>
+<!-- Primary Action Button: Copy URL -->
+<button class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] via-[#0099ff] to-[#0066ff] hover:brightness-110 active:scale-[0.98] transition-all duration-150 text-white font-mono font-extrabold text-sm tracking-wider uppercase shadow-glow-blue flex items-center justify-center space-x-2 border border-neonCyan/30" data-purpose="copy-url-action" id="copy-btn">
+<span class="text-base">📋</span>
+<span id="copy-btn-text">COPIAR DIRECCIÓN URL</span>
+</button>
+</header>
+<!-- END: Top Bar & Server URL Header -->
+<!-- Scrollable Main Content -->
+<main class="flex-1 px-4 py-3 space-y-3.5 overflow-y-auto">
+<!-- BEGIN: Keyboard Setup Section -->
+<section class="bg-surfaceNavy/90 border border-borderNavy rounded-2xl p-4 shadow-lg backdrop-blur-sm" data-purpose="keyboard-configuration">
+<div class="flex items-center space-x-2 mb-3.5 pb-2 border-b border-borderNavy/70">
+<span class="text-base text-neonCyan">⚙️</span>
+<h2 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">Configuración del Teclado</h2>
+</div>
+<div class="flex flex-col space-y-2.5">
+<!-- Step 1 Button -->
+<button class="w-full py-3 px-3.5 bg-panelNavy hover:bg-slate-800/80 active:bg-slate-700/60 border border-borderNavy hover:border-slate-600 rounded-xl text-left flex items-center justify-between transition-all group" data-purpose="settings-step-1">
+<span class="text-xs font-mono font-semibold text-slate-300 group-hover:text-white uppercase tracking-tight">1. Habilitar Teclado en Ajustes</span>
+<span class="text-xs text-neonCyan font-mono">→</span>
+</button>
+<!-- Step 2 Button -->
+<button class="w-full py-3 px-3.5 bg-panelNavy hover:bg-slate-800/80 active:bg-slate-700/60 border border-borderNavy hover:border-slate-600 rounded-xl text-left flex items-center justify-between transition-all group" data-purpose="settings-step-2">
+<span class="text-xs font-mono font-semibold text-slate-300 group-hover:text-white uppercase tracking-tight">2. Seleccionar como Teclado Activo</span>
+<span class="text-xs text-neonCyan font-mono">→</span>
+</button>
+</div>
+</section>
+<!-- END: Keyboard Setup Section -->
+<!-- BEGIN: Live Diagnostics & Telemetry Section -->
+<section class="bg-surfaceNavy/90 border border-borderNavy rounded-2xl p-4 shadow-lg backdrop-blur-sm relative" data-purpose="diagnostics-telemetry">
+<div class="flex items-center justify-between mb-3.5 pb-2 border-b border-borderNavy/70">
+<div class="flex items-center space-x-2">
+<span class="text-base text-neonCyan">🔍</span>
+<h2 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">Diagnóstico y Telemetría en Vivo</h2>
+</div>
+<!-- Latency Badge -->
+<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-[10px] font-mono font-extrabold text-amber-400 shadow-[0_0_8px_rgba(255,214,0,0.25)]">
+<span>⚡</span>
+<span>&lt;3ms</span>
+</span>
+</div>
+<!-- Telemetry Status Bullet List -->
+<div class="space-y-2 text-xs font-mono mb-4">
+<!-- Connection Status -->
+<div class="flex items-start space-x-2 leading-relaxed">
+<span class="text-slate-500 mt-0.5">•</span>
+<div class="text-slate-300">
+<span class="text-slate-400">Conexión PC:</span>
+<span class="inline-flex items-center ml-1 text-slate-300">
+<span class="w-2 h-2 rounded-full border border-slate-400 mr-1.5 inline-block"></span>
+                Esperando conexión desde PC / Navegador...
+              </span>
+</div>
+</div>
+<!-- IME Keyboard Status -->
+<div class="flex items-start space-x-2 leading-relaxed">
+<span class="text-amber-400 mt-0.5">•</span>
+<div class="text-amber-400">
+<span class="font-semibold text-amber-300">Teclado IME:</span>
+<span class="inline-flex items-center ml-1 font-medium">
+<span class="w-2 h-2 rounded-full bg-amber-400 inline-block mr-1.5 shadow-[0_0_6px_#ffd600]"></span>
+                Habilitado (Falta seleccionar como activo en Paso 2)
+              </span>
+</div>
+</div>
+<!-- Keypress Counter -->
+<div class="flex items-start space-x-2 leading-relaxed">
+<span class="text-neonCyan mt-0.5">•</span>
+<div class="text-slate-300 flex items-center justify-between w-full">
+<div>
+<span class="text-slate-400">Pulsaciones Recibidas:</span>
+<span class="text-neonCyan font-bold ml-1" id="key-count">0</span> <span class="text-slate-500">teclas</span>
+</div>
+<span class="text-[10px] bg-deepNavy border border-borderNavy px-1.5 py-0.5 rounded text-slate-400">0x00 NONE</span>
+</div>
+</div>
+</div>
+<!-- Haptic Feedback Toggle -->
+<div class="pt-2 border-t border-borderNavy/60 flex items-center justify-between">
+<div class="flex items-center space-x-2 text-xs text-slate-300">
+<span class="text-sm">📳</span>
+<span class="text-[11px] font-mono leading-tight">Vibración Háptica <span class="text-slate-400 block text-[10px]">(Desactivada = Máxima Rapidez)</span></span>
+</div>
+<!-- Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" id="haptic-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+</label>
+</div>
+<!-- Slider Track for Intensity -->
+<div class="mt-3 pt-1 flex items-center space-x-3">
+<span class="text-[11px] font-mono text-slate-400 whitespace-nowrap min-w-[90px]">Intensidad: <span class="text-neonCyan font-bold" id="intensity-val">100%</span></span>
+<input class="w-full h-1.5 bg-panelNavy rounded-lg appearance-none cursor-pointer accent-neonCyan" id="intensity-slider" max="100" min="0" type="range" value="100"/>
+</div>
+</section>
+<!-- END: Live Diagnostics & Telemetry Section -->
+<!-- BEGIN: Live Test Area Section -->
+<section class="bg-surfaceNavy/90 border border-borderNavy rounded-2xl p-4 shadow-lg backdrop-blur-sm" data-purpose="test-input-area">
+<div class="flex items-center space-x-2 mb-1.5">
+<span class="text-base text-neonCyan">✏️</span>
+<h2 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">Área de Prueba en Vivo:</h2>
+</div>
+<p class="text-[11px] text-slate-400 mb-3 font-mono">Toca el cuadro para abrir el teclado y escribe desde tu PC:</p>
+<!-- Terminal Console Style Textbox -->
+<div class="relative bg-deepNavy/90 border border-borderNavy hover:border-neonCyan/50 focus-within:border-neonCyan rounded-xl p-3.5 transition-all">
+<textarea class="w-full bg-transparent border-none p-0 text-slate-100 font-mono text-xs focus:ring-0 resize-none outline-none placeholder:text-slate-600 leading-relaxed" id="test-input" placeholder="Haz clic aquí y escribe desde la PC..." rows="3"></textarea>
+<div class="flex justify-between items-center pt-2 mt-1 border-t border-borderNavy/40 text-[10px] font-mono text-slate-500">
+<span>Encoding: UTF-8</span>
+<span class="text-neonCyan font-bold flex items-center">
+              READY <span class="inline-block w-1.5 h-3 ml-1 bg-neonCyan caret-blink"></span>
+</span>
+</div>
+</div>
+</section>
+<!-- END: Live Test Area Section -->
+<!-- BEGIN: Lifetime PRO License Section -->
+<section class="bg-gradient-to-br from-panelNavy via-surfaceNavy to-[#1c1a0e] border border-amber-500/30 rounded-2xl p-4 shadow-glow-amber/20 backdrop-blur-sm relative overflow-hidden" data-purpose="pro-license-banner">
+<!-- Subtle Glow Accent in corner -->
+<div class="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center space-x-1.5">
+<span class="text-base">👑</span>
+<h3 class="text-xs font-mono font-bold uppercase tracking-wide text-amber-300">Licencia PRO de por Vida</h3>
+</div>
+<!-- 50% OFF Badge -->
+<span class="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2 py-0.5 rounded shadow">
+            50% OFF
+          </span>
+</div>
+<p class="text-[11px] text-slate-400 mb-3 font-mono leading-tight">
+          Cero anuncios, velocidad ultra-rápida y soporte prioritario.
+        </p>
+<!-- Unlock Button -->
+<button class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#ffd600] to-[#ffaa00] hover:brightness-105 active:scale-[0.98] transition-all font-mono font-black text-xs sm:text-sm tracking-wider uppercase text-slate-950 shadow-glow-amber flex items-center justify-center space-x-2 border border-amber-300" data-purpose="unlock-pro-cta">
+<span>DESBLOQUEAR PRO POR $7.99 USD</span>
+<span>🚀</span>
+</button>
+</section>
+<!-- END: Lifetime PRO License Section -->
+</main>
+<!-- BEGIN: Banner Placeholder & Bottom Navigation Bar -->
+<footer class="w-full bg-surfaceNavy/95 border-t border-borderNavy/80 flex flex-col items-center" data-purpose="bottom-ad-and-navigation">
+<!-- Simulated 320x50 Clean Test Ad Banner (matching the screenshot reference) -->
+<div class="w-full py-1.5 flex justify-center items-center bg-white/95 text-slate-800 shadow-inner">
+<div class="w-[320px] h-[50px] flex items-center justify-between px-3 border border-slate-200 bg-white">
+<div class="text-left">
+<span class="bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Anuncio de prueba</span>
+<div class="flex items-center space-x-2 mt-0.5">
+<span class="text-blue-600 font-bold text-xs">Nice job!</span>
+<span class="text-slate-600 text-[11px]">This is a 320x50 test ad.</span>
+</div>
+</div>
+<!-- AdMob Placeholder Icon -->
+<div class="w-6 h-6 flex items-center justify-center">
+<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Android Navigation Bar Indicator (Home bar style for modern devices) -->
+<div class="w-full h-4 flex items-center justify-center bg-deepNavy">
+<div class="w-32 h-1 bg-slate-600/60 rounded-full"></div>
+</div>
+</footer>
+<!-- END: Banner Placeholder & Bottom Navigation Bar -->
+</div>
+<!-- BEGIN: Interactive Logic Scripts -->
+<script data-purpose="interactive-ui-logic">
+    // Copy URL handler
+    const copyBtn = document.getElementById('copy-btn');
+    const copyBtnText = document.getElementById('copy-btn-text');
+    const serverUrl = document.getElementById('server-url').innerText.trim();
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(serverUrl).then(() => {
+        const originalText = copyBtnText.innerText;
+        copyBtnText.innerText = '¡DIRECCIÓN COPIADA!';
+        copyBtn.classList.remove('from-[#00d2ff]', 'to-[#0066ff]');
+        copyBtn.classList.add('from-emerald-400', 'to-emerald-600');
+        
+        setTimeout(() => {
+          copyBtnText.innerText = originalText;
+          copyBtn.classList.remove('from-emerald-400', 'to-emerald-600');
+          copyBtn.classList.add('from-[#00d2ff]', 'to-[#0066ff]');
+        }, 1800);
+      }).catch(err => {
+        console.error('No se pudo copiar: ', err);
+      });
+    });
+
+    // Slider value sync
+    const slider = document.getElementById('intensity-slider');
+    const intensityVal = document.getElementById('intensity-val');
+    slider.addEventListener('input', (e) => {
+      intensityVal.innerText = `${e.target.value}%`;
+    });
+
+    // Keystroke simulation count on input area
+    const testInput = document.getElementById('test-input');
+    const keyCount = document.getElementById('key-count');
+    testInput.addEventListener('input', (e) => {
+      keyCount.innerText = e.target.value.length;
+    });
+  </script>
+<!-- END: Interactive Logic Scripts -->
+</body></html>
