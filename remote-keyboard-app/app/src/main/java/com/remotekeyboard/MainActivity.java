@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     private TextView tvLabelDark;
     private TextView tvLabelAmoled;
     private TextView tvLabelLight;
+    private Button btnExploreBase16;
 
     // Headers & Labels
     private TextView tvAppTitle;
@@ -179,6 +180,28 @@ public class MainActivity extends Activity {
         etTestInput = findViewById(R.id.etTestInput);
         btnBuyPro = findViewById(R.id.btnBuyPro);
 
+        btnExploreBase16 = findViewById(R.id.btnExploreBase16);
+        if (btnExploreBase16 != null) {
+            btnExploreBase16.setOnClickListener(v -> {
+                com.remotekeyboard.theme.Base16ThemeDialog.show(MainActivity.this, theme -> {
+                    Toast.makeText(MainActivity.this, "Esquema Base16 aplicado: " + theme.getName(), Toast.LENGTH_SHORT).show();
+                    RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                    if (ime != null) {
+                        ime.applyBase16Theme(theme);
+                    }
+                    if (tvThemeBadge != null) {
+                        tvThemeBadge.setText(theme.getName().toUpperCase());
+                        tvThemeBadge.setTextColor(theme.getAccentColor());
+                    }
+                    if (etTestInput != null) {
+                        etTestInput.setBackgroundColor(theme.getBackgroundColor());
+                        etTestInput.setTextColor(theme.getTextColor());
+                        etTestInput.setHintTextColor(theme.getBase(0x3));
+                    }
+                });
+            });
+        }
+
         // Theme Switcher listeners
         themeDarkBtn.setOnClickListener(v -> applyAppTheme("dark", true));
         themeAmoledBtn.setOnClickListener(v -> applyAppTheme("amoled", true));
@@ -187,6 +210,15 @@ public class MainActivity extends Activity {
         // Cargar tema guardado
         String savedTheme = prefs.getString(KEY_APP_THEME, "dark");
         applyAppTheme(savedTheme, false);
+
+        String savedBase16 = prefs.getString("base16_selected_theme_id", null);
+        if (savedBase16 != null) {
+            com.remotekeyboard.theme.Base16Theme b16 = com.remotekeyboard.theme.Base16ThemeManager.getInstance().getThemeById(this, savedBase16);
+            if (b16 != null && tvThemeBadge != null) {
+                tvThemeBadge.setText(b16.getName().toUpperCase());
+                tvThemeBadge.setTextColor(b16.getAccentColor());
+            }
+        }
 
         // Configuración de Switch de Vibración
         boolean vibEnabled = prefs.getBoolean(KEY_VIBRATION, true);
@@ -356,6 +388,10 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
                 btnSelectIme.setTextColor(Color.WHITE);
             }
+            if (btnExploreBase16 != null) {
+                btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
+                btnExploreBase16.setTextColor(Color.WHITE);
+            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00FF88"));
             if (tvThemeBadge != null) {
@@ -412,6 +448,10 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
                 btnSelectIme.setTextColor(Color.parseColor("#0F172A"));
             }
+            if (btnExploreBase16 != null) {
+                btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
+                btnExploreBase16.setTextColor(Color.parseColor("#0F172A"));
+            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#0284C7"));
             if (tvThemeBadge != null) {
@@ -467,6 +507,10 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
                 btnSelectIme.setTextColor(Color.WHITE);
+            }
+            if (btnExploreBase16 != null) {
+                btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
+                btnExploreBase16.setTextColor(Color.WHITE);
             }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00F0FF"));

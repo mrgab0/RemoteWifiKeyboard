@@ -1420,6 +1420,13 @@
       if (menu) menu.classList.toggle('hidden');
     }
 
+    function closeAppPicker() {
+      const menu = document.getElementById('android-app-picker-menu');
+      if (menu && !menu.classList.contains('hidden')) {
+        menu.classList.add('hidden');
+      }
+    }
+
     function launchRemoteApp(packageName, appName) {
       const payload = {
         type: 'launch_app',
@@ -1427,7 +1434,7 @@
       };
       sendPayload(payload);
       appendLog(`🚀 Lanzando ${appName} (${packageName}) en Android...`);
-      toggleAppPicker();
+      closeAppPicker();
     }
 
     function launchCustomAppFromInput() {
@@ -1484,7 +1491,9 @@
           <kbd class="mt-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 font-mono text-[9px] border border-slate-700/60 self-start">${sc.combo}</kbd>
         `;
         card.onclick = () => {
-          if (sc.type === 'key') {
+          if (sc.type === 'launch_app') {
+            launchRemoteApp(sc.package || 'com.termux', sc.label);
+          } else if (sc.type === 'key') {
             if (sc.key === 'WAKE') {
               sendPayload({ type: 'wake_device' });
               appendLog(`⚡ Despertando pantalla de Android...`);

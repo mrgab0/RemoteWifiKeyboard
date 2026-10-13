@@ -185,10 +185,38 @@ public class RemoteWebServer extends NanoHTTPD {
                 String pkg = json.optString("package", "");
                 if (!pkg.isEmpty()) {
                     try {
-                        android.content.Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
+                        RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                        if (ime != null) {
+                            ime.pokeWakeLock();
+                        }
+
+                        android.content.pm.PackageManager pm = context.getPackageManager();
+                        android.content.Intent launchIntent = pm.getLaunchIntentForPackage(pkg);
+
+                        // Fallback 1: Si getLaunchIntentForPackage es null, intentar Intent directo para Termux u otras apps
+                        if (launchIntent == null) {
+                            if ("com.termux".equals(pkg)) {
+                                launchIntent = new android.content.Intent();
+                                launchIntent.setComponent(new android.content.ComponentName("com.termux", "com.termux.app.TermuxActivity"));
+                            } else {
+                                launchIntent = new android.content.Intent(android.content.Intent.ACTION_MAIN);
+                                launchIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
+                                launchIntent.setPackage(pkg);
+                            }
+                        }
+
                         if (launchIntent != null) {
-                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(launchIntent);
+                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | 
+                                                  android.content.Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                            final android.content.Intent finalIntent = launchIntent;
+                            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                                try {
+                                    context.startActivity(finalIntent);
+                                    android.widget.Toast.makeText(context, "🚀 Abriendo: " + pkg, android.widget.Toast.LENGTH_SHORT).show();
+                                } catch (Exception e) {
+                                    com.remotekeyboard.DebugLogger.log("Error al iniciar actividad: " + e.getMessage());
+                                }
+                            });
                             com.remotekeyboard.DebugLogger.log("App lanzada exitosamente: " + pkg);
                         } else {
                             com.remotekeyboard.DebugLogger.log("App no encontrada o no instalada: " + pkg);

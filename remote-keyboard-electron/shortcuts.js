@@ -153,6 +153,7 @@ module.exports = [
         id: 'termux',
         label: '🖥️ Termux',
         shortcuts: [
+            { label: '🚀 Abrir Termux (App)', combo: 'Abrir App', type: 'launch_app', package: 'com.termux' },
             { label: 'Interrupt ✗',   combo: 'Ctrl+C',  type: 'key_event', code: 'KeyC', mods: ['CTRL'] },
             { label: 'EOF / Salir',   combo: 'Ctrl+D',  type: 'key_event', code: 'KeyD', mods: ['CTRL'] },
             { label: 'Suspender',     combo: 'Ctrl+Z',  type: 'key_event', code: 'KeyZ', mods: ['CTRL'] },
@@ -176,6 +177,7 @@ module.exports = [
         id: 'android',
         label: '📱 Android',
         shortcuts: [
+            { label: '⚙️ Abrir Ajustes', combo: 'Abrir App', type: 'launch_app', package: 'com.android.settings' },
             { label: 'Home',          combo: 'Meta',         type: 'key_event', code: 'MetaLeft',   mods: [] },
             { label: 'Back',          combo: 'Alt+←',        type: 'key_event', code: 'ArrowLeft',  mods: ['ALT'] },
             { label: 'Recientes',     combo: 'Meta+Tab',     type: 'key_event', code: 'Tab',        mods: ['META'] },

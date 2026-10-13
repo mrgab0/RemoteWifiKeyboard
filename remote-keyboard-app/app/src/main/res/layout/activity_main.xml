@@ -346,6 +346,18 @@
                         android:layout_marginTop="4dp" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- 4. Explorador de 360+ Temas Base16 -->
+            <Button
+                android:id="@+id/btnExploreBase16"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="🎨 Explorar 360+ Esquemas Base16 (Nord, Dracula, Gruvbox...)"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:backgroundTint="#162444"
+                android:layout_marginTop="12dp" />
         </LinearLayout>
 
         <!-- Card 4: Telemetry & Haptic Settings -->

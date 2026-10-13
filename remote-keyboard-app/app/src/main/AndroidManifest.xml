@@ -9,6 +9,23 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
+    <!-- Package Visibility para Lanzador Remoto de Aplicaciones en Android 11+ (API 30+) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <package android:name="com.termux" />
+        <package android:name="com.whatsapp" />
+        <package android:name="com.foxdebug.acode" />
+        <package android:name="com.spdk.editor" />
+        <package android:name="com.vscode.mobile" />
+        <package android:name="org.telegram.messenger" />
+        <package android:name="md.obsidian" />
+        <package android:name="com.android.settings" />
+        <package android:name="com.google.android.youtube" />
+        <package android:name="com.android.chrome" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_keyboard"
@@ -34,6 +51,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Selector Rápido de Temas Base16 -->
+        <activity
+            android:name=".theme.ThemePickerActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"
+            android:excludeFromRecents="true"
+            android:exported="false" />
 
         <!-- Servicio de Teclado del Sistema (Input Method Service) -->
         <service

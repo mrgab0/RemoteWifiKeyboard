@@ -65,6 +65,8 @@ public class RemoteInputMethodService extends InputMethodService {
     private LinearLayout suggestionContainer;
     private Button pastePillButton;
     private int currentThemeIndex = 0;
+    private com.remotekeyboard.theme.Base16Theme currentBase16Theme = null;
+    private int currentFeaturedBase16Index = -1;
     private boolean isVisualKeyboardVisible = true;
     private boolean isShifted = false;
     private boolean isSymbols = false;
@@ -111,8 +113,14 @@ public class RemoteInputMethodService extends InputMethodService {
         DebugLogger.log("RemoteInputMethodService onCreate iniciado.");
         instance = this;
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        currentThemeIndex = prefs.getInt("keyboard_theme_index", 0);
-        if (currentThemeIndex < 0 || currentThemeIndex >= THEMES.length) currentThemeIndex = 0;
+        String savedBase16Id = prefs.getString("base16_selected_theme_id", null);
+        if (savedBase16Id != null) {
+            currentBase16Theme = com.remotekeyboard.theme.Base16ThemeManager.getInstance().getThemeById(this, savedBase16Id);
+        }
+        if (currentBase16Theme == null) {
+            currentThemeIndex = prefs.getInt("keyboard_theme_index", 0);
+            if (currentThemeIndex < 0 || currentThemeIndex >= THEMES.length) currentThemeIndex = 0;
+        }
         try {
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         } catch (Exception ignored) {}
@@ -291,15 +299,10 @@ public class RemoteInputMethodService extends InputMethodService {
         btnTheme.setText("🎨");
         btnTheme.setTextSize(14);
         btnTheme.setPadding(0,0,0,0);
-        btnTheme.setOnClickListener(v -> {
-            currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
-            if (prefs != null) {
-                prefs.edit().putInt("keyboard_theme_index", currentThemeIndex).apply();
-            }
-            applyTheme(layout);
-            if (tvLiveFeedback != null) {
-                tvLiveFeedback.setText("🎨 " + THEME_NAMES[currentThemeIndex]);
-            }
+        btnTheme.setOnClickListener(v -> cycleNextTheme());
+        btnTheme.setOnLongClickListener(v -> {
+            openThemePickerDialog();
+            return true;
         });
 
         pastePillButton = new Button(this);
@@ -513,7 +516,99 @@ public class RemoteInputMethodService extends InputMethodService {
         visualKeyboardContainer.addView(row);
     }
 
+    public void cycleNextTheme() {
+        com.remotekeyboard.theme.Base16ThemeManager manager = com.remotekeyboard.theme.Base16ThemeManager.getInstance();
+        java.util.List<com.remotekeyboard.theme.Base16Theme> featured = manager.getFeaturedThemes(this);
+
+        if (featured != null && !featured.isEmpty()) {
+            currentFeaturedBase16Index = (currentFeaturedBase16Index + 1) % featured.size();
+            currentBase16Theme = featured.get(currentFeaturedBase16Index);
+            manager.setSelectedTheme(this, currentBase16Theme);
+            if (prefs != null) {
+                prefs.edit().putString("base16_selected_theme_id", currentBase16Theme.getId()).apply();
+            }
+        } else {
+            currentBase16Theme = null;
+            currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
+            if (prefs != null) {
+                prefs.edit().putInt("keyboard_theme_index", currentThemeIndex).apply();
+            }
+        }
+
+        if (mainLayout != null) {
+            applyTheme(mainLayout);
+        }
+        if (tvLiveFeedback != null) {
+            String name = currentBase16Theme != null ? currentBase16Theme.getName() : THEME_NAMES[currentThemeIndex];
+            tvLiveFeedback.setText("🎨 " + name);
+        }
+    }
+
+    public void openThemePickerDialog() {
+        try {
+            android.content.Intent intent = new android.content.Intent(this, com.remotekeyboard.theme.ThemePickerActivity.class);
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            DebugLogger.log("Error abriendo ThemePickerActivity: " + e.getMessage());
+        }
+    }
+
+    public void applyBase16Theme(com.remotekeyboard.theme.Base16Theme theme) {
+        if (theme == null) return;
+        currentBase16Theme = theme;
+        if (prefs != null) {
+            prefs.edit().putString("base16_selected_theme_id", theme.getId()).apply();
+        }
+        mainHandler.post(() -> {
+            if (mainLayout != null) {
+                applyTheme(mainLayout);
+            }
+            if (tvLiveFeedback != null) {
+                tvLiveFeedback.setText("🎨 " + theme.getName());
+            }
+        });
+    }
+
     private void applyTheme(View rootLayout) {
+        if (currentBase16Theme != null) {
+            int bg = currentBase16Theme.getBackgroundColor();
+            int keyBg = currentBase16Theme.getKeyBackgroundColor();
+            int textColor = currentBase16Theme.getTextColor();
+            int accent = currentBase16Theme.getAccentColor();
+            int modBg = currentBase16Theme.getModifierKeyColor();
+            int delBg = currentBase16Theme.getDeleteKeyColor();
+
+            rootLayout.setBackgroundColor(bg);
+            if (visualKeyboardContainer != null) {
+                visualKeyboardContainer.setBackgroundColor(bg);
+            }
+
+            for (java.util.Map.Entry<String, Button> entry : keyButtons.entrySet()) {
+                String k = entry.getKey();
+                Button btn = entry.getValue();
+                if ("ENTER".equals(k)) {
+                    btn.setBackgroundColor(accent);
+                    btn.setTextColor(bg);
+                } else if ("BACKSPACE".equals(k)) {
+                    btn.setBackgroundColor(delBg);
+                    btn.setTextColor(bg);
+                } else if ("SHIFT".equals(k) || "CTRL".equals(k) || "ALT".equals(k) || "META".equals(k) || "FN".equals(k)) {
+                    btn.setBackgroundColor(modBg);
+                    btn.setTextColor(textColor);
+                } else {
+                    btn.setBackgroundColor(keyBg);
+                    btn.setTextColor(textColor);
+                }
+            }
+
+            if (pastePillButton != null) {
+                pastePillButton.setBackgroundColor(accent);
+                pastePillButton.setTextColor(bg);
+            }
+            return;
+        }
+
         int[] theme = THEMES[currentThemeIndex];
         int bgColor = theme[0];
         int keyBgColor = theme[1];
@@ -538,20 +633,41 @@ public class RemoteInputMethodService extends InputMethodService {
     public void setExternalTheme(String mode) {
         mainHandler.post(() -> {
             if ("amoled".equalsIgnoreCase(mode) || "pro".equalsIgnoreCase(mode)) {
+                currentBase16Theme = null;
                 currentThemeIndex = 5; // AMOLED Dark Battery Saver
             } else if ("light".equalsIgnoreCase(mode)) {
+                currentBase16Theme = null;
                 currentThemeIndex = 2; // Minimalist Light
-            } else {
+            } else if ("dark".equalsIgnoreCase(mode) || "cyber".equalsIgnoreCase(mode)) {
+                currentBase16Theme = null;
                 currentThemeIndex = 0; // Cyber-Dark Default
+            } else {
+                com.remotekeyboard.theme.Base16Theme b16 = com.remotekeyboard.theme.Base16ThemeManager.getInstance().getThemeById(this, mode);
+                if (b16 == null) {
+                    b16 = com.remotekeyboard.theme.Base16ThemeManager.getInstance().getThemeByName(this, mode);
+                }
+                if (b16 != null) {
+                    currentBase16Theme = b16;
+                    com.remotekeyboard.theme.Base16ThemeManager.getInstance().setSelectedTheme(this, b16);
+                } else {
+                    currentBase16Theme = null;
+                    currentThemeIndex = 0;
+                }
             }
             if (prefs != null) {
-                prefs.edit().putInt("keyboard_theme_index", currentThemeIndex).apply();
+                if (currentBase16Theme != null) {
+                    prefs.edit().putString("base16_selected_theme_id", currentBase16Theme.getId()).apply();
+                } else {
+                    prefs.edit().remove("base16_selected_theme_id")
+                                .putInt("keyboard_theme_index", currentThemeIndex).apply();
+                }
             }
             if (mainLayout != null) {
                 applyTheme(mainLayout);
             }
             if (tvLiveFeedback != null) {
-                tvLiveFeedback.setText("🎨 " + THEME_NAMES[currentThemeIndex]);
+                String name = currentBase16Theme != null ? currentBase16Theme.getName() : THEME_NAMES[currentThemeIndex];
+                tvLiveFeedback.setText("🎨 " + name);
             }
         });
     }
@@ -592,13 +708,35 @@ public class RemoteInputMethodService extends InputMethodService {
         if (btn != null) {
             final Button targetBtn = btn;
             mainHandler.post(() -> {
-                int[] theme = THEMES[currentThemeIndex];
-                if (isPressed) {
-                    targetBtn.setBackgroundColor(theme[2]); // Pressed color
-                    targetBtn.setTextColor(theme[0]);
+                if (currentBase16Theme != null) {
+                    if (isPressed) {
+                        targetBtn.setBackgroundColor(currentBase16Theme.getKeyPressedColor());
+                        targetBtn.setTextColor(currentBase16Theme.getBackgroundColor());
+                    } else {
+                        String kName = resolveKeyButtonName(keyStr, codeStr);
+                        if ("ENTER".equals(kName)) {
+                            targetBtn.setBackgroundColor(currentBase16Theme.getAccentColor());
+                            targetBtn.setTextColor(currentBase16Theme.getBackgroundColor());
+                        } else if ("BACKSPACE".equals(kName)) {
+                            targetBtn.setBackgroundColor(currentBase16Theme.getDeleteKeyColor());
+                            targetBtn.setTextColor(currentBase16Theme.getBackgroundColor());
+                        } else if ("SHIFT".equals(kName) || "CTRL".equals(kName) || "ALT".equals(kName) || "META".equals(kName) || "FN".equals(kName)) {
+                            targetBtn.setBackgroundColor(currentBase16Theme.getModifierKeyColor());
+                            targetBtn.setTextColor(currentBase16Theme.getTextColor());
+                        } else {
+                            targetBtn.setBackgroundColor(currentBase16Theme.getKeyBackgroundColor());
+                            targetBtn.setTextColor(currentBase16Theme.getTextColor());
+                        }
+                    }
                 } else {
-                    targetBtn.setBackgroundColor(theme[1]); // Normal color
-                    targetBtn.setTextColor(theme[3]);
+                    int[] theme = THEMES[currentThemeIndex];
+                    if (isPressed) {
+                        targetBtn.setBackgroundColor(theme[2]); // Pressed color
+                        targetBtn.setTextColor(theme[0]);
+                    } else {
+                        targetBtn.setBackgroundColor(theme[1]); // Normal color
+                        targetBtn.setTextColor(theme[3]);
+                    }
                 }
             });
         }
