@@ -6,4 +6,10 @@
     <string name="btn_enable_ime">1. Habilitar en Ajustes de Teclado</string>
     <string name="btn_select_ime">2. Seleccionar como Teclado Activo</string>
     <string name="desc_instructions">Abre la siguiente dirección en el navegador web de tu PC para empezar a escribir en tiempo real:</string>
+    <string name="accessibility_service_name">Remote WiFi Keyboard (Navegación Remota)</string>
+    <string name="accessibility_service_description">Permite abrir la vista de Apps Recientes (Multitarea), Botón Atrás e Inicio directamente desde el teclado de Windows.</string>
+    <string name="accessibility_disclosure_title">🛡️ Divulgación de Accesibilidad (Google Play)</string>
+    <string name="accessibility_disclosure_message">Remote WiFi Keyboard utiliza la API de Servicios de Accesibilidad de Android (AccessibilityService) de forma opcional y exclusiva para:\n\n• Activar acciones globales de navegación del sistema: Vista de aplicaciones recientes (Multitarea), botón Atrás e Inicio desde el cliente de PC.\n\n🔒 Privacidad y Seguridad:\n• Esta aplicación NO recopila, almacena ni comparte ningún tipo de dato personal o información de usuario.\n• Este servicio NO lee, monitoriza ni captura el contenido de la pantalla ni las pulsaciones fuera del método de entrada.\n\nPuedes habilitar o deshabilitar este permiso cuando lo desees.</string>
+    <string name="accessibility_disclosure_accept">Continuar a Ajustes</string>
+    <string name="accessibility_disclosure_cancel">Cancelar</string>
 </resources>

@@ -991,10 +991,19 @@ public class RemoteInputMethodService extends InputMethodService {
                         });
                         break;
                     case "ESCAPE":
-                        sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                        RemoteAccessibilityService accEsc = RemoteAccessibilityService.getInstance();
+                        if (accEsc != null) {
+                            accEsc.triggerBack();
+                        } else {
+                            sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                        }
                         break;
                     case "RECENTS":
                     case "APP_SWITCH":
+                        RemoteAccessibilityService accRec = RemoteAccessibilityService.getInstance();
+                        if (accRec != null) {
+                            accRec.triggerRecents();
+                        }
                         break;
                     case "VOLUME_UP":
                     case "VOL_UP":
@@ -1051,11 +1060,19 @@ public class RemoteInputMethodService extends InputMethodService {
                     if (androidAction == KeyEvent.ACTION_DOWN) {
                         // 1. Botón Atrás (Escape)
                         if ("Escape".equalsIgnoreCase(code)) {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                            RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                            if (acc != null) acc.triggerBack();
+                            else sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
                             return;
                         }
                         // 2. Multitarea / Recientes (Alt+Tab o Espacio)
-                        // (Sin servicio de accesibilidad para prevenir bloqueo de Play Protect)
+                        if (((metaState & KeyEvent.META_ALT_ON) != 0 && "Tab".equalsIgnoreCase(code)) || "Space".equalsIgnoreCase(code)) {
+                            RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                            if (acc != null) {
+                                acc.triggerRecents();
+                                return;
+                            }
+                        }
                         // 3. Controles de Volumen (F2 / F3 / F1)
                         if ("F3".equalsIgnoreCase(code)) {
                             try {
@@ -1097,6 +1114,13 @@ public class RemoteInputMethodService extends InputMethodService {
 
                 // Global Shortcuts mientras se escribe
                 if (androidAction == KeyEvent.ACTION_DOWN) {
+                    if ((metaState & KeyEvent.META_ALT_ON) != 0 && "Tab".equalsIgnoreCase(code)) {
+                        RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                        if (acc != null) {
+                            acc.triggerRecents();
+                            return;
+                        }
+                    }
                     if ("F3".equalsIgnoreCase(code)) {
                         try {
                             android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -1110,8 +1134,14 @@ public class RemoteInputMethodService extends InputMethodService {
                         } catch (Exception ignored) {}
                     }
                     if ("Escape".equalsIgnoreCase(code)) {
-                        sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
-                        return;
+                        RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                        if (acc != null) {
+                            acc.triggerBack();
+                            return;
+                        } else {
+                            sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                            return;
+                        }
                     }
                 }
 
