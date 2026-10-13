@@ -318,7 +318,7 @@ public class MainActivity extends Activity {
      * - Requiere consentimiento afirmativo del usuario.
      */
     private void showAccessibilityDisclosureDialog() {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        new android.app.AlertDialog.Builder(this)
             .setTitle(R.string.accessibility_disclosure_title)
             .setMessage(R.string.accessibility_disclosure_message)
             .setPositiveButton(R.string.accessibility_disclosure_accept, (dialog, which) -> {
