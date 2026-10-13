@@ -11,6 +11,7 @@ tmuxconfig/
 *.zip
 *.keystore
 *.nupkg
+*.lnk
 installer/
 dist/
 dist-pro/
