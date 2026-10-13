@@ -10,6 +10,22 @@
 
 module.exports = [
     {
+        id: 'android_system',
+        label: '🤖 Android Control',
+        shortcuts: [
+            { label: 'Multitarea',   combo: 'Alt+Tab / Espacio', type: 'key', key: 'RECENTS' },
+            { label: 'Atrás',        combo: 'Escape',            type: 'key', key: 'ESCAPE' },
+            { label: 'Inicio (Home)',combo: 'Meta / Home',       type: 'key', key: 'HOME' },
+            { label: 'Volumen +',    combo: 'F3',                type: 'key', key: 'VOLUME_UP' },
+            { label: 'Volumen -',    combo: 'F2',                type: 'key', key: 'VOLUME_DOWN' },
+            { label: 'Silenciar',    combo: 'F1',                type: 'key', key: 'VOLUME_MUTE' },
+            { label: 'Play / Pausa', combo: 'MediaPlayPause',    type: 'key_event', code: 'MediaPlayPause', mods: [] },
+            { label: 'Sig. Pista',   combo: 'MediaTrackNext',    type: 'key_event', code: 'MediaTrackNext', mods: [] },
+            { label: 'Ant. Pista',   combo: 'MediaTrackPrevious',type: 'key_event', code: 'MediaTrackPrevious', mods: [] },
+            { label: 'Despertar Tel',combo: 'Wake',              type: 'key', key: 'WAKE' }
+        ]
+    },
+    {
         id: 'universal',
         label: '🌐 Universal',
         shortcuts: [

@@ -128,6 +128,12 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('widget-wake-device', () => {
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('wake-android-device');
+    }
+  });
+
   ipcMain.on('widget-keystroke', (event, keyData) => {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('simulate-keystroke', keyData);
@@ -191,6 +197,7 @@ app.whenReady().then(() => {
             widgetWindow.focus();
           }
         } else if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('wake-android-device');
           if (mainWindow.isFocused()) {
             mainWindow.webContents.send('toggle-remote-writing');
           } else {
@@ -198,6 +205,9 @@ app.whenReady().then(() => {
             mainWindow.focus();
             mainWindow.webContents.send('toggle-remote-writing');
           }
+        }
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('wake-android-device');
         }
       });
       if (!ok) console.log('No se pudo registrar atajo universal:', registeredShortcut);

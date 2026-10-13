@@ -75,6 +75,7 @@ public class MainActivity extends Activity {
     private TextView tvImeStatus;
     private Button btnEnableIme;
     private Button btnSelectIme;
+    private Button btnAccessibility;
 
     private TextView tvThemeCardHeader;
     private TextView tvTelemetryHeader;
@@ -159,6 +160,7 @@ public class MainActivity extends Activity {
         tvImeStatus = findViewById(R.id.tvImeStatus);
         btnEnableIme = findViewById(R.id.btnEnableIme);
         btnSelectIme = findViewById(R.id.btnSelectIme);
+        btnAccessibility = findViewById(R.id.btnAccessibility);
 
         tvThemeCardHeader = findViewById(R.id.tvThemeCardHeader);
         tvTelemetryHeader = findViewById(R.id.tvTelemetryHeader);
@@ -289,6 +291,22 @@ public class MainActivity extends Activity {
             }
         });
 
+        btnAccessibility.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    Toast.makeText(MainActivity.this, "Busca 'Remote Keyboard' y activa el servicio para multitarea y atrás", Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_SETTINGS));
+                    } catch (Exception ignored) {}
+                }
+            }
+        });
+
         btnBuyPro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -356,6 +374,10 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
                 btnSelectIme.setTextColor(Color.WHITE);
             }
+            if (btnAccessibility != null) {
+                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#050505")));
+                btnAccessibility.setTextColor(Color.parseColor("#00F0FF"));
+            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00FF88"));
             if (tvThemeBadge != null) {
@@ -412,6 +434,10 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
                 btnSelectIme.setTextColor(Color.parseColor("#0F172A"));
             }
+            if (btnAccessibility != null) {
+                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0F2FE")));
+                btnAccessibility.setTextColor(Color.parseColor("#0284C7"));
+            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#0284C7"));
             if (tvThemeBadge != null) {
@@ -467,6 +493,10 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
                 btnSelectIme.setTextColor(Color.WHITE);
+            }
+            if (btnAccessibility != null) {
+                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0C1527")));
+                btnAccessibility.setTextColor(Color.parseColor("#38BDF8"));
             }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00F0FF"));

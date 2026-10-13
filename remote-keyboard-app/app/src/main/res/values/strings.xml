@@ -6,4 +6,6 @@
     <string name="btn_enable_ime">1. Habilitar en Ajustes de Teclado</string>
     <string name="btn_select_ime">2. Seleccionar como Teclado Activo</string>
     <string name="desc_instructions">Abre la siguiente dirección en el navegador web de tu PC para empezar a escribir en tiempo real:</string>
+    <string name="accessibility_service_name">Remote Keyboard (Navegación y Multitarea)</string>
+    <string name="accessibility_service_description">Permite abrir la vista de Apps Recientes (Multitarea), Botón Atrás e Inicio directamente desde el teclado de Windows.</string>
 </resources>

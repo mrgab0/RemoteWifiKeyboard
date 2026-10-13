@@ -787,7 +787,7 @@ public class RemoteInputMethodService extends InputMethodService {
         }
     };
 
-    private void pokeWakeLock() {
+    public void pokeWakeLock() {
         if (typingWakeLock != null) {
             try {
                 if (!typingWakeLock.isHeld()) {
@@ -990,6 +990,44 @@ public class RemoteInputMethodService extends InputMethodService {
                             } else { sendDownUpKeyEvents(KeyEvent.KEYCODE_FORWARD_DEL); }
                         });
                         break;
+                    case "ESCAPE":
+                        RemoteAccessibilityService accEsc = RemoteAccessibilityService.getInstance();
+                        if (accEsc != null) {
+                            accEsc.triggerBack();
+                        } else {
+                            sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                        }
+                        break;
+                    case "RECENTS":
+                    case "APP_SWITCH":
+                        RemoteAccessibilityService accRec = RemoteAccessibilityService.getInstance();
+                        if (accRec != null) {
+                            accRec.triggerRecents();
+                        }
+                        break;
+                    case "VOLUME_UP":
+                    case "VOL_UP":
+                        try {
+                            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                            if (am != null) am.adjustVolume(android.media.AudioManager.ADJUST_RAISE, android.media.AudioManager.FLAG_SHOW_UI);
+                        } catch (Exception ignored) {}
+                        break;
+                    case "VOLUME_DOWN":
+                    case "VOL_DOWN":
+                        try {
+                            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                            if (am != null) am.adjustVolume(android.media.AudioManager.ADJUST_LOWER, android.media.AudioManager.FLAG_SHOW_UI);
+                        } catch (Exception ignored) {}
+                        break;
+                    case "VOLUME_MUTE":
+                    case "MUTE":
+                        try {
+                            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                            if (am != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                am.adjustVolume(android.media.AudioManager.ADJUST_TOGGLE_MUTE, android.media.AudioManager.FLAG_SHOW_UI);
+                            }
+                        } catch (Exception ignored) {}
+                        break;
                     default:
                         if (key.length() == 1) {
                             typeText(key);
@@ -1017,7 +1055,92 @@ public class RemoteInputMethodService extends InputMethodService {
             @Override
             public void run() {
                 InputConnection ic = getCurrentInputConnection();
-                if (ic == null) return;
+                if (ic == null) {
+                    // --- Modo Navegación Remota de Android (Sin campo de texto enfocado) ---
+                    if (androidAction == KeyEvent.ACTION_DOWN) {
+                        // 1. Botón Atrás (Escape)
+                        if ("Escape".equalsIgnoreCase(code)) {
+                            RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                            if (acc != null) acc.triggerBack();
+                            else sendDownUpKeyEvents(KeyEvent.KEYCODE_BACK);
+                            return;
+                        }
+                        // 2. Multitarea / Recientes (Alt+Tab o Espacio)
+                        if (((metaState & KeyEvent.META_ALT_ON) != 0 && "Tab".equalsIgnoreCase(code)) || "Space".equalsIgnoreCase(code)) {
+                            RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                            if (acc != null) {
+                                acc.triggerRecents();
+                                return;
+                            }
+                        }
+                        // 3. Controles de Volumen (F2 / F3 / F1)
+                        if ("F3".equalsIgnoreCase(code)) {
+                            try {
+                                android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                                if (am != null) am.adjustVolume(android.media.AudioManager.ADJUST_RAISE, android.media.AudioManager.FLAG_SHOW_UI);
+                            } catch (Exception ignored) {}
+                            return;
+                        }
+                        if ("F2".equalsIgnoreCase(code)) {
+                            try {
+                                android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                                if (am != null) am.adjustVolume(android.media.AudioManager.ADJUST_LOWER, android.media.AudioManager.FLAG_SHOW_UI);
+                            } catch (Exception ignored) {}
+                            return;
+                        }
+                        if ("F1".equalsIgnoreCase(code)) {
+                            try {
+                                android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                                if (am != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    am.adjustVolume(android.media.AudioManager.ADJUST_TOGGLE_MUTE, android.media.AudioManager.FLAG_SHOW_UI);
+                                }
+                            } catch (Exception ignored) {}
+                            return;
+                        }
+                        // 4. Selección / Clic en Android (Enter)
+                        if ("Enter".equalsIgnoreCase(code) || "NumpadEnter".equalsIgnoreCase(code)) {
+                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_CENTER);
+                            return;
+                        }
+                        // 5. Flechas Direccionales (DPAD)
+                        if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+                            keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                            sendDownUpKeyEvents(keyCode);
+                            return;
+                        }
+                    }
+                    return;
+                }
+
+                // Global Shortcuts mientras se escribe
+                if (androidAction == KeyEvent.ACTION_DOWN) {
+                    if ((metaState & KeyEvent.META_ALT_ON) != 0 && "Tab".equalsIgnoreCase(code)) {
+                        RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                        if (acc != null) {
+                            acc.triggerRecents();
+                            return;
+                        }
+                    }
+                    if ("F3".equalsIgnoreCase(code)) {
+                        try {
+                            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                            if (am != null) { am.adjustVolume(android.media.AudioManager.ADJUST_RAISE, android.media.AudioManager.FLAG_SHOW_UI); return; }
+                        } catch (Exception ignored) {}
+                    }
+                    if ("F2".equalsIgnoreCase(code)) {
+                        try {
+                            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                            if (am != null) { am.adjustVolume(android.media.AudioManager.ADJUST_LOWER, android.media.AudioManager.FLAG_SHOW_UI); return; }
+                        } catch (Exception ignored) {}
+                    }
+                    if ("Escape".equalsIgnoreCase(code)) {
+                        RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                        if (acc != null) {
+                            acc.triggerBack();
+                            return;
+                        }
+                    }
+                }
 
                 // 1. Manejo seguro e inmediato de Backspace y Delete (WhatsApp, Chrome, editores)
                 if ("Backspace".equalsIgnoreCase(code)) {

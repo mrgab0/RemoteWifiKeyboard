@@ -3,6 +3,7 @@ package com.remotekeyboard.server;
 import android.content.Context;
 import android.util.Log;
 import com.remotekeyboard.RemoteInputMethodService;
+import com.remotekeyboard.RemoteAccessibilityService;
 
 import org.json.JSONObject;
 
@@ -178,6 +179,69 @@ public class RemoteWebServer extends NanoHTTPD {
                 RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
                 if (ime != null) {
                     ime.setExternalTheme(theme);
+                }
+            }
+            // ⚡ 5. Lanzador Remoto de Aplicaciones en Android (Fase 1)
+            else if ("launch_app".equals(type)) {
+                String pkg = json.optString("package", "");
+                if (!pkg.isEmpty()) {
+                    try {
+                        android.content.Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(launchIntent);
+                            com.remotekeyboard.DebugLogger.log("App lanzada exitosamente: " + pkg);
+                        } else {
+                            com.remotekeyboard.DebugLogger.log("App no encontrada o no instalada: " + pkg);
+                        }
+                    } catch (Exception ex) {
+                        com.remotekeyboard.DebugLogger.log("Error al lanzar " + pkg + ": " + ex.getMessage());
+                    }
+                }
+            }
+            // ⚡ 6. Acciones Globales del Sistema (Fase 2: Recientes, Atrás, Inicio)
+            else if ("global_action".equals(type)) {
+                String action = json.optString("action", "");
+                com.remotekeyboard.DebugLogger.log("WebSocket RX [GLOBAL ACTION]: " + action);
+                RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                if (acc != null) {
+                    if ("back".equalsIgnoreCase(action)) {
+                        acc.triggerBack();
+                    } else if ("recents".equalsIgnoreCase(action)) {
+                        acc.triggerRecents();
+                    } else if ("home".equalsIgnoreCase(action)) {
+                        acc.triggerHome();
+                    } else if ("notifications".equalsIgnoreCase(action)) {
+                        acc.triggerNotifications();
+                    }
+                } else {
+                    RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                    if (ime != null && "back".equalsIgnoreCase(action)) {
+                        ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_BACK);
+                    }
+                }
+            }
+            // ⚡ 7. Despertar Pantalla Remotamente (Fase 4: WakeLock)
+            else if ("wake_device".equals(type)) {
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
+                    ime.pokeWakeLock();
+                }
+            }
+            // ⚡ 8. Controles de Volumen y Audio (Fase 3: AudioManager)
+            else if ("volume".equals(type)) {
+                String dir = json.optString("dir", "");
+                android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                if (am != null) {
+                    if ("up".equalsIgnoreCase(dir)) {
+                        am.adjustVolume(android.media.AudioManager.ADJUST_RAISE, android.media.AudioManager.FLAG_SHOW_UI);
+                    } else if ("down".equalsIgnoreCase(dir)) {
+                        am.adjustVolume(android.media.AudioManager.ADJUST_LOWER, android.media.AudioManager.FLAG_SHOW_UI);
+                    } else if ("mute".equalsIgnoreCase(dir)) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                            am.adjustVolume(android.media.AudioManager.ADJUST_TOGGLE_MUTE, android.media.AudioManager.FLAG_SHOW_UI);
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

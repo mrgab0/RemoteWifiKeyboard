@@ -554,18 +554,32 @@
             </div>
 
             <!-- Detected Apps List -->
-            <div class="space-y-1 max-h-48 overflow-y-auto pr-1 text-xs">
-              <div onclick="launchRemoteApp('md.obsidian', 'Obsidian')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+            <div class="space-y-1 max-h-56 overflow-y-auto pr-1 text-xs">
+              <!-- Termux -->
+              <div onclick="launchRemoteApp('com.termux', 'Termux')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
                 <div class="flex items-center space-x-2">
-                  <span class="w-6 h-6 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-[10px] border border-purple-500/40">OB</span>
+                  <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px] border border-emerald-500/40">TX</span>
                   <div>
-                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Obsidian</p>
-                    <p class="text-[10px] text-slate-500 font-mono">md.obsidian</p>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Termux</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.termux</p>
                   </div>
                 </div>
                 <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
               </div>
 
+              <!-- WhatsApp -->
+              <div onclick="launchRemoteApp('com.whatsapp', 'WhatsApp')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-green-500/20 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/40">WA</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">WhatsApp</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.whatsapp</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <!-- Google Chrome -->
               <div onclick="launchRemoteApp('com.android.chrome', 'Google Chrome')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
                 <div class="flex items-center space-x-2">
                   <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-[10px] border border-cyan-500/40">CR</span>
@@ -577,6 +591,31 @@
                 <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
               </div>
 
+              <!-- YouTube -->
+              <div onclick="launchRemoteApp('com.google.android.youtube', 'YouTube')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-red-500/20 text-red-400 flex items-center justify-center font-bold text-[10px] border border-red-500/40">YT</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">YouTube</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.google.android.youtube</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <!-- Spotify -->
+              <div onclick="launchRemoteApp('com.spotify.music', 'Spotify')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px] border border-emerald-500/40">SP</span>
+                  <div>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Spotify</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.spotify.music</p>
+                  </div>
+                </div>
+                <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
+              </div>
+
+              <!-- Telegram -->
               <div onclick="launchRemoteApp('org.telegram.messenger', 'Telegram')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
                 <div class="flex items-center space-x-2">
                   <span class="w-6 h-6 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-[10px] border border-blue-500/40">TG</span>
@@ -588,31 +627,39 @@
                 <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
               </div>
 
-              <div onclick="launchRemoteApp('com.termux.api', 'Termux:API')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+              <!-- Obsidian -->
+              <div onclick="launchRemoteApp('md.obsidian', 'Obsidian')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
                 <div class="flex items-center space-x-2">
-                  <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px] border border-emerald-500/40">API</span>
+                  <span class="w-6 h-6 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-[10px] border border-purple-500/40">OB</span>
                   <div>
-                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Termux:API</p>
-                    <p class="text-[10px] text-slate-500 font-mono">com.termux.api</p>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Obsidian</p>
+                    <p class="text-[10px] text-slate-500 font-mono">md.obsidian</p>
                   </div>
                 </div>
                 <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
               </div>
 
-              <div onclick="launchRemoteApp('com.alacritty.terminal', 'Alacritty Mobile')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
+              <!-- Ajustes de Android -->
+              <div onclick="launchRemoteApp('com.android.settings', 'Ajustes')" class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer group transition">
                 <div class="flex items-center space-x-2">
-                  <span class="w-6 h-6 rounded bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-[10px] border border-amber-500/40">AL</span>
+                  <span class="w-6 h-6 rounded bg-slate-700/40 text-slate-300 flex items-center justify-center font-bold text-[10px] border border-slate-600">⚙️</span>
                   <div>
-                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Alacritty Mobile</p>
-                    <p class="text-[10px] text-slate-500 font-mono">com.alacritty.terminal</p>
+                    <p class="text-slate-200 font-medium group-hover:text-cyan-300 leading-tight">Ajustes</p>
+                    <p class="text-[10px] text-slate-500 font-mono">com.android.settings</p>
                   </div>
                 </div>
                 <button class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-slate-700 font-medium transition">Abrir</button>
               </div>
             </div>
 
-            <div class="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-              <span>Transmisión vía WebSocket intent</span>
+            <!-- Custom App Input -->
+            <div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center gap-1.5">
+              <input id="input-custom-app" type="text" placeholder="Otro paquete (ej: com.termux)..." class="flex-1 bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-400 font-mono" onkeydown="if(event.key==='Enter')launchCustomAppFromInput()" />
+              <button onclick="launchCustomAppFromInput()" class="px-2.5 py-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold rounded-lg text-[10px] hover:brightness-110">Abrir</button>
+            </div>
+
+            <div class="mt-2 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Lanzamiento instantáneo vía WebSocket</span>
               <button onclick="toggleAppPicker()" class="text-slate-400 hover:text-slate-200">Cerrar</button>
             </div>
           </div>
@@ -1383,6 +1430,15 @@
       toggleAppPicker();
     }
 
+    function launchCustomAppFromInput() {
+      const inp = document.getElementById('input-custom-app');
+      if (inp && inp.value.trim()) {
+        const pkg = inp.value.trim();
+        launchRemoteApp(pkg, pkg);
+        inp.value = '';
+      }
+    }
+
     // =========================================================
     // Developer Shortcuts Catalog
     // =========================================================
@@ -1429,12 +1485,22 @@
         `;
         card.onclick = () => {
           if (sc.type === 'key') {
-            sendPayload({ type: 'key', key: sc.key });
+            if (sc.key === 'WAKE') {
+              sendPayload({ type: 'wake_device' });
+              appendLog(`⚡ Despertando pantalla de Android...`);
+            } else if (sc.key === 'RECENTS' || sc.key === 'ESCAPE' || sc.key === 'HOME') {
+              sendPayload({ type: 'global_action', action: sc.key.toLowerCase() });
+              sendPayload({ type: 'key', key: sc.key });
+              appendLog(`⚡ Acción del sistema Android: ${sc.label} (${sc.key})`);
+            } else {
+              sendPayload({ type: 'key', key: sc.key });
+              appendLog(`⚡ Tecla especial enviada: ${sc.label} (${sc.key})`);
+            }
           } else if (sc.type === 'key_event') {
             sendRawKey('keydown', sc.key || sc.code, sc.code, sc.mods || []);
             setTimeout(() => sendRawKey('keyup', sc.key || sc.code, sc.code, sc.mods || []), 40);
+            appendLog(`⚡ Shortcut disparado: ${sc.label} (${sc.combo})`);
           }
-          appendLog(`⚡ Shortcut disparado: ${sc.label} (${sc.combo})`);
         };
         gridEl.appendChild(card);
       });
@@ -1577,6 +1643,11 @@
         setTimeout(() => keyBox.classList.remove('ring-2', 'ring-cyan-400'), 600);
       }
       appendLog('⚡ Modo escritura remoto alternado por atajo universal (Ctrl+Shift+Ins)', 'sys');
+    });
+
+    ipcRenderer.on('wake-android-device', () => {
+      sendPayload({ type: 'wake_device' });
+      appendLog('📱 Señal enviada para despertar pantalla de Android', 'sys');
     });
 
     // Cargar ajustes al inicio

@@ -319,7 +319,10 @@
       }
     }
 
-    window.addEventListener('focus', () => setFocusState(true));
+    window.addEventListener('focus', () => {
+      setFocusState(true);
+      ipcRenderer.send('widget-wake-device');
+    });
     window.addEventListener('blur', () => {
       setFocusState(false);
       hideTooltip();
@@ -345,6 +348,7 @@
       showTooltip();
       if (appConfig.widgetHoverActivate) {
         ipcRenderer.send('widget-hover-activate');
+        ipcRenderer.send('widget-wake-device');
         setFocusState(true);
       }
     });
