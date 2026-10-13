@@ -3,7 +3,6 @@ package com.remotekeyboard.server;
 import android.content.Context;
 import android.util.Log;
 import com.remotekeyboard.RemoteInputMethodService;
-import com.remotekeyboard.RemoteAccessibilityService;
 
 import org.json.JSONObject;
 
@@ -187,89 +186,28 @@ public class RemoteWebServer extends NanoHTTPD {
                 if (!pkg.isEmpty()) {
                     try {
                         android.content.Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
-                        if (launchIntent == null) {
-                            android.content.Intent qIntent = new android.content.Intent(android.content.Intent.ACTION_MAIN);
-                            qIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-                            qIntent.setPackage(pkg);
-                            java.util.List<android.content.pm.ResolveInfo> list = context.getPackageManager().queryIntentActivities(qIntent, 0);
-                            if (list != null && !list.isEmpty()) {
-                                android.content.pm.ActivityInfo aInfo = list.get(0).activityInfo;
-                                launchIntent = new android.content.Intent(android.content.Intent.ACTION_MAIN);
-                                launchIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-                                launchIntent.setComponent(new android.content.ComponentName(aInfo.packageName, aInfo.name));
-                            }
-                        }
-                        if (launchIntent == null && "com.termux".equalsIgnoreCase(pkg)) {
-                            launchIntent = new android.content.Intent();
-                            launchIntent.setComponent(new android.content.ComponentName("com.termux", "com.termux.app.TermuxActivity"));
-                        }
-
                         if (launchIntent != null) {
-                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                            
-                            Context targetCtx = RemoteAccessibilityService.getInstance() != null 
-                                ? RemoteAccessibilityService.getInstance() 
-                                : (RemoteInputMethodService.getInstance() != null ? RemoteInputMethodService.getInstance() : context);
-
-                            // 1. Lanzamiento directo
-                            try {
-                                targetCtx.startActivity(launchIntent);
-                                com.remotekeyboard.DebugLogger.log("🚀 App lanzada vía startActivity: " + pkg);
-                            } catch (Exception se) {
-                                com.remotekeyboard.DebugLogger.log("startActivity aviso: " + se.getMessage());
-                            }
-
-                            // 2. Bypass BAL con PendingIntent para Android 10-14+
-                            try {
-                                android.app.PendingIntent pi = android.app.PendingIntent.getActivity(
-                                    targetCtx,
-                                    (int) (System.currentTimeMillis() & 0xfffffff),
-                                    launchIntent,
-                                    android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT
-                                );
-                                if (android.os.Build.VERSION.SDK_INT >= 34) {
-                                    android.app.ActivityOptions ao = android.app.ActivityOptions.makeBasic();
-                                    ao.setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
-                                    pi.send(targetCtx, 0, null, null, null, null, ao.toBundle());
-                                } else {
-                                    pi.send();
-                                }
-                                com.remotekeyboard.DebugLogger.log("🚀 App lanzada vía PendingIntent BAL: " + pkg);
-                            } catch (Exception pe) {
-                                com.remotekeyboard.DebugLogger.log("PendingIntent aviso: " + pe.getMessage());
-                            }
+                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(launchIntent);
+                            com.remotekeyboard.DebugLogger.log("App lanzada exitosamente: " + pkg);
                         } else {
-                            com.remotekeyboard.DebugLogger.log("⚠️ App no encontrada o no instalada: " + pkg);
+                            com.remotekeyboard.DebugLogger.log("App no encontrada o no instalada: " + pkg);
                         }
                     } catch (Exception ex) {
                         com.remotekeyboard.DebugLogger.log("Error al lanzar " + pkg + ": " + ex.getMessage());
                     }
                 }
             }
-            // ⚡ 6. Acciones Globales del Sistema (Recientes, Atrás, Inicio, Notificaciones)
+            // ⚡ 6. Acciones Globales del Sistema (Atrás, Inicio)
             else if ("global_action".equals(type)) {
                 String action = json.optString("action", "");
                 com.remotekeyboard.DebugLogger.log("WebSocket RX [GLOBAL ACTION]: " + action);
-                RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
-                if (acc != null) {
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
                     if ("back".equalsIgnoreCase(action)) {
-                        acc.triggerBack();
-                    } else if ("recents".equalsIgnoreCase(action)) {
-                        acc.triggerRecents();
+                        ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_BACK);
                     } else if ("home".equalsIgnoreCase(action)) {
-                        acc.triggerHome();
-                    } else if ("notifications".equalsIgnoreCase(action)) {
-                        acc.triggerNotifications();
-                    }
-                } else {
-                    // Fallback nativo si el usuario eligió no activar accesibilidad
-                    RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
-                    if (ime != null) {
-                        if ("back".equalsIgnoreCase(action)) {
-                            ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_BACK);
-                        } else if ("home".equalsIgnoreCase(action)) {
-                            ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_HOME);
-                        }
+                        ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_HOME);
                     }
                 }
             }

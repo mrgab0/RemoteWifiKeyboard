@@ -75,7 +75,6 @@ public class MainActivity extends Activity {
     private TextView tvImeStatus;
     private Button btnEnableIme;
     private Button btnSelectIme;
-    private Button btnAccessibility;
 
     private TextView tvThemeCardHeader;
     private TextView tvTelemetryHeader;
@@ -160,7 +159,6 @@ public class MainActivity extends Activity {
         tvImeStatus = findViewById(R.id.tvImeStatus);
         btnEnableIme = findViewById(R.id.btnEnableIme);
         btnSelectIme = findViewById(R.id.btnSelectIme);
-        btnAccessibility = findViewById(R.id.btnAccessibility);
 
         tvThemeCardHeader = findViewById(R.id.tvThemeCardHeader);
         tvTelemetryHeader = findViewById(R.id.tvTelemetryHeader);
@@ -291,15 +289,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (btnAccessibility != null) {
-            btnAccessibility.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showAccessibilityDisclosureDialog();
-                }
-            });
-        }
-
         btnBuyPro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -308,34 +297,6 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "¡Licencia PRO Activada ($7.99 USD)! Cero anuncios.", Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    /**
-     * Cumplimiento estricto de la política de Google Play Store sobre la API de Accesibilidad:
-     * - Divulgación destacada antes de solicitar permisos o enviar al usuario a Ajustes.
-     * - Explica el propósito exacto (Multitarea y Navegación remota desde PC).
-     * - Aclara que NO recopila ni comparte datos personales ni lee la pantalla.
-     * - Requiere consentimiento afirmativo del usuario.
-     */
-    private void showAccessibilityDisclosureDialog() {
-        new android.app.AlertDialog.Builder(this)
-            .setTitle(R.string.accessibility_disclosure_title)
-            .setMessage(R.string.accessibility_disclosure_message)
-            .setPositiveButton(R.string.accessibility_disclosure_accept, (dialog, which) -> {
-                try {
-                    Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    Toast.makeText(MainActivity.this, "Busca 'Remote WiFi Keyboard' y activa el servicio", Toast.LENGTH_LONG).show();
-                } catch (Exception e) {
-                    try {
-                        startActivity(new Intent(Settings.ACTION_SETTINGS));
-                    } catch (Exception ignored) {}
-                }
-            })
-            .setNegativeButton(R.string.accessibility_disclosure_cancel, (dialog, which) -> dialog.dismiss())
-            .setCancelable(true)
-            .show();
     }
 
     public void applyAppTheme(String themeKey, boolean userTriggered) {
@@ -395,10 +356,6 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
                 btnSelectIme.setTextColor(Color.WHITE);
             }
-            if (btnAccessibility != null) {
-                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#050505")));
-                btnAccessibility.setTextColor(Color.parseColor("#00F0FF"));
-            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00FF88"));
             if (tvThemeBadge != null) {
@@ -455,10 +412,6 @@ public class MainActivity extends Activity {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
                 btnSelectIme.setTextColor(Color.parseColor("#0F172A"));
             }
-            if (btnAccessibility != null) {
-                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0F2FE")));
-                btnAccessibility.setTextColor(Color.parseColor("#0284C7"));
-            }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#0284C7"));
             if (tvThemeBadge != null) {
@@ -514,10 +467,6 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
                 btnSelectIme.setTextColor(Color.WHITE);
-            }
-            if (btnAccessibility != null) {
-                btnAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0C1527")));
-                btnAccessibility.setTextColor(Color.parseColor("#38BDF8"));
             }
 
             if (tvThemeCardHeader != null) tvThemeCardHeader.setTextColor(Color.parseColor("#00F0FF"));
@@ -595,16 +544,6 @@ public class MainActivity extends Activity {
                 } else {
                     tvImeStatus.setText("• Teclado IME: 🔴 No habilitado en ajustes del sistema");
                     tvImeStatus.setTextColor(Color.parseColor("#F87171"));
-                }
-            }
-
-            // 3. Estado Accesibilidad Auxiliar Opcional
-            if (btnAccessibility != null) {
-                RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
-                if (acc != null) {
-                    btnAccessibility.setText("3. Multitarea / Navegación: 🟢 Activo");
-                } else {
-                    btnAccessibility.setText("3. Multitarea / Navegación (Opcional)");
                 }
             }
         } catch (Exception ignored) {}
