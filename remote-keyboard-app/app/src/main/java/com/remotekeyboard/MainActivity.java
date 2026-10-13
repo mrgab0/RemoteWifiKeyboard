@@ -576,6 +576,16 @@ public class MainActivity extends Activity {
                     tvImeStatus.setTextColor(Color.parseColor("#F87171"));
                 }
             }
+
+            // 3. Estado Accesibilidad Auxiliar (100% Opcional y Modular)
+            if (btnAccessibility != null) {
+                RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
+                if (acc != null) {
+                    btnAccessibility.setText("3. Recientes / Multitarea: 🟢 Activo");
+                } else {
+                    btnAccessibility.setText("3. Habilitar Recientes / Atrás (Opcional)");
+                }
+            }
         } catch (Exception ignored) {}
     }
 
