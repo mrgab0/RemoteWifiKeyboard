@@ -14,7 +14,7 @@ echo       SCRCPY 4.1 INALAMBRICO (Aceleracion por GTX 1060 NVDEC)
 echo ======================================================================
 echo.
 echo  [1] Activar WiFi por Cable USB (Recomendado 1a vez: cable 5 seg)
-echo  [2] Conectar por IP WiFi (Puerto 5555 ya activo)
+echo  [2] Conectar por IP WiFi (Introduce IP con o sin puerto)
 echo  [3] Vincular por Codigo de Android 11+ (Sin cable)
 echo  [4] Instalar RemoteWiFiKeyboard.apk directamente al telefono
 echo  [5] Salir
@@ -46,11 +46,17 @@ if "%opt%"=="1" (
 
 if "%opt%"=="2" (
     echo.
-    set /p ip="Introduce la IP de tu telefono (ej: 192.168.1.101): "
-    echo Conectando a !ip!:5555...
-    adb connect !ip!:5555
+    set /p ip="Introduce la IP de tu telefono (ej: 192.168.1.101 o 192.168.1.101:40457): "
+    echo !ip! | findstr ":" >nul
+    if errorlevel 1 (
+        set "TARGET=!ip!:5555"
+    ) else (
+        set "TARGET=!ip!"
+    )
+    echo Conectando a !TARGET!...
+    adb connect !TARGET!
     echo Abriendo Scrcpy...
-    scrcpy -s !ip!:5555
+    scrcpy -s !TARGET!
     pause
     goto end
 )
@@ -80,7 +86,7 @@ if "%opt%"=="4" (
     adb devices
     echo.
     echo Instalando RemoteWiFiKeyboard.apk...
-    adb install -r "%~dp0remote-keyboard-app\RemoteWiFiKeyboard.apk"
+    adb install -r -d "%~dp0remote-keyboard-app\RemoteWiFiKeyboard.apk"
     echo.
     pause
     goto end
