@@ -205,16 +205,6 @@
                 android:textSize="12sp"
                 android:backgroundTint="#162444"
                 android:layout_marginTop="8dp" />
-
-            <Button
-                android:id="@+id/btnAccessibility"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:text="3. Habilitar Recientes / Atrás (Accesibilidad Opcional)"
-                android:textColor="#38BDF8"
-                android:textSize="12sp"
-                android:backgroundTint="#0C1527"
-                android:layout_marginTop="8dp" />
         </LinearLayout>
 
         <!-- Card 3: Theme Selector (Cyber-Dark, AMOLED Battery Saver, Light) -->

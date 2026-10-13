@@ -3,7 +3,6 @@ package com.remotekeyboard.server;
 import android.content.Context;
 import android.util.Log;
 import com.remotekeyboard.RemoteInputMethodService;
-import com.remotekeyboard.RemoteAccessibilityService;
 
 import org.json.JSONObject;
 
@@ -199,25 +198,16 @@ public class RemoteWebServer extends NanoHTTPD {
                     }
                 }
             }
-            // ⚡ 6. Acciones Globales del Sistema (Fase 2: Recientes, Atrás, Inicio)
+            // ⚡ 6. Acciones Globales del Sistema (Atrás, Inicio)
             else if ("global_action".equals(type)) {
                 String action = json.optString("action", "");
                 com.remotekeyboard.DebugLogger.log("WebSocket RX [GLOBAL ACTION]: " + action);
-                RemoteAccessibilityService acc = RemoteAccessibilityService.getInstance();
-                if (acc != null) {
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
                     if ("back".equalsIgnoreCase(action)) {
-                        acc.triggerBack();
-                    } else if ("recents".equalsIgnoreCase(action)) {
-                        acc.triggerRecents();
-                    } else if ("home".equalsIgnoreCase(action)) {
-                        acc.triggerHome();
-                    } else if ("notifications".equalsIgnoreCase(action)) {
-                        acc.triggerNotifications();
-                    }
-                } else {
-                    RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
-                    if (ime != null && "back".equalsIgnoreCase(action)) {
                         ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_BACK);
+                    } else if ("home".equalsIgnoreCase(action)) {
+                        ime.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_HOME);
                     }
                 }
             }

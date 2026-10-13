@@ -13,7 +13,6 @@ module.exports = [
         id: 'android_system',
         label: '🤖 Android Control',
         shortcuts: [
-            { label: 'Multitarea',   combo: 'Alt+Tab / Espacio', type: 'key', key: 'RECENTS' },
             { label: 'Atrás',        combo: 'Escape',            type: 'key', key: 'ESCAPE' },
             { label: 'Inicio (Home)',combo: 'Meta / Home',       type: 'key', key: 'HOME' },
             { label: 'Volumen +',    combo: 'F3',                type: 'key', key: 'VOLUME_UP' },
