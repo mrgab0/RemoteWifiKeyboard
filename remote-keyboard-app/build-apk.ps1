@@ -3,6 +3,13 @@ Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host "  Compilando Remote WiFi Keyboard APK" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
+if (-not $env:JAVA_HOME -or -not (Test-Path "$env:JAVA_HOME\bin\javac.exe")) {
+    if (Test-Path "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot") {
+        $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+        $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+    }
+}
+
 $sdkDir = "$env:LOCALAPPDATA\Android\Sdk"
 $cmdlineZip = "$PSScriptRoot\cmdline-tools.zip"
 $cmdlineDir = "$sdkDir\cmdline-tools\latest"
