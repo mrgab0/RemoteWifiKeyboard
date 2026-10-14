@@ -262,6 +262,14 @@ public class RemoteWebServer extends NanoHTTPD {
                     }
                 }
             }
+            // ⚡ 9. Consulta de Apps Instaladas en Android
+            else if ("get_apps".equals(type)) {
+                org.json.JSONArray apps = AppManager.getInstalledAppsJson(context);
+                JSONObject res = new JSONObject();
+                res.put("type", "installed_apps");
+                res.put("apps", apps);
+                session.sendText(res.toString());
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error procesando mensaje WebSocket: " + message, e);
         }
@@ -300,7 +308,30 @@ public class RemoteWebServer extends NanoHTTPD {
             }
         }
 
-        // 3. Endpoint Type Text (Fallback HTTP REST)
+        // 3. Endpoint Catálogo de Apps Instaladas
+        if ("/api/apps".equals(uri)) {
+            totalPacketsReceived.incrementAndGet();
+            org.json.JSONArray apps = AppManager.getInstalledAppsJson(context);
+            Response r = Response.newFixedLengthResponse(Response.Status.OK, "application/json", apps.toString());
+            r.addHeader("Access-Control-Allow-Origin", "*");
+            return r;
+        }
+
+        // 4. Endpoint Streaming de Iconos Reales en PNG
+        if ("/api/app_icon".equals(uri) || "/api/icon".equals(uri)) {
+            java.util.Map<String, String> parms = session.getParms();
+            String pkg = parms.get("pkg");
+            if (pkg == null) pkg = parms.get("package");
+            byte[] iconBytes = AppManager.getAppIconPng(context, pkg);
+            if (iconBytes != null) {
+                Response r = Response.newFixedLengthResponse(Response.Status.OK, "image/png", iconBytes);
+                r.addHeader("Cache-Control", "public, max-age=86400");
+                return r;
+            }
+            return Response.newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Icon not found");
+        }
+
+        // 5. Endpoint Type Text (Fallback HTTP REST)
         if ("/api/type".equals(uri) && Method.POST.equals(method)) {
             totalPacketsReceived.incrementAndGet();
             lastPacketTime.set(System.currentTimeMillis());

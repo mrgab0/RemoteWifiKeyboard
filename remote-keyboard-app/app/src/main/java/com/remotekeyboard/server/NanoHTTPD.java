@@ -109,6 +109,7 @@ public abstract class NanoHTTPD {
         String getUri();
         Method getMethod();
         Map<String, String> getHeaders();
+        Map<String, String> getParms();
         String getBody();
     }
 
@@ -139,6 +140,7 @@ public abstract class NanoHTTPD {
         private final Status status;
         private final String mimeType;
         private final byte[] data;
+        private final Map<String, String> customHeaders = new HashMap<String, String>();
 
         public Response(Status status, String mimeType, byte[] data) {
             this.status = status;
@@ -152,8 +154,16 @@ public abstract class NanoHTTPD {
             this.data = (txt != null) ? txt.getBytes(StandardCharsets.UTF_8) : new byte[0];
         }
 
+        public void addHeader(String key, String value) {
+            customHeaders.put(key, value);
+        }
+
         public static Response newFixedLengthResponse(Status status, String mimeType, String message) {
             return new Response(status, mimeType, message);
+        }
+
+        public static Response newFixedLengthResponse(Status status, String mimeType, byte[] data) {
+            return new Response(status, mimeType, data);
         }
 
         public static Response newFixedLengthResponse(String message) {
@@ -170,6 +180,9 @@ public abstract class NanoHTTPD {
                 pw.append("Access-Control-Allow-Origin: *\r\n");
                 pw.append("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n");
                 pw.append("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With\r\n");
+                for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
+                    pw.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
+                }
                 pw.append("Connection: close\r\n");
                 pw.append("\r\n");
                 pw.flush();
@@ -303,12 +316,32 @@ public abstract class NanoHTTPD {
         private String uri = "/";
         private Method method = Method.GET;
         private final Map<String, String> headers = new HashMap<String, String>();
+        private final Map<String, String> parms = new HashMap<String, String>();
         private String body = "";
 
         public HTTPSession(BufferedInputStream inputStream, OutputStream outputStream, Socket socket) {
             this.inputStream = inputStream;
             this.outputStream = outputStream;
             this.socket = socket;
+        }
+
+        private void decodeParms(String queryString, Map<String, String> parms) {
+            if (queryString == null) return;
+            String[] pairs = queryString.split("&");
+            for (String pair : pairs) {
+                int eq = pair.indexOf('=');
+                if (eq > 0) {
+                    try {
+                        String key = URLDecoder.decode(pair.substring(0, eq), "UTF-8");
+                        String val = URLDecoder.decode(pair.substring(eq + 1), "UTF-8");
+                        parms.put(key, val);
+                    } catch (Exception ignored) {}
+                } else if (!pair.isEmpty()) {
+                    try {
+                        parms.put(URLDecoder.decode(pair, "UTF-8"), "");
+                    } catch (Exception ignored) {}
+                }
+            }
         }
 
         public void execute() throws IOException {
@@ -352,7 +385,15 @@ public abstract class NanoHTTPD {
             } catch (Exception e) {
                 this.method = Method.GET;
             }
-            this.uri = requestLine[1];
+            
+            String rawUri = requestLine[1];
+            int qmark = rawUri.indexOf('?');
+            if (qmark >= 0) {
+                decodeParms(rawUri.substring(qmark + 1), this.parms);
+                this.uri = rawUri.substring(0, qmark);
+            } else {
+                this.uri = rawUri;
+            }
 
             for (int i = 1; i < lines.length; i++) {
                 String line = lines[i];
@@ -437,6 +478,8 @@ public abstract class NanoHTTPD {
         public Method getMethod() { return method; }
         @Override
         public Map<String, String> getHeaders() { return headers; }
+        @Override
+        public Map<String, String> getParms() { return parms; }
         @Override
         public String getBody() { return body; }
     }
