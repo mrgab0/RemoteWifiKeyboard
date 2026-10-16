@@ -137,6 +137,84 @@
                 android:layout_marginTop="12dp" />
         </LinearLayout>
 
+        <!-- Card: Zen Status Summary & Settings Toggle -->
+        <LinearLayout
+            android:id="@+id/cardZenSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_cyber_dark"
+            android:padding="16dp"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvZenSummaryIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛡️"
+                    android:textSize="16sp"
+                    android:layout_marginRight="8dp" />
+
+                <TextView
+                    android:id="@+id/tvZenSummaryTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ESTADO DE SERVICIOS"
+                    android:textColor="#E2E8F0"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvZenSummaryPill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LISTO PARA USAR"
+                    android:textColor="#00FF88"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/badge_pill_live"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvZenSummaryDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Teclado, Mouse Synergy y Red activos en segundo plano."
+                android:textColor="#94A3B8"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+            <Button
+                android:id="@+id/btnToggleAdvancedSettings"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="⚙️ CONFIGURACIÓN Y PERMISOS ▼"
+                android:textColor="#00F0FF"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:backgroundTint="#0F172A"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+
+        <!-- Contenedor colapsable de ajustes y opciones avanzadas -->
+        <LinearLayout
+            android:id="@+id/layoutAdvancedSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
         <!-- Card 2: IME Keyboard Setup -->
         <LinearLayout
             android:id="@+id/cardIme"
@@ -706,5 +784,6 @@
             android:orientation="vertical"
             android:layout_marginTop="14dp" />
 
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

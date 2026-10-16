@@ -362,8 +362,51 @@
     </div>
   </section>
 
+  <!-- Navigation Tabs Bar (Cyberpunk Theme) -->
+  <div class="border-b border-[#182438] bg-[#090f1a] px-6 py-2 flex items-center justify-between">
+    <div class="flex items-center space-x-2 select-none overflow-x-auto scrollbar-none">
+      <!-- Tab 1: Escritura Directa (Default) -->
+      <button id="nav-tab-typing" onclick="switchMainTab('typing')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>⚡ Escritura Directa</span>
+      </button>
+
+      <!-- Tab 2: Portapapeles Masivo -->
+      <button id="nav-tab-clipboard" onclick="switchMainTab('clipboard')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent transition-all" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>📋 Portapapeles &amp; Buffer</span>
+      </button>
+
+      <!-- Tab 3: Macros Rápidos -->
+      <button id="nav-tab-macros" onclick="switchMainTab('macros')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent transition-all" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+        </svg>
+        <span>🪄 Macros</span>
+      </button>
+
+      <!-- Tab 4: Consola & Logs -->
+      <button id="nav-tab-terminal" onclick="switchMainTab('terminal')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent transition-all" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>💻 Consola &amp; Logs</span>
+      </button>
+    </div>
+
+    <div class="hidden sm:flex items-center space-x-2 text-[11px] text-slate-500 font-mono">
+      <span>MODO: <strong class="text-cyan-400">ENFOQUE ZEN</strong></span>
+    </div>
+  </div>
+
   <!-- Main Content Grid -->
   <main class="p-6 space-y-6 flex-1">
+    <!-- TAB 1: ESCRITURA DIRECTA & CONEXIÓN (Modo Zen Principal) -->
+    <div id="tab-content-typing" class="space-y-6">
     <!-- SECTION 1: Device Connection & Discovery Card -->
     <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg relative overflow-hidden">
       <div class="absolute -top-16 -right-16 w-52 h-52 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -544,7 +587,10 @@
         </div>
       </div>
     </section>
+    </div>
 
+    <!-- TAB 2: PORTAPAPELES MASIVO -->
+    <div id="tab-content-clipboard" class="hidden space-y-6">
     <!-- SECTION 3: Large Text Buffer & Clipboard Manager -->
     <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg">
       <div class="flex items-center justify-between mb-3">
@@ -619,7 +665,10 @@
         <button onclick="insertRecentText(this.innerText)" class="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 truncate max-w-[160px]">cd ~/codespaces</button>
       </div>
     </section>
+    </div>
 
+    <!-- TAB 3: SHORTCUTS & MACROS -->
+    <div id="tab-content-macros" class="hidden space-y-6">
     <!-- SECTION 4: Developer Shortcuts Catalog (Collapsible) -->
     <section class="bg-[#101826] border border-[#1b273b] rounded-2xl shadow-lg overflow-hidden">
       <div onclick="toggleShortcutsPanel()" class="p-4 bg-[#0c1322] border-b border-[#182438] flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/40 transition">
@@ -634,7 +683,10 @@
         <div id="sp-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 pt-2"></div>
       </div>
     </section>
+    </div>
 
+    <!-- TAB 4: LIVE TELEMETRY & TERMINAL -->
+    <div id="tab-content-terminal" class="hidden space-y-6">
     <!-- SECTION 5: Live Telemetry & Event Log Terminal -->
     <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg flex flex-col">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -674,6 +726,7 @@
         </div>
       </div>
     </section>
+    </div>
   </main>
 
   <!-- Pro Footer Status Bar & Remote App Launcher -->
@@ -829,6 +882,31 @@
     let manualDisconnect = false;
     let totalKeysTypedCount = 0;
     let isWritingActive = false; // Teclado Windows 100% libre por defecto
+
+    // Modo Zen: Navegación de Pestañas
+    let activeMainTab = 'typing';
+    function switchMainTab(tabKey) {
+      activeMainTab = tabKey;
+      const tabs = ['typing', 'clipboard', 'macros', 'terminal'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`nav-tab-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabKey) {
+          if (btn) {
+            btn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm";
+          }
+          if (content) content.classList.remove('hidden');
+        } else {
+          if (btn) {
+            btn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent transition-all";
+          }
+          if (content) content.classList.add('hidden');
+        }
+      });
+      if (tabKey === 'typing' && isWritingActive) {
+        if (captureBox) captureBox.focus();
+      }
+    }
 
     // Función de control del estado de escritura remota
     function setWritingActive(active) {
@@ -1893,11 +1971,16 @@
     let activeShortcutTab = SHORTCUTS_CATALOG[0].id;
 
     function toggleShortcutsPanel() {
-      shortcutsPanelOpen = !shortcutsPanelOpen;
+      if (activeMainTab !== 'macros') {
+        switchMainTab('macros');
+        shortcutsPanelOpen = true;
+      } else {
+        shortcutsPanelOpen = !shortcutsPanelOpen;
+      }
       const body = document.getElementById('sp-body');
       const toggle = document.getElementById('sp-toggle');
-      body.style.display = shortcutsPanelOpen ? '' : 'none';
-      toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
+      if (body) body.style.display = shortcutsPanelOpen ? '' : 'none';
+      if (toggle) toggle.textContent = shortcutsPanelOpen ? '▼' : '▶';
     }
 
     function renderShortcutsPanel() {

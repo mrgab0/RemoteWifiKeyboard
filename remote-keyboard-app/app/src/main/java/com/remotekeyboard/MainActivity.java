@@ -55,6 +55,13 @@ public class MainActivity extends Activity {
     private LinearLayout layoutProUpgrade;
     private LinearLayout adContainer;
 
+    // Zen Mode Views
+    private LinearLayout cardZenSummary;
+    private LinearLayout layoutAdvancedSettings;
+    private Button btnToggleAdvancedSettings;
+    private TextView tvZenSummaryPill;
+    private TextView tvZenSummaryDetails;
+
     // Theme Switcher Buttons
     private LinearLayout themeDarkBtn;
     private LinearLayout themeAmoledBtn;
@@ -143,6 +150,20 @@ public class MainActivity extends Activity {
     private void initViews() {
         rootScrollView = findViewById(R.id.rootScrollView);
         cardServer = findViewById(R.id.cardServer);
+        cardZenSummary = findViewById(R.id.cardZenSummary);
+        layoutAdvancedSettings = findViewById(R.id.layoutAdvancedSettings);
+        btnToggleAdvancedSettings = findViewById(R.id.btnToggleAdvancedSettings);
+        tvZenSummaryPill = findViewById(R.id.tvZenSummaryPill);
+        tvZenSummaryDetails = findViewById(R.id.tvZenSummaryDetails);
+
+        if (btnToggleAdvancedSettings != null && layoutAdvancedSettings != null) {
+            btnToggleAdvancedSettings.setOnClickListener(v -> {
+                boolean isVisible = layoutAdvancedSettings.getVisibility() == View.VISIBLE;
+                layoutAdvancedSettings.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                btnToggleAdvancedSettings.setText(isVisible ? "⚙️ CONFIGURACIÓN Y PERMISOS ▼" : "⚙️ OCULTAR CONFIGURACIÓN ▲");
+            });
+        }
+
         cardIme = findViewById(R.id.cardIme);
         cardTheme = findViewById(R.id.cardTheme);
         cardTelemetry = findViewById(R.id.cardTelemetry);
@@ -424,6 +445,7 @@ public class MainActivity extends Activity {
             // --- TEMA AMOLED DARK BATTERY SAVER (Negros puros #000000) ---
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.BLACK);
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardZenSummary != null) cardZenSummary.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_amoled);
@@ -494,6 +516,7 @@ public class MainActivity extends Activity {
             // --- TEMA CLARO (Minimalist Light #F1F5F9) ---
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#F1F5F9"));
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardZenSummary != null) cardZenSummary.setBackgroundResource(R.drawable.bg_card_light);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_light);
             if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_light);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_light);
@@ -564,6 +587,7 @@ public class MainActivity extends Activity {
             // --- TEMA OSCURO NORMAL (Cyber-Dark / Electron Style #060E20) ---
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#060E20"));
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardZenSummary != null) cardZenSummary.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
@@ -702,6 +726,24 @@ public class MainActivity extends Activity {
                     tvAccessibilityStatus.setText("• Accesibilidad: 🔴 Desactivado en Ajustes");
                     tvAccessibilityStatus.setTextColor(Color.parseColor("#F87171"));
                     if (btnEnableAccessibility != null) btnEnableAccessibility.setText("2. Activar Accesibilidad (Simular Toques)");
+                }
+            }
+
+            // 4. Actualizar Estado Global Zen (Dashboard simplificado)
+            if (tvZenSummaryPill != null && tvZenSummaryDetails != null) {
+                boolean imeOk = (ime != null) || isImeEnabled();
+                boolean overlayOk = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
+                boolean accessOk = com.remotekeyboard.accessibility.RemoteAccessibilityService.getInstance() != null;
+
+                int activeServices = (imeOk ? 1 : 0) + (overlayOk ? 1 : 0) + (accessOk ? 1 : 0);
+                if (activeServices == 3) {
+                    tvZenSummaryPill.setText("3/3 SERVICIOS LISTOS");
+                    tvZenSummaryPill.setTextColor(Color.parseColor("#00FF88"));
+                    tvZenSummaryDetails.setText("Teclado, Mouse Synergy y Accesibilidad activos en segundo plano.");
+                } else {
+                    tvZenSummaryPill.setText(activeServices + "/3 SERVICIOS LISTOS");
+                    tvZenSummaryPill.setTextColor(Color.parseColor("#FBBF24"));
+                    tvZenSummaryDetails.setText("Se requiere configurar " + (3 - activeServices) + " permiso(s). Toca abajo para ver detalles.");
                 }
             }
         } catch (Exception ignored) {}
