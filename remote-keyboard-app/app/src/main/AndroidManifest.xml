@@ -30,9 +30,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_keyboard"
+        android:icon="@drawable/ic_remote_keyboard_pro"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_keyboard"
+        android:roundIcon="@drawable/ic_remote_keyboard_pro"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:extractNativeLibs="true"

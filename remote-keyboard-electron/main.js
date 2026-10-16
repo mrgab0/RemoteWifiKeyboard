@@ -101,12 +101,14 @@ function exitSynergyMode() {
 }
 
 function createWindow() {
+  const iconPath = path.join(__dirname, 'icon.png');
   mainWindow = new BrowserWindow({
     width: 380,
     height: 700,
     minWidth: 150,
     minHeight: 150,
     title: "Remote WiFi Keyboard",
+    icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
@@ -134,6 +136,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId("com.mrgab0.remotewifikeyboard");
   createWindow();
 
   let widgetWindow = null;
@@ -402,11 +405,17 @@ if (process.argv.includes('--dev')) {
   // Create tray icon
   try {
     const { nativeImage } = require('electron');
-    const base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAZUlEQVQ4T2NkYGD4z8DAwMgAA0xISDCAG0CSYIQpQAkwM2BgYMSQYCSjARhkI0QBSAMjAwPDfzAGS1EMgDQwMjAw/CdDAyMDA8N/MmyAGwaWApAGGBgY/hOhAaQBBgaG/2RoQJYBAOJ5Jg34E17sAAAAAElFTkSuQmCC';
-    let icon = nativeImage.createFromDataURL(base64Icon);
-    tray = new Tray(icon);
+    const iconPath = path.join(__dirname, 'icon.png');
+    let trayIcon = nativeImage.createFromPath(iconPath);
+    if (!trayIcon.isEmpty()) {
+      trayIcon = trayIcon.resize({ width: 16, height: 16 });
+      tray = new Tray(trayIcon);
+    } else {
+      const base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAZUlEQVQ4T2NkYGD4z8DAwMgAA0xISDCAG0CSYIQpQAkwM2BgYMSQYCSjARhkI0QBSAMjAwPDfzAGS1EMgDQwMjAw/CdDAyMDA8N/MmyAGwaWApAGGBgY/hOhAaQBBgaG/2RoQJYBAOJ5Jg34E17sAAAAAElFTkSuQmCC';
+      tray = new Tray(nativeImage.createFromDataURL(base64Icon));
+    }
   } catch (e) {
-    console.log('Error creating Tray');
+    console.log('Error creating Tray:', e);
   }
 
   if (tray) {

@@ -24,11 +24,14 @@
       "widget.html",
       "synergy-capture.html",
       "shortcuts.js",
+      "icon.png",
+      "icon.ico",
       "package.json"
     ],
     "compression": "normal",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "icon.ico"
     }
   },
   "dependencies": {
