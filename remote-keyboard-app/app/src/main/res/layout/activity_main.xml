@@ -207,6 +207,94 @@
                 android:layout_marginTop="8dp" />
         </LinearLayout>
 
+        <!-- Card: Mouse Synergy & Accessibility Permissions -->
+        <LinearLayout
+            android:id="@+id/cardMouseSynergy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_cyber_dark"
+            android:padding="16dp"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvMouseCardHeader"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🖱️ SALTO DE RATÓN (SYNERGY)"
+                    android:textColor="#E2E8F0"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvMousePillBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EXPERIMENTAL"
+                    android:textColor="#F59E0B"
+                    android:textSize="10sp"
+                    android:background="@drawable/badge_pill_status"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvMouseDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pasa el ratón de tu PC a la pantalla del móvil al tocar el borde derecho del monitor. Requiere 2 permisos:"
+                android:textColor="#94A3B8"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+            <TextView
+                android:id="@+id/tvOverlayStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Superposición de Pantalla: 🟡 Pendiente"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/btnEnableOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="1. Permitir Superposición (Dibujar Puntero)"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:backgroundTint="#162444"
+                android:layout_marginTop="6dp" />
+
+            <TextView
+                android:id="@+id/tvAccessibilityStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Servicio de Accesibilidad: 🟡 Pendiente"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginTop="10dp" />
+
+            <Button
+                android:id="@+id/btnEnableAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="2. Activar Accesibilidad (Simular Toques)"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:backgroundTint="#162444"
+                android:layout_marginTop="6dp" />
+        </LinearLayout>
+
         <!-- Card 3: Theme Selector (Cyber-Dark, AMOLED Battery Saver, Light) -->
         <LinearLayout
             android:id="@+id/cardTheme"

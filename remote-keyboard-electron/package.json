@@ -22,6 +22,7 @@
       "main.js",
       "index.html",
       "widget.html",
+      "synergy-capture.html",
       "shortcuts.js",
       "package.json"
     ],

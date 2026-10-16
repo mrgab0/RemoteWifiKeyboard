@@ -76,6 +76,156 @@
     .titlebar-no-drag {
       -webkit-app-region: no-drag;
     }
+
+    /* Cyberpunk Fire Neon Animated Border (Mismo botón y estética que MiniWidget) */
+    @keyframes cyberFire {
+      0% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 10px rgba(255, 60, 0, 0.7)) drop-shadow(0 0 20px rgba(0, 217, 255, 0.5));
+      }
+      50% {
+        background-position: 100% 50%;
+        filter: drop-shadow(0 0 16px rgba(255, 115, 0, 0.9)) drop-shadow(0 0 26px rgba(0, 150, 255, 0.75));
+      }
+      100% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 10px rgba(255, 60, 0, 0.7)) drop-shadow(0 0 20px rgba(0, 217, 255, 0.5));
+      }
+    }
+
+    .fire-border-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      border-radius: 9999px;
+      padding: 3.5px;
+      background: linear-gradient(135deg, #ff1a00, #ff7b00, #00f0ff, #0077ff, #ff007b);
+      background-size: 300% 300%;
+      animation: cyberFire 3s ease infinite;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .fire-border-wrap:hover {
+      transform: scale(1.03);
+    }
+
+    .fire-border-wrap:active {
+      transform: scale(0.97);
+    }
+
+    .widget-btn {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      border: none;
+      outline: none;
+      background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.45),
+        inset 0 -3px 6px rgba(0, 30, 100, 0.5),
+        0 4px 15px rgba(0, 150, 255, 0.4);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .widget-btn:hover {
+      filter: brightness(1.12);
+    }
+
+    .is-off {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.1), inset 0 -2px 4px rgba(0,0,0,0.6) !important;
+    }
+
+    .is-off-fire {
+      background: linear-gradient(135deg, #334155, #64748b, #1e293b) !important;
+      animation: none !important;
+      filter: drop-shadow(0 0 6px rgba(100, 116, 139, 0.3)) !important;
+    }
+
+    .glass-highlight {
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 100%);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.12) 0px,
+        rgba(0,0,0,0.12) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+
+    .cyber-btn-title {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 24px;
+      letter-spacing: 0.05em;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      z-index: 10;
+      line-height: 1;
+      transition: all 0.2s ease;
+    }
+
+    .cyber-sub-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 10;
+      margin-top: 4px;
+    }
+
+    .cyber-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+      transition: all 0.2s ease;
+    }
+
+    .cyber-sub-text {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: all 0.2s ease;
+    }
+
+    .is-off .cyber-btn-title {
+      color: #94a3b8 !important;
+    }
+
+    .is-off .cyber-status-dot {
+      background-color: #64748b !important;
+      box-shadow: none !important;
+    }
+
+    .is-off .cyber-sub-text {
+      color: #64748b !important;
+    }
   </style>
 </head>
 <body class="bg-[#070b12] text-slate-200 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden min-h-screen flex flex-col justify-between">
@@ -285,6 +435,34 @@
       </div>
     </section>
 
+    <!-- SECTION: Mouse Synergy Jump (Salto de Ratón Continuo) -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-4 shadow-lg relative overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">🖱️ Salto Continuo de Ratón (Synergy Mode)</h2>
+              <span id="synergy-status-badge" class="text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-700">DESACTIVADO</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Mueve el ratón al borde derecho del monitor para saltar al móvil Android. Clic der. = Atrás, Rueda = Scroll.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <span class="text-[11px] text-slate-400 hidden sm:inline-block">Atajo: <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono text-[10px] border border-slate-700">Ctrl + Shift + Rueda</kbd></span>
+          <label class="relative inline-flex items-center cursor-pointer select-none">
+            <input type="checkbox" id="synergy-toggle" onchange="toggleSynergyMode(this.checked)" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+          </label>
+        </div>
+      </div>
+    </section>
+
     <!-- SECTION 2: Ultra-Fast Keystroke Capture Zone (<3ms) -->
     <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-5 shadow-lg relative">
       <div class="flex items-center justify-between mb-3.5">
@@ -303,38 +481,65 @@
           </div>
         </div>
         <!-- Focus State Indicator Pill -->
-        <div id="capture-focus-badge" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-medium">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span id="capture-focus-text">Ventana sin foco: Haz clic para escribir</span>
+        <div id="capture-focus-badge" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-[11px] text-slate-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="capture-focus-text">Escritura Pausada (OFF)</span>
         </div>
       </div>
 
-      <!-- Keystroke Interactive Live Canvas Container -->
-      <div id="keystroke-capture-box" tabindex="0" class="relative w-full min-h-[110px] bg-[#070d17] border-2 border-emerald-500/40 rounded-xl p-4 flex flex-col justify-between cursor-text focus:outline-none focus:border-cyan-400 focus:glow-cyan transition duration-200 group">
-        <!-- Live Keystroke Display Text / Placeholder -->
-        <div id="live-typing-display" class="font-mono text-base tracking-wide flex items-center flex-wrap gap-1.5">
-          <span class="text-slate-400 select-none">Escribe directamente con tu teclado físico...</span>
-          <span class="inline-block w-2.5 h-5 bg-cyan-400 animate-pulse ml-1 rounded-sm"></span>
+      <!-- Container: Large Cyberpunk Switch Button + Keystroke Capture Box -->
+      <div class="flex flex-col sm:flex-row items-center gap-5">
+        <!-- 96x96px Cyberpunk Button identical to Mini Widget -->
+        <div class="flex flex-col items-center flex-shrink-0 select-none">
+          <div id="mainWidgetContainer" class="fire-border-wrap is-off-fire" onclick="toggleWritingState()" title="Alternar Escritura a Android (Ctrl+Shift+Ins)">
+            <button id="mainToggleBtn" class="widget-btn is-off" type="button">
+              <div class="glass-highlight"></div>
+              <div class="scanline"></div>
+              <span id="mainStatusText" class="cyber-btn-title">OFF</span>
+              <div class="cyber-sub-badge">
+                <span id="mainStatusDot" class="cyber-status-dot"></span>
+                <span id="mainSubText" class="cyber-sub-text">STANDBY</span>
+              </div>
+            </button>
+          </div>
+          <span class="text-[10px] font-mono text-slate-400 mt-1.5 flex items-center gap-1">
+            <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[9px] border border-slate-700">Ctrl+Shift+Ins</kbd>
+          </span>
         </div>
 
-        <!-- Helper badges and keyboard shortcuts inside capture box -->
-        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 select-none">
-          <div class="flex items-center space-x-3">
-            <span class="flex items-center gap-1.5">
-              <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">Rueda Ratón</kbd>
-              <span class="text-[11px] text-slate-400 font-medium">Pegar portapapeles</span>
-            </span>
-            <span class="text-slate-700">•</span>
-            <span class="flex items-center gap-1.5">
-              <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">ESC</kbd>
-              <span class="text-[11px] text-slate-500">Liberar foco</span>
-            </span>
+        <!-- Keystroke Interactive Live Canvas Container (flex-1) -->
+        <div id="keystroke-capture-box" tabindex="0" class="flex-1 w-full min-h-[110px] bg-[#070d17] border-2 border-slate-700/60 rounded-xl p-4 flex flex-col justify-between cursor-text focus:outline-none focus:border-cyan-400 focus:glow-cyan transition duration-200 group">
+          <!-- Live Keystroke Display Text / Placeholder -->
+          <div id="live-typing-display" class="font-mono text-base tracking-wide flex items-center flex-wrap gap-1.5">
+            <span id="live-typing-placeholder" class="text-slate-400 select-none">Escritura remota pausada. Haz clic en el botón o presiona Ctrl+Shift+Ins...</span>
+            <span id="live-typing-cursor" class="hidden w-2.5 h-5 bg-cyan-400 animate-pulse ml-1 rounded-sm"></span>
           </div>
-          <!-- Last Key Indicator -->
-          <div class="flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
-            <span class="text-slate-500">Última tecla:</span>
-            <span id="last-key-badge" class="bg-cyan-950/70 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">--</span>
-            <span id="last-ack-badge" class="text-emerald-400 text-[10px]">ACK &lt;2ms</span>
+
+          <!-- Helper badges and keyboard shortcuts inside capture box -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 select-none">
+            <div class="flex items-center space-x-3">
+              <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">Rueda Ratón</kbd>
+                <span class="text-[11px] text-slate-400 font-medium">Pegar portapapeles</span>
+              </span>
+              <span class="text-slate-700">•</span>
+              <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">ESC</kbd>
+                <span class="text-[11px] text-slate-500">Liberar foco</span>
+              </span>
+              <span class="text-slate-700">•</span>
+              <button type="button" onclick="focusAndroidTextInput()" class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition active:scale-95 cursor-pointer" title="Saltar el cursor directamente a la caja de texto en Android (F6)">
+                <span>🎯</span>
+                <span class="text-[11px] font-medium">Enfocar Texto</span>
+                <kbd class="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-mono text-[9px] border border-slate-700">F6</kbd>
+              </button>
+            </div>
+            <!-- Last Key Indicator -->
+            <div class="flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
+              <span class="text-slate-500">Última tecla:</span>
+              <span id="last-key-badge" class="bg-cyan-950/70 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">--</span>
+              <span id="last-ack-badge" class="text-emerald-400 text-[10px]">ACK &lt;2ms</span>
+            </div>
           </div>
         </div>
       </div>
@@ -623,6 +828,68 @@
     let reconnectTimer = null;
     let manualDisconnect = false;
     let totalKeysTypedCount = 0;
+    let isWritingActive = false; // Teclado Windows 100% libre por defecto
+
+    // Función de control del estado de escritura remota
+    function setWritingActive(active) {
+      isWritingActive = !!active;
+
+      const wrap = document.getElementById('mainWidgetContainer');
+      const btn = document.getElementById('mainToggleBtn');
+      const statusText = document.getElementById('mainStatusText');
+      const subText = document.getElementById('mainSubText');
+      const placeholder = document.getElementById('live-typing-placeholder');
+      const cursor = document.getElementById('live-typing-cursor');
+
+      if (isWritingActive) {
+        if (wrap) wrap.classList.remove('is-off-fire');
+        if (btn) btn.classList.remove('is-off');
+        if (statusText) statusText.innerText = 'ON';
+        if (subText) subText.innerText = 'ACTIVO';
+        if (focusBadge) {
+          focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-[11px] text-cyan-300 font-medium glow-cyan";
+        }
+        if (focusText) focusText.innerText = "Escritura Activa Directa (<3ms)";
+        if (captureBox) {
+          captureBox.classList.remove('border-slate-700/60');
+          captureBox.classList.add('border-cyan-400/60');
+          captureBox.focus();
+        }
+        if (placeholder) placeholder.innerText = "Escribe directamente con tu teclado físico...";
+        if (cursor) cursor.classList.remove('hidden');
+        appendLog('⚡ Escritura remota a Android ACTIVADA (ON)', 'sys');
+      } else {
+        if (wrap) wrap.classList.add('is-off-fire');
+        if (btn) btn.classList.add('is-off');
+        if (statusText) statusText.innerText = 'OFF';
+        if (subText) subText.innerText = 'PAUSADO';
+        if (focusBadge) {
+          focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-[11px] text-slate-400 font-medium";
+        }
+        if (focusText) focusText.innerText = "Escritura Pausada: Teclado Windows Libre";
+        if (captureBox) {
+          captureBox.classList.remove('border-cyan-400/60');
+          captureBox.classList.add('border-slate-700/60');
+          captureBox.blur();
+        }
+        if (placeholder) placeholder.innerText = "Escritura remota pausada. Haz clic en el botón o presiona Ctrl+Shift+Ins...";
+        if (cursor) cursor.classList.add('hidden');
+        appendLog('⏸️ Escritura remota PAUSADA (OFF) - Teclado de Windows liberado', 'sys');
+      }
+    }
+
+    function toggleWritingState() {
+      ipcRenderer.send('toggle-writing-state');
+    }
+
+    function focusAndroidTextInput() {
+      sendPayload({ type: 'focus_input' });
+      appendLog('🎯 Solicitado auto-foco en caja de texto de Android (F6)', 'sys');
+      if (!isWritingActive) {
+        setWritingActive(true);
+        ipcRenderer.send('toggle-writing-state', true);
+      }
+    }
 
     // Window Controls
     function windowMinimize() { ipcRenderer.send('window-minimize'); }
@@ -1003,6 +1270,7 @@
     }
 
     function handleKey(e) {
+      if (!isWritingActive) return; // Teclado Windows 100% libre cuando está en OFF
       e.preventDefault();
       const action = e.type === 'keyup' ? 'keyup' : 'keydown';
       const key = e.key;
@@ -1101,13 +1369,17 @@
 
     // Capture Box Focus/Blur Listeners
     captureBox.addEventListener('focus', () => {
-      focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-[11px] text-cyan-300 font-medium glow-cyan";
-      focusText.innerText = "Captura activa directa (< 3ms)";
+      if (isWritingActive) {
+        focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-[11px] text-cyan-300 font-medium glow-cyan";
+        focusText.innerText = "Captura activa directa (< 3ms)";
+      }
     });
 
     captureBox.addEventListener('blur', () => {
-      focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-medium";
-      focusText.innerText = "Ventana sin foco: Haz clic para escribir";
+      if (isWritingActive) {
+        focusBadge.className = "flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-medium";
+        focusText.innerText = "Ventana sin foco: Haz clic para escribir";
+      }
     });
 
     captureBox.addEventListener('keydown', (e) => {
@@ -1115,22 +1387,43 @@
         captureBox.blur();
         return;
       }
+      if (e.key === 'F6') {
+        e.preventDefault();
+        focusAndroidTextInput();
+        return;
+      }
+      if (!isWritingActive) return;
       handleKey(e);
     });
-    captureBox.addEventListener('keyup', handleKey);
+    captureBox.addEventListener('keyup', (e) => {
+      if (!isWritingActive) return;
+      handleKey(e);
+    });
 
     // Global Key Listener when window has focus
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'F6') {
+        e.preventDefault();
+        focusAndroidTextInput();
+        return;
+      }
+      if (!isWritingActive) return;
       if (document.activeElement === textarea || document.activeElement === endpointIpInput) return;
       if (document.activeElement !== captureBox) {
         handleKey(e);
       }
     });
     window.addEventListener('keyup', (e) => {
+      if (!isWritingActive) return;
       if (document.activeElement === textarea || document.activeElement === endpointIpInput) return;
       if (document.activeElement !== captureBox) {
         handleKey(e);
       }
+    });
+
+    // Atajo F6 invocado desde IPC (Widget u otro proceso)
+    ipcRenderer.on('trigger-focus-input', () => {
+      focusAndroidTextInput();
     });
 
     // Keystroke forwarding from Mini Widget
@@ -1709,6 +2002,13 @@
     renderShortcutsPanel();
     setTimeout(connectWebSocket, 400);
 
+    // Heartbeat keep-alive cada 15s para mantener el socket activo y evitar timeout del router/Android
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        runBenchmark();
+      }
+    }, 15000);
+
     // =========================================================
     // Ajustes & Settings Management
     // =========================================================
@@ -1789,20 +2089,68 @@
       closeSettingsModal();
     }
 
-    // Atajo universal IPC listener
-    ipcRenderer.on('toggle-remote-writing', () => {
-      const keyBox = document.getElementById('keystroke-capture-box');
-      if (keyBox) {
-        keyBox.focus();
-        keyBox.classList.add('ring-2', 'ring-cyan-400');
-        setTimeout(() => keyBox.classList.remove('ring-2', 'ring-cyan-400'), 600);
-      }
-      appendLog('⚡ Modo escritura remoto alternado por atajo universal (Ctrl+Shift+Ins)', 'sys');
+    // Atajo universal y botón IPC listener para sincronización de escritura
+    ipcRenderer.on('writing-state-changed', (event, active) => {
+      setWritingActive(active);
+    });
+
+    // Consultar estado inicial al arrancar
+    ipcRenderer.invoke('get-writing-state').then(active => {
+      setWritingActive(active);
+    }).catch(() => {
+      setWritingActive(false);
     });
 
     ipcRenderer.on('wake-android-device', () => {
       sendPayload({ type: 'wake_device' });
       appendLog('📱 Señal enviada para despertar pantalla de Android', 'sys');
+    });
+
+    // =========================================================
+    // Mouse Synergy Mode (Salto Continuo de Pantalla)
+    // =========================================================
+    function toggleSynergyMode(enable) {
+      ipcRenderer.send('toggle-synergy', enable);
+      appendLog(`🖱️ Modo Synergy (Salto de Ratón) ${enable ? 'ACTIVADO' : 'DESACTIVADO'}`, 'sys');
+    }
+
+    ipcRenderer.on('synergy-status-changed', (event, enabled) => {
+      const toggle = document.getElementById('synergy-toggle');
+      if (toggle) toggle.checked = enabled;
+      const statusBadge = document.getElementById('synergy-status-badge');
+      if (statusBadge) {
+        if (enabled) {
+          statusBadge.innerText = 'ACTIVO (Borde Derecho)';
+          statusBadge.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded border border-emerald-500/30';
+        } else {
+          statusBadge.innerText = 'DESACTIVADO';
+          statusBadge.className = 'text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-700';
+        }
+      }
+    });
+
+    ipcRenderer.on('synergy-relay-move', (event, { x, y }) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'mouse_move', x, y }));
+      }
+    });
+
+    ipcRenderer.on('synergy-relay-click', (event, { button, action }) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'mouse_click', button, action }));
+      }
+    });
+
+    ipcRenderer.on('synergy-relay-scroll', (event, { deltaY }) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'mouse_scroll', deltaY }));
+      }
+    });
+
+    ipcRenderer.on('synergy-relay-leave', () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'mouse_leave' }));
+      }
     });
 
     // Cargar ajustes al inicio

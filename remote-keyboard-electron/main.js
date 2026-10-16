@@ -6,14 +6,99 @@ const path = require('path');
 let tray = null;
 let mainWindow = null;
 let isMiniMode = false;
+let isSynergyEnabled = false;
+let isSynergyActive = false;
+let isWritingActive = false;
+let synergyCaptureWindow = null;
+let synergyEdgeInterval = null;
+
 let appSettings = {
   universalShortcut: 'CommandOrControl+Shift+Insert',
   widgetHoverActivate: true,
   widgetPosition: 'bottom-left',
   widgetTooltips: true,
   wheelPasteEnabled: true,
-  wheelPasteDebounce: 350
+  wheelPasteDebounce: 350,
+  synergyEnabled: false
 };
+
+function createSynergyCaptureWindow() {
+  if (synergyCaptureWindow && !synergyCaptureWindow.isDestroyed()) return;
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.bounds;
+
+  synergyCaptureWindow = new BrowserWindow({
+    width,
+    height,
+    x: 0,
+    y: 0,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    hasShadow: false,
+    focusable: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  synergyCaptureWindow.loadFile('synergy-capture.html');
+
+  synergyCaptureWindow.on('closed', () => {
+    synergyCaptureWindow = null;
+    isSynergyActive = false;
+  });
+}
+
+function startEdgeDetection() {
+  if (synergyEdgeInterval) clearInterval(synergyEdgeInterval);
+  synergyEdgeInterval = setInterval(() => {
+    if (!isSynergyEnabled || isSynergyActive) return;
+
+    try {
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const pt = screen.getCursorScreenPoint();
+      const bounds = primaryDisplay.bounds;
+
+      // Colisión con el borde derecho del monitor (Salto hacia Android)
+      if (pt.x >= bounds.x + bounds.width - 2) {
+        enterSynergyMode();
+      }
+    } catch (e) {}
+  }, 35);
+}
+
+function stopEdgeDetection() {
+  if (synergyEdgeInterval) {
+    clearInterval(synergyEdgeInterval);
+    synergyEdgeInterval = null;
+  }
+}
+
+function enterSynergyMode() {
+  if (isSynergyActive) return;
+  if (!synergyCaptureWindow || synergyCaptureWindow.isDestroyed()) {
+    createSynergyCaptureWindow();
+  }
+  isSynergyActive = true;
+  synergyCaptureWindow.show();
+  synergyCaptureWindow.focus();
+}
+
+function exitSynergyMode() {
+  if (!isSynergyActive) return;
+  isSynergyActive = false;
+  if (synergyCaptureWindow && !synergyCaptureWindow.isDestroyed()) {
+    synergyCaptureWindow.hide();
+  }
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    mainWindow.webContents.send('synergy-relay-leave');
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -146,9 +231,74 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('focus-android-input', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('trigger-focus-input');
+    }
+  });
+
   ipcMain.on('update-ping', (event, ping) => {
     if (widgetWindow && widgetWindow.webContents) {
       widgetWindow.webContents.send('ping-update', ping);
+    }
+  });
+
+  // Mouse Synergy IPC Handlers
+  ipcMain.on('toggle-synergy', (event, enable) => {
+    isSynergyEnabled = enable;
+    if (enable) {
+      createSynergyCaptureWindow();
+      startEdgeDetection();
+    } else {
+      stopEdgeDetection();
+      exitSynergyMode();
+    }
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
+    }
+    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+      widgetWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
+    }
+  });
+
+  ipcMain.on('synergy-exit', () => {
+    exitSynergyMode();
+  });
+
+  ipcMain.on('synergy-mouse-move', (event, { x, y }) => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('synergy-relay-move', { x, y });
+    }
+  });
+
+  ipcMain.on('synergy-mouse-click', (event, { button, action }) => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('synergy-relay-click', { button, action });
+    }
+  });
+
+  ipcMain.on('synergy-mouse-scroll', (event, { deltaY }) => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('synergy-relay-scroll', { deltaY });
+    }
+  });
+
+  // Atajo rápido: Ctrl + Shift + Rueda del Ratón para alternar Synergy desde cualquier parte
+  ipcMain.on('toggle-synergy-shortcut', () => {
+    const newState = !isSynergyEnabled;
+    isSynergyEnabled = newState;
+    if (newState) {
+      createSynergyCaptureWindow();
+      startEdgeDetection();
+    } else {
+      stopEdgeDetection();
+      exitSynergyMode();
+    }
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
+    }
+    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+      widgetWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
     }
   });
 
@@ -181,7 +331,28 @@ app.whenReady().then(() => {
     if (mainWindow) mainWindow.close();
   });
 
-  // Atajo universal alternable para activar escritura a Android (Ctrl+Shift+Insert)
+  // Manejador IPC para alternar el estado de escritura remota
+  ipcMain.on('toggle-writing-state', (event, explicitState) => {
+    if (typeof explicitState === 'boolean') {
+      isWritingActive = explicitState;
+    } else {
+      isWritingActive = !isWritingActive;
+    }
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('writing-state-changed', isWritingActive);
+      if (isWritingActive) mainWindow.webContents.send('wake-android-device');
+    }
+    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+      widgetWindow.webContents.send('writing-state-changed', isWritingActive);
+      if (isWritingActive) widgetWindow.webContents.send('wake-android-device');
+    }
+  });
+
+  ipcMain.handle('get-writing-state', () => {
+    return isWritingActive;
+  });
+
+  // Atajo universal alternable para activar/desactivar escritura a Android (Ctrl+Shift+Insert)
   let registeredShortcut = null;
   function registerUniversalShortcut(keyCombo) {
     if (registeredShortcut) {
@@ -190,24 +361,18 @@ app.whenReady().then(() => {
     registeredShortcut = keyCombo || appSettings.universalShortcut;
     try {
       const ok = globalShortcut.register(registeredShortcut, () => {
-        if (isMiniMode && widgetWindow && !widgetWindow.isDestroyed()) {
-          if (widgetWindow.isFocused()) {
-            widgetWindow.blur();
-          } else {
-            widgetWindow.focus();
-          }
-        } else if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('wake-android-device');
-          if (mainWindow.isFocused()) {
-            mainWindow.webContents.send('toggle-remote-writing');
-          } else {
-            mainWindow.show();
-            mainWindow.focus();
-            mainWindow.webContents.send('toggle-remote-writing');
+        isWritingActive = !isWritingActive;
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+          mainWindow.webContents.send('writing-state-changed', isWritingActive);
+          if (isWritingActive) {
+            mainWindow.webContents.send('wake-android-device');
           }
         }
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('wake-android-device');
+        if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+          widgetWindow.webContents.send('writing-state-changed', isWritingActive);
+          if (isWritingActive) {
+            widgetWindow.webContents.send('wake-android-device');
+          }
         }
       });
       if (!ok) console.log('No se pudo registrar atajo universal:', registeredShortcut);

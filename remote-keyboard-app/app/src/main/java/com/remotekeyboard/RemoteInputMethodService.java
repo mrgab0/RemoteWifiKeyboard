@@ -219,7 +219,8 @@ public class RemoteInputMethodService extends InputMethodService {
         if (typingWakeLock != null && typingWakeLock.isHeld()) {
             try { typingWakeLock.release(); } catch (Exception ignored) {}
         }
-        RemoteWebServerManager.stopServer();
+        // El servidor NanoHTTPD pertenece a RemoteServerService (Foreground Service)
+        // para garantizar que siga corriendo mientras se usan otras aplicaciones.
     }
 
         public void setClipboardText(String text) {

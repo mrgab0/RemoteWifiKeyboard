@@ -219,8 +219,9 @@ public abstract class NanoHTTPD {
                 os.write(payload.length & 0xFF);
             } else {
                 os.write(127);
+                long pLen = (long) payload.length;
                 for (int i = 7; i >= 0; i--) {
-                    os.write((int) ((payload.length >> (8 * i)) & 0xFF));
+                    os.write((int) ((pLen >> (8 * i)) & 0xFF));
                 }
             }
             os.write(payload);
@@ -460,6 +461,10 @@ public abstract class NanoHTTPD {
                 pw.append("Sec-WebSocket-Accept: ").append(acceptKey).append("\r\n");
                 pw.append("\r\n");
                 pw.flush();
+                try {
+                    socket.setTcpNoDelay(true);
+                    socket.setKeepAlive(true);
+                } catch (Exception ignored) {}
 
                 WebSocketSession wsSession = new WebSocketSession(socket, inputStream, outputStream);
                 wsSession.handleFrames();

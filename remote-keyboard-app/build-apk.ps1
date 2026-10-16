@@ -66,7 +66,8 @@ Write-Host "[3/4] Compilando APK con Gradle..." -ForegroundColor Green
 $gradleBin = "$gradleDir\bin\gradle.bat"
 $env:ANDROID_HOME = $sdkDir
 $env:ANDROID_SDK_ROOT = $sdkDir
-& $gradleBin assembleDebug
+
+& $gradleBin assembleDebug --no-daemon
 
 if ($LASTEXITCODE -eq 0) {
     $apkPath = "$PSScriptRoot\app\build\outputs\apk\debug\app-debug.apk"

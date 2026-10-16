@@ -63,7 +63,6 @@ public class RemoteWebServer extends NanoHTTPD {
     public RemoteWebServer(Context context, int port) {
         super(port);
         this.context = context.getApplicationContext();
-        startLogcatStreamer();
     }
 
     public long getTotalPacketsReceived() {
@@ -213,6 +212,12 @@ public class RemoteWebServer extends NanoHTTPD {
                                 try {
                                     context.startActivity(finalIntent);
                                     android.widget.Toast.makeText(context, "🚀 Abriendo: " + pkg, android.widget.Toast.LENGTH_SHORT).show();
+
+                                    // Auto-foco inteligente de la caja de texto al abrir la app
+                                    com.remotekeyboard.accessibility.RemoteAccessibilityService service = com.remotekeyboard.accessibility.RemoteAccessibilityService.getInstance();
+                                    if (service != null) {
+                                        service.autoFocusWithRetry(4, 500);
+                                    }
                                 } catch (Exception e) {
                                     com.remotekeyboard.DebugLogger.log("Error al iniciar actividad: " + e.getMessage());
                                 }
@@ -224,6 +229,15 @@ public class RemoteWebServer extends NanoHTTPD {
                     } catch (Exception ex) {
                         com.remotekeyboard.DebugLogger.log("Error al lanzar " + pkg + ": " + ex.getMessage());
                     }
+                }
+            }
+            // 🎯 Foco Inmediato en Caja de Texto (Prompt / EditText)
+            else if ("focus_input".equals(type)) {
+                com.remotekeyboard.accessibility.RemoteAccessibilityService service = com.remotekeyboard.accessibility.RemoteAccessibilityService.getInstance();
+                if (service != null) {
+                    service.autoFocusWithRetry(3, 250);
+                } else {
+                    com.remotekeyboard.DebugLogger.log("RemoteAccessibilityService no disponible para auto-foco");
                 }
             }
             // ⚡ 6. Acciones Globales del Sistema (Atrás, Inicio)
@@ -269,6 +283,24 @@ public class RemoteWebServer extends NanoHTTPD {
                 res.put("type", "installed_apps");
                 res.put("apps", apps);
                 session.sendText(res.toString());
+            }
+            // ⚡ 10. Salto Continuo de Ratón (Synergy Mode)
+            else if ("mouse_move".equals(type)) {
+                float x = (float) json.optDouble("x", 0.0);
+                float y = (float) json.optDouble("y", 0.0);
+                com.remotekeyboard.mouse.RemoteMouseController.getInstance(context).onMouseMove(x, y);
+            }
+            else if ("mouse_click".equals(type)) {
+                int button = json.optInt("button", 0);
+                String action = json.optString("action", "down");
+                com.remotekeyboard.mouse.RemoteMouseController.getInstance(context).onMouseClick(button, action);
+            }
+            else if ("mouse_scroll".equals(type)) {
+                int deltaY = json.optInt("deltaY", 0);
+                com.remotekeyboard.mouse.RemoteMouseController.getInstance(context).onMouseScroll(deltaY);
+            }
+            else if ("mouse_leave".equals(type)) {
+                com.remotekeyboard.mouse.RemoteMouseController.getInstance(context).onMouseLeave();
             }
         } catch (Exception e) {
             Log.e(TAG, "Error procesando mensaje WebSocket: " + message, e);

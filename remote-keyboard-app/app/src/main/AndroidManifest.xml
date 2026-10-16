@@ -8,11 +8,13 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Package Visibility para Lanzador Remoto de Aplicaciones en Android 11+ (API 30+) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <package android:name="com.termux" />
         <package android:name="com.whatsapp" />
@@ -59,6 +61,7 @@
             android:excludeFromRecents="true"
             android:exported="false" />
 
+
         <!-- Servicio de Teclado del Sistema (Input Method Service) -->
         <service
             android:name=".RemoteInputMethodService"
@@ -71,6 +74,20 @@
             <meta-data
                 android:name="android.view.im"
                 android:resource="@xml/method" />
+        </service>
+
+        <!-- Servicio de Accesibilidad para Simular Toques de Ratón y Gestos -->
+        <service
+            android:name=".accessibility.RemoteAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="@string/accessibility_service_desc"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
         </service>
 
         <!-- Provider para compartir imágenes del portapapeles a otras apps -->

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Synergy Mouse Capture</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+      user-select: none;
+      cursor: none; /* Oculta el puntero nativo de Windows mientras se controla Android */
+    }
+    /* Borde sutil indicador de retorno a Windows en el extremo izquierdo */
+    #return-boundary {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(0, 240, 255, 0.6), rgba(16, 185, 129, 0.6));
+      box-shadow: 0 0 12px #00f0ff;
+      z-index: 99999;
+      pointer-events: none;
+    }
+    /* Notificación flotante de salida rápida con Escape */
+    #hud-hint {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      padding: 6px 12px;
+      background: rgba(6, 14, 32, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 8px;
+      color: #00f0ff;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+      opacity: 0.9;
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="return-boundary"></div>
+  <div id="hud-hint">📱 Controlando Android | Presiona [ESC] o toca el borde izquierdo para regresar</div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let throttleTimer = null;
+    let lastNormX = -1;
+    let lastNormY = -1;
+
+    // Seguimiento de movimiento continuo
+    window.addEventListener('mousemove', (e) => {
+      const normX = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
+      const normY = Math.max(0, Math.min(1, e.clientY / window.innerHeight));
+
+      // Salto de regreso a Windows si toca el borde izquierdo físico
+      if (e.clientX <= 4) {
+        ipcRenderer.send('synergy-exit');
+        return;
+      }
+
+      // Stream a 60 FPS sin saturar el canal IPC
+      lastNormX = normX;
+      lastNormY = normY;
+      if (!throttleTimer) {
+        throttleTimer = requestAnimationFrame(() => {
+          ipcRenderer.send('synergy-mouse-move', { x: lastNormX, y: lastNormY });
+          throttleTimer = null;
+        });
+      }
+    });
+
+    // Clics físicos: 0 = Izquierdo (Tap / Drag), 1 = Central (Home), 2 = Derecho (Atrás)
+    window.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      ipcRenderer.send('synergy-mouse-click', { button: e.button, action: 'down' });
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      e.preventDefault();
+      ipcRenderer.send('synergy-mouse-click', { button: e.button, action: 'up' });
+    });
+
+    // Rueda del ratón para scroll vertical en Android
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = Math.sign(e.deltaY);
+      ipcRenderer.send('synergy-mouse-scroll', { deltaY: delta });
+    }, { passive: false });
+
+    // Desactivar menú contextual nativo de Windows (el clic derecho debe ir a Android como botón Atrás)
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    // Tecla Escape para salir instantáneamente del modo Synergy
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        ipcRenderer.send('synergy-exit');
+      }
+    });
+  </script>
+</body>
+</html>

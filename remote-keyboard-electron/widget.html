@@ -263,6 +263,8 @@
     </div>
     <div class="tooltip-body">
       <div class="tip-row"><span class="tip-icon">🖱️</span> <span><b>Rueda:</b> Pegar portapapeles</span></div>
+      <div class="tip-row"><span class="tip-icon">🎯</span> <span><b>F6:</b> Enfocar caja de texto</span></div>
+      <div class="tip-row"><span class="tip-icon">🖰</span> <span><b>Ctrl+Shift+Rueda:</b> Salto Ratón <span id="tip-synergy-status"><b style="color:#94a3b8">OFF</b></span></span></div>
       <div class="tip-row"><span class="tip-icon">⌨️</span> <span><b>Hover:</b> Escribe directo a Android</span></div>
       <div class="tip-row"><span class="tip-icon">✥</span> <span><b>Arrastra:</b> Mover a cualquier sitio</span></div>
       <div class="tip-row"><span class="tip-icon">✨</span> <span><b>2x Clic:</b> Cerrar widget</span></div>
@@ -298,6 +300,7 @@
     const tooltip = document.getElementById('cyberTooltip');
 
     let currentPing = '3ms';
+    let isWritingActive = false;
     let appConfig = {
       widgetHoverActivate: true,
       widgetTooltips: true,
@@ -305,8 +308,8 @@
       wheelPasteDebounce: 350
     };
 
-    function setFocusState(focused) {
-      if (focused) {
+    function setFocusState(active) {
+      if (active) {
         wrap.classList.remove('is-off-fire');
         btn.classList.remove('is-off');
         statusText.innerText = 'ON';
@@ -319,18 +322,25 @@
       }
     }
 
-    window.addEventListener('focus', () => {
-      setFocusState(true);
-      ipcRenderer.send('widget-wake-device');
-    });
-    window.addEventListener('blur', () => {
-      setFocusState(false);
-      hideTooltip();
+    ipcRenderer.on('writing-state-changed', (event, active) => {
+      isWritingActive = active;
+      setFocusState(active);
     });
 
-    if (document.hasFocus()) {
-      setFocusState(true);
-    }
+    ipcRenderer.invoke('get-writing-state').then(active => {
+      isWritingActive = active;
+      setFocusState(active);
+    }).catch(() => {});
+
+    window.addEventListener('focus', () => {
+      if (isWritingActive) {
+        setFocusState(true);
+        ipcRenderer.send('widget-wake-device');
+      }
+    });
+    window.addEventListener('blur', () => {
+      hideTooltip();
+    });
 
     // Tooltip Helpers
     function showTooltip() {
@@ -346,7 +356,7 @@
     // Auto-activación al posar el mouse (Hover Activate) y Tooltip
     wrap.addEventListener('mouseenter', () => {
       showTooltip();
-      if (appConfig.widgetHoverActivate) {
+      if (appConfig.widgetHoverActivate && isWritingActive) {
         ipcRenderer.send('widget-hover-activate');
         ipcRenderer.send('widget-wake-device');
         setFocusState(true);
@@ -366,7 +376,7 @@
     let hasMoved = false;
 
     wrap.addEventListener('mousedown', (e) => {
-      if (e.button === 0) { // Clic izquierdo para arrastrar
+      if (e.button === 0) { // Clic izquierdo para arrastrar o alternar
         isDragging = true;
         dragStartX = e.screenX;
         dragStartY = e.screenY;
@@ -378,7 +388,7 @@
       if (isDragging) {
         const deltaX = e.screenX - dragStartX;
         const deltaY = e.screenY - dragStartY;
-        if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
           hasMoved = true;
           ipcRenderer.send('widget-move', { deltaX, deltaY });
           dragStartX = e.screenX;
@@ -392,6 +402,9 @@
         isDragging = false;
         if (hasMoved) {
           e.stopPropagation();
+        } else {
+          // Si fue un clic simple sin arrastrar, alternar estado ON/OFF
+          ipcRenderer.send('toggle-writing-state');
         }
       }
     });
@@ -407,8 +420,14 @@
       ipcRenderer.send('close-widget');
     });
 
-    // Interceptar pulsación de teclas y retransmitir a la ventana principal
+    // Interceptar pulsación de teclas y retransmitir a la ventana principal SOLO si está activo
     function handleWidgetKey(e) {
+      if (e.key === 'F6') {
+        e.preventDefault();
+        ipcRenderer.send('focus-android-input');
+        return;
+      }
+      if (!isWritingActive) return;
       e.preventDefault();
       const keyData = {
         type: e.type,
@@ -459,6 +478,33 @@
     ipcRenderer.on('settings-sync', (event, settings) => {
       if (settings) {
         appConfig = { ...appConfig, ...settings };
+      }
+    });
+
+    // Atajo rápido: Ctrl + Shift + Rueda del ratón para alternar Modo Synergy
+    let lastSynergyToggle = 0;
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastSynergyToggle < 500) return;
+        lastSynergyToggle = now;
+
+        ipcRenderer.send('toggle-synergy-shortcut');
+
+        statusText.innerText = '🖱️';
+        setTimeout(() => {
+          statusText.innerText = document.hasFocus() ? 'ON' : 'OFF';
+        }, 500);
+      }
+    }, { passive: false });
+
+    ipcRenderer.on('synergy-status-changed', (event, enabled) => {
+      const synTip = document.getElementById('tip-synergy-status');
+      if (synTip) {
+        synTip.innerHTML = enabled
+          ? '<b style="color:#00ff88">ON</b>'
+          : '<b style="color:#94a3b8">OFF</b>';
       }
     });
   </script>

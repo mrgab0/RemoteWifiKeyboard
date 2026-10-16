@@ -77,6 +77,14 @@ public class MainActivity extends Activity {
     private Button btnEnableIme;
     private Button btnSelectIme;
 
+    // Mouse Synergy Controls
+    private LinearLayout cardMouseSynergy;
+    private TextView tvMouseCardHeader;
+    private TextView tvOverlayStatus;
+    private Button btnEnableOverlay;
+    private TextView tvAccessibilityStatus;
+    private Button btnEnableAccessibility;
+
     private TextView tvThemeCardHeader;
     private TextView tvTelemetryHeader;
     private TextView tvPingBadge;
@@ -160,6 +168,14 @@ public class MainActivity extends Activity {
         tvImeStatus = findViewById(R.id.tvImeStatus);
         btnEnableIme = findViewById(R.id.btnEnableIme);
         btnSelectIme = findViewById(R.id.btnSelectIme);
+
+        // Mouse Synergy
+        cardMouseSynergy = findViewById(R.id.cardMouseSynergy);
+        tvMouseCardHeader = findViewById(R.id.tvMouseCardHeader);
+        tvOverlayStatus = findViewById(R.id.tvOverlayStatus);
+        btnEnableOverlay = findViewById(R.id.btnEnableOverlay);
+        tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus);
+        btnEnableAccessibility = findViewById(R.id.btnEnableAccessibility);
 
         tvThemeCardHeader = findViewById(R.id.tvThemeCardHeader);
         tvTelemetryHeader = findViewById(R.id.tvTelemetryHeader);
@@ -321,6 +337,47 @@ public class MainActivity extends Activity {
             }
         });
 
+        if (btnEnableOverlay != null) {
+            btnEnableOverlay.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    android.net.Uri.parse("package:" + getPackageName()));
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            Toast.makeText(MainActivity.this, "Permite 'Mostrar sobre otras aplicaciones'", Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_SETTINGS));
+                            } catch (Exception ignored) {}
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this, "Permiso no necesario en esta versión", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+        if (btnEnableAccessibility != null) {
+            btnEnableAccessibility.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        Toast.makeText(MainActivity.this, "Busca 'Remote WiFi Keyboard' y activa el servicio", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        try {
+                            startActivity(new Intent(Settings.ACTION_SETTINGS));
+                        } catch (Exception ignored) {}
+                    }
+                }
+            });
+        }
+
         btnBuyPro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -368,6 +425,7 @@ public class MainActivity extends Activity {
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.BLACK);
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_amoled);
+            if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_amoled);
             if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_amoled);
@@ -380,6 +438,7 @@ public class MainActivity extends Activity {
             if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.BLACK);
 
             if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
+            if (tvMouseCardHeader != null) tvMouseCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
             if (btnEnableIme != null) {
                 btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
                 btnEnableIme.setTextColor(Color.WHITE);
@@ -387,6 +446,14 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
                 btnSelectIme.setTextColor(Color.WHITE);
+            }
+            if (btnEnableOverlay != null) {
+                btnEnableOverlay.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
+                btnEnableOverlay.setTextColor(Color.WHITE);
+            }
+            if (btnEnableAccessibility != null) {
+                btnEnableAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
+                btnEnableAccessibility.setTextColor(Color.WHITE);
             }
             if (btnExploreBase16 != null) {
                 btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#111111")));
@@ -428,6 +495,7 @@ public class MainActivity extends Activity {
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#F1F5F9"));
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_light);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_light);
+            if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_light);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_light);
             if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_light);
             if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_light);
@@ -440,6 +508,7 @@ public class MainActivity extends Activity {
             if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.WHITE);
 
             if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#0F172A"));
+            if (tvMouseCardHeader != null) tvMouseCardHeader.setTextColor(Color.parseColor("#0F172A"));
             if (btnEnableIme != null) {
                 btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
                 btnEnableIme.setTextColor(Color.parseColor("#0F172A"));
@@ -447,6 +516,14 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
                 btnSelectIme.setTextColor(Color.parseColor("#0F172A"));
+            }
+            if (btnEnableOverlay != null) {
+                btnEnableOverlay.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
+                btnEnableOverlay.setTextColor(Color.parseColor("#0F172A"));
+            }
+            if (btnEnableAccessibility != null) {
+                btnEnableAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
+                btnEnableAccessibility.setTextColor(Color.parseColor("#0F172A"));
             }
             if (btnExploreBase16 != null) {
                 btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
@@ -488,6 +565,7 @@ public class MainActivity extends Activity {
             if (rootScrollView != null) rootScrollView.setBackgroundColor(Color.parseColor("#060E20"));
             if (cardServer != null) cardServer.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardIme != null) cardIme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
+            if (cardMouseSynergy != null) cardMouseSynergy.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardTheme != null) cardTheme.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardTelemetry != null) cardTelemetry.setBackgroundResource(R.drawable.bg_card_cyber_dark);
             if (cardTest != null) cardTest.setBackgroundResource(R.drawable.bg_card_cyber_dark);
@@ -500,6 +578,7 @@ public class MainActivity extends Activity {
             if (btnCopyUrl != null) btnCopyUrl.setTextColor(Color.parseColor("#060E20"));
 
             if (tvImeCardHeader != null) tvImeCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
+            if (tvMouseCardHeader != null) tvMouseCardHeader.setTextColor(Color.parseColor("#E2E8F0"));
             if (btnEnableIme != null) {
                 btnEnableIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
                 btnEnableIme.setTextColor(Color.WHITE);
@@ -507,6 +586,14 @@ public class MainActivity extends Activity {
             if (btnSelectIme != null) {
                 btnSelectIme.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
                 btnSelectIme.setTextColor(Color.WHITE);
+            }
+            if (btnEnableOverlay != null) {
+                btnEnableOverlay.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
+                btnEnableOverlay.setTextColor(Color.WHITE);
+            }
+            if (btnEnableAccessibility != null) {
+                btnEnableAccessibility.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
+                btnEnableAccessibility.setTextColor(Color.WHITE);
             }
             if (btnExploreBase16 != null) {
                 btnExploreBase16.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#162444")));
@@ -588,6 +675,33 @@ public class MainActivity extends Activity {
                 } else {
                     tvImeStatus.setText("• Teclado IME: 🔴 No habilitado en ajustes del sistema");
                     tvImeStatus.setTextColor(Color.parseColor("#F87171"));
+                }
+            }
+
+            // 3. Permisos de Mouse Synergy
+            if (tvOverlayStatus != null) {
+                boolean canDraw = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
+                if (canDraw) {
+                    tvOverlayStatus.setText("• Superposición: 🟢 Concedido");
+                    tvOverlayStatus.setTextColor(Color.parseColor("#34D399"));
+                    if (btnEnableOverlay != null) btnEnableOverlay.setText("✓ Superposición Concedida");
+                } else {
+                    tvOverlayStatus.setText("• Superposición: 🔴 Falta Permiso");
+                    tvOverlayStatus.setTextColor(Color.parseColor("#F87171"));
+                    if (btnEnableOverlay != null) btnEnableOverlay.setText("1. Permitir Superposición (Dibujar Puntero)");
+                }
+            }
+
+            if (tvAccessibilityStatus != null) {
+                boolean accessActive = com.remotekeyboard.accessibility.RemoteAccessibilityService.getInstance() != null;
+                if (accessActive) {
+                    tvAccessibilityStatus.setText("• Accesibilidad: 🟢 Activo (Gestos Listos)");
+                    tvAccessibilityStatus.setTextColor(Color.parseColor("#34D399"));
+                    if (btnEnableAccessibility != null) btnEnableAccessibility.setText("✓ Accesibilidad Activada");
+                } else {
+                    tvAccessibilityStatus.setText("• Accesibilidad: 🔴 Desactivado en Ajustes");
+                    tvAccessibilityStatus.setTextColor(Color.parseColor("#F87171"));
+                    if (btnEnableAccessibility != null) btnEnableAccessibility.setText("2. Activar Accesibilidad (Simular Toques)");
                 }
             }
         } catch (Exception ignored) {}
