@@ -54,6 +54,9 @@ function createSynergyCaptureWindow() {
   });
 }
 
+let synergyLastExitTime = 0;
+let synergyNeedsHysteresisReset = false;
+
 function startEdgeDetection() {
   if (synergyEdgeInterval) clearInterval(synergyEdgeInterval);
   synergyEdgeInterval = setInterval(() => {
@@ -63,6 +66,18 @@ function startEdgeDetection() {
       const primaryDisplay = screen.getPrimaryDisplay();
       const pt = screen.getCursorScreenPoint();
       const bounds = primaryDisplay.bounds;
+
+      // Histéresis: el usuario debe adentrarse en Windows al menos 60px antes de reactivar el salto
+      if (synergyNeedsHysteresisReset) {
+        if (pt.x <= bounds.x + bounds.width - 60) {
+          synergyNeedsHysteresisReset = false;
+        } else {
+          return; // Aún en la zona del borde, no reactivar
+        }
+      }
+
+      // Cooldown de 800ms tras salir de Synergy para evitar bucles instantáneos
+      if (Date.now() - synergyLastExitTime < 800) return;
 
       // Colisión con el borde derecho del monitor (Salto hacia Android)
       if (pt.x >= bounds.x + bounds.width - 2) {
@@ -92,6 +107,9 @@ function enterSynergyMode() {
 function exitSynergyMode() {
   if (!isSynergyActive) return;
   isSynergyActive = false;
+  synergyLastExitTime = Date.now();
+  synergyNeedsHysteresisReset = true;
+
   if (synergyCaptureWindow && !synergyCaptureWindow.isDestroyed()) {
     synergyCaptureWindow.hide();
   }

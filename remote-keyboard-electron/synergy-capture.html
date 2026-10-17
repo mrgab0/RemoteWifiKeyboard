@@ -66,8 +66,8 @@
       const normX = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
       const normY = Math.max(0, Math.min(1, e.clientY / window.innerHeight));
 
-      // Salto de regreso a Windows si toca el borde izquierdo físico
-      if (e.clientX <= 4) {
+      // Salto de regreso a Windows si toca el borde izquierdo físico (margen ergonómico de 14px)
+      if (e.clientX <= 14) {
         ipcRenderer.send('synergy-exit');
         return;
       }

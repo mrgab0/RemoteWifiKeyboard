@@ -301,12 +301,20 @@ public class RemoteInputMethodService extends InputMethodService {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         suggParams.setMargins(0, 10, 0, 10);
         
+        int cyberBtnW = (int) (38 * getResources().getDisplayMetrics().density + 0.5f);
+        int cyberBtnH = (int) (32 * getResources().getDisplayMetrics().density + 0.5f);
+
         Button btnToggleKb = new Button(this);
-        btnToggleKb.setText("👁️");
+        btnToggleKb.setText(isVisualKeyboardVisible ? "⌨️" : "👁️");
         btnToggleKb.setTextSize(14);
-        btnToggleKb.setPadding(0,0,0,0);
+        btnToggleKb.setPadding(0, 0, 0, 0);
+        btnToggleKb.setBackgroundResource(R.drawable.bg_btn_toggle_kb);
+        LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(cyberBtnW, cyberBtnH);
+        toggleParams.setMargins(6, 0, 6, 0);
+        btnToggleKb.setLayoutParams(toggleParams);
         btnToggleKb.setOnClickListener(v -> {
             isVisualKeyboardVisible = !isVisualKeyboardVisible;
+            btnToggleKb.setText(isVisualKeyboardVisible ? "⌨️" : "👁️");
             if (visualKeyboardContainer != null) {
                 visualKeyboardContainer.setVisibility(isVisualKeyboardVisible ? View.VISIBLE : View.GONE);
             }
@@ -315,7 +323,11 @@ public class RemoteInputMethodService extends InputMethodService {
         Button btnTheme = new Button(this);
         btnTheme.setText("🎨");
         btnTheme.setTextSize(14);
-        btnTheme.setPadding(0,0,0,0);
+        btnTheme.setPadding(0, 0, 0, 0);
+        btnTheme.setBackgroundResource(R.drawable.bg_btn_theme_gradient);
+        LinearLayout.LayoutParams themeParams = new LinearLayout.LayoutParams(cyberBtnW, cyberBtnH);
+        themeParams.setMargins(6, 0, 6, 0);
+        btnTheme.setLayoutParams(themeParams);
         btnTheme.setOnClickListener(v -> cycleNextTheme());
         btnTheme.setOnLongClickListener(v -> {
             openThemePickerDialog();
@@ -384,8 +396,9 @@ public class RemoteInputMethodService extends InputMethodService {
         Button btnSwitch = new Button(this);
         btnSwitch.setText("🌐 Cambiar Teclado");
         btnSwitch.setTextColor(Color.WHITE);
-        btnSwitch.setBackgroundColor(Color.parseColor("#1E2337"));
         btnSwitch.setTextSize(11);
+        btnSwitch.setBackgroundResource(R.drawable.bg_btn_switch_kb);
+        btnSwitch.setPadding(20, 0, 20, 0);
         btnSwitch.setOnClickListener(v -> {
             try {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -396,8 +409,9 @@ public class RemoteInputMethodService extends InputMethodService {
         Button btnSettings = new Button(this);
         btnSettings.setText("⚙️ Panel");
         btnSettings.setTextColor(Color.WHITE);
-        btnSettings.setBackgroundColor(Color.parseColor("#1E2337"));
         btnSettings.setTextSize(11);
+        btnSettings.setBackgroundResource(R.drawable.bg_btn_panel);
+        btnSettings.setPadding(20, 0, 20, 0);
         btnSettings.setOnClickListener(v -> {
             try {
                 Intent intent = new Intent(RemoteInputMethodService.this, MainActivity.class);

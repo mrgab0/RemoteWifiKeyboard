@@ -68,13 +68,133 @@ public class RemoteAccessibilityService extends AccessibilityService {
         try {
             Path path = new Path();
             path.moveTo(x, y);
+            path.lineTo(x, y + 1f); // CRÍTICO: Una ruta sin lineTo está vacía en Skia y Android descarta el gesto
+
             GestureDescription.Builder builder = new GestureDescription.Builder();
-            builder.addStroke(new GestureDescription.StrokeDescription(path, 0, 50));
-            return dispatchGesture(builder.build(), null, null);
+            builder.addStroke(new GestureDescription.StrokeDescription(path, 0, 75));
+
+            boolean dispatched = dispatchGesture(builder.build(), new GestureResultCallback() {
+                @Override
+                public void onCompleted(GestureDescription gestureDescription) {
+                    DebugLogger.log("Tap COMPLETADO con éxito en (" + (int) x + ", " + (int) y + ")");
+                }
+
+                @Override
+                public void onCancelled(GestureDescription gestureDescription) {
+                    DebugLogger.log("Tap CANCELADO por Android en (" + (int) x + ", " + (int) y + ")");
+                }
+            }, null);
+
+            if (!dispatched) {
+                clickNodeAt(x, y);
+            }
+            return dispatched;
         } catch (Exception e) {
+            DebugLogger.log("Error en dispatchTap: " + e.getMessage());
             Log.e(TAG, "Error en dispatchTap: ", e);
+            clickNodeAt(x, y);
             return false;
         }
+    }
+
+    /**
+     * Realiza un toque sostenido (long click) en pantalla.
+     */
+    public boolean dispatchLongClick(float x, float y) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false;
+        try {
+            Path path = new Path();
+            path.moveTo(x, y);
+            path.lineTo(x, y + 1f);
+
+            GestureDescription.Builder builder = new GestureDescription.Builder();
+            builder.addStroke(new GestureDescription.StrokeDescription(path, 0, 550));
+            return dispatchGesture(builder.build(), null, null);
+        } catch (Exception e) {
+            Log.e(TAG, "Error en dispatchLongClick: ", e);
+            return false;
+        }
+    }
+
+    /**
+     * Fallback de clic directo mediante AccessibilityNodeInfo.
+     */
+    public boolean clickNodeAt(float x, float y) {
+        try {
+            AccessibilityNodeInfo root = getRootInActiveWindow();
+            if (root == null) return false;
+            return clickDeepestNodeAt(root, (int) x, (int) y);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean clickDeepestNodeAt(AccessibilityNodeInfo node, int x, int y) {
+        if (node == null) return false;
+        android.graphics.Rect rect = new android.graphics.Rect();
+        node.getBoundsInScreen(rect);
+        if (!rect.contains(x, y)) return false;
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null && clickDeepestNodeAt(child, x, y)) {
+                return true;
+            }
+        }
+
+        if (node.isClickable()) {
+            return node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        }
+        return false;
+    }
+
+    /**
+     * Comprueba si en las coordenadas (x, y) de la pantalla existe un elemento interactivo
+     * (botón, enlace web, checkbox, editable o vista con acción clic).
+     */
+    public boolean isInteractiveElementAt(float x, float y) {
+        try {
+            AccessibilityNodeInfo root = getRootInActiveWindow();
+            if (root == null) return false;
+            return checkNodeClickableAt(root, (int) x, (int) y);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean checkNodeClickableAt(AccessibilityNodeInfo node, int x, int y) {
+        if (node == null) return false;
+        android.graphics.Rect rect = new android.graphics.Rect();
+        node.getBoundsInScreen(rect);
+        if (!rect.contains(x, y)) return false;
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null && checkNodeClickableAt(child, x, y)) {
+                return true;
+            }
+        }
+
+        if (node.isClickable() || node.isCheckable() || node.isLongClickable() || node.isEditable()) {
+            return true;
+        }
+
+        CharSequence cls = node.getClassName();
+        if (cls != null) {
+            String c = cls.toString();
+            if (c.contains("Button") || c.contains("ImageButton") || c.contains("CheckBox") ||
+                c.contains("Switch") || c.contains("RadioButton") || (c.contains("TextView") && node.isClickable())) {
+                return true;
+            }
+        }
+
+        for (AccessibilityNodeInfo.AccessibilityAction action : node.getActionList()) {
+            if (action.getId() == AccessibilityNodeInfo.ACTION_CLICK) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

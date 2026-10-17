@@ -734,7 +734,7 @@ public class MainActivity extends Activity {
                 } else {
                     tvAccessibilityStatus.setText("• Accesibilidad: 🔴 Desactivado en Ajustes");
                     tvAccessibilityStatus.setTextColor(Color.parseColor("#F87171"));
-                    if (btnEnableAccessibility != null) btnEnableAccessibility.setText("2. Activar Accesibilidad (Simular Toques)");
+                    if (btnEnableAccessibility != null) btnEnableAccessibility.setText("2. Activar Accesibilidad (Remote WiFi Keyboard)");
                 }
             }
 

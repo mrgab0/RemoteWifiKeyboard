@@ -366,7 +366,7 @@
                 android:id="@+id/btnEnableAccessibility"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:text="2. Activar Accesibilidad (Simular Toques)"
+                android:text="2. Activar Accesibilidad (Remote WiFi Keyboard)"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:backgroundTint="#162444"

@@ -44,6 +44,10 @@ public class RemoteMouseController {
     private long dragStartTime = 0;
     private boolean isDragging = false;
 
+    // Detección de elementos interactivos (icono de mano / pointer)
+    private long lastHoverCheckTime = 0;
+    private boolean isHandCursor = false;
+
     public static synchronized RemoteMouseController getInstance(Context context) {
         if (instance == null) {
             instance = new RemoteMouseController(context.getApplicationContext());
@@ -135,15 +139,32 @@ public class RemoteMouseController {
             try {
                 windowManager.updateViewLayout(pointerView, layoutParams);
             } catch (Exception ignored) {}
+
+            // Detección reactiva de elementos interactivos (botones, enlaces, inputs -> manito)
+            long now = System.currentTimeMillis();
+            if (now - lastHoverCheckTime > 75) {
+                lastHoverCheckTime = now;
+                RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
+                boolean shouldBeHand = accessService != null && accessService.isInteractiveElementAt(currentX, currentY);
+                if (shouldBeHand != isHandCursor) {
+                    isHandCursor = shouldBeHand;
+                    pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
+                }
+            }
         });
     }
 
     /**
-     * Procesa eventos de clic de ratón (Izquierdo: Tap / Drag, Derecho: Atrás).
+     * Procesa eventos de clic de ratón (Izquierdo: Tap / Drag, Derecho: Atrás, Central: Home).
      */
     public void onMouseClick(final int button, final String action) {
         mainHandler.post(() -> {
             RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
+            if (accessService == null) {
+                DebugLogger.log("⚠️ Clic falló: RemoteAccessibilityService es NULL. Activa el servicio en Ajustes -> Accesibilidad.");
+                return;
+            }
+
             boolean isDown = "down".equalsIgnoreCase(action);
 
             // Botón 0: Clic Izquierdo (Toque / Arrastre)
@@ -159,14 +180,19 @@ public class RemoteMouseController {
                         long duration = System.currentTimeMillis() - dragStartTime;
                         float distSq = (currentX - dragStartX) * (currentX - dragStartX) + (currentY - dragStartY) * (currentY - dragStartY);
 
-                        if (accessService != null) {
-                            if (distSq < 400 && duration < 350) { // Menos de 20px de movimiento = Tap simple
+                        // Si el ratón no se desplazó significativamente (< 25px), siempre es un Tap
+                        if (distSq < 625) {
+                            if (duration > 500) {
+                                accessService.dispatchLongClick(currentX, currentY);
+                                DebugLogger.log("Mouse Long Click en (" + (int) currentX + ", " + (int) currentY + ")");
+                            } else {
                                 accessService.dispatchTap(currentX, currentY);
-                                DebugLogger.log("Mouse Tap ejecutado en (" + (int) currentX + ", " + (int) currentY + ")");
-                            } else { // Arrastre (Drag)
-                                accessService.dispatchDrag(dragStartX, dragStartY, currentX, currentY, duration);
-                                DebugLogger.log("Mouse Drag ejecutado desde (" + (int) dragStartX + ", " + (int) dragStartY + ") a (" + (int) currentX + ", " + (int) currentY + ")");
+                                DebugLogger.log("Mouse Tap en (" + (int) currentX + ", " + (int) currentY + ")");
                             }
+                        } else {
+                            // Arrastre real (Drag / Swipe con desplazamiento)
+                            accessService.dispatchDrag(dragStartX, dragStartY, currentX, currentY, Math.max(100, duration));
+                            DebugLogger.log("Mouse Drag desde (" + (int) dragStartX + ", " + (int) dragStartY + ") a (" + (int) currentX + ", " + (int) currentY + ")");
                         }
                     }
                 }
@@ -174,19 +200,15 @@ public class RemoteMouseController {
             // Botón 2: Clic Derecho (Atrás)
             else if (button == 2) {
                 if (isDown) {
-                    if (accessService != null) {
-                        accessService.performBack();
-                        DebugLogger.log("Mouse Clic Derecho: Botón Atrás ejecutado");
-                    }
+                    accessService.performBack();
+                    DebugLogger.log("Mouse Clic Derecho: Atrás ejecutado");
                 }
             }
             // Botón 1: Clic Central (Inicio / Home)
             else if (button == 1) {
                 if (isDown) {
-                    if (accessService != null) {
-                        accessService.performHome();
-                        DebugLogger.log("Mouse Clic Central: Inicio (Home) ejecutado");
-                    }
+                    accessService.performHome();
+                    DebugLogger.log("Mouse Clic Central: Inicio (Home) ejecutado");
                 }
             }
         });
@@ -211,6 +233,10 @@ public class RemoteMouseController {
         mainHandler.post(() -> {
             if (pointerView != null && isOverlayAttached) {
                 pointerView.setVisibility(View.GONE);
+                if (isHandCursor) {
+                    isHandCursor = false;
+                    pointerView.setImageResource(R.drawable.ic_mouse_pointer);
+                }
             }
         });
     }
