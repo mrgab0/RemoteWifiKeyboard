@@ -22,10 +22,10 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 4px;
+      width: 6px;
       height: 100vh;
-      background: linear-gradient(180deg, rgba(0, 240, 255, 0.6), rgba(16, 185, 129, 0.6));
-      box-shadow: 0 0 12px #00f0ff;
+      background: linear-gradient(180deg, rgba(0, 240, 255, 0.8), rgba(16, 185, 129, 0.8));
+      box-shadow: 0 0 16px #00f0ff, 0 0 24px rgba(0, 240, 255, 0.4);
       z-index: 99999;
       pointer-events: none;
     }
@@ -66,8 +66,8 @@
       const normX = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
       const normY = Math.max(0, Math.min(1, e.clientY / window.innerHeight));
 
-      // Salto de regreso a Windows si toca el borde izquierdo físico (margen ergonómico de 14px)
-      if (e.clientX <= 14) {
+      // Salto de regreso a Windows si toca el borde izquierdo físico (margen ergonómico generoso de 25px)
+      if (e.clientX <= 25) {
         ipcRenderer.send('synergy-exit');
         return;
       }
