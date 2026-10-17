@@ -6,5 +6,6 @@
     <string name="btn_enable_ime">1. Habilitar en Ajustes de Teclado</string>
     <string name="btn_select_ime">2. Seleccionar como Teclado Activo</string>
     <string name="desc_instructions">Abre la siguiente dirección en el navegador web de tu PC para empezar a escribir en tiempo real:</string>
-    <string name="accessibility_service_desc">Permite controlar la pantalla mediante el ratón de tu PC (toques, scroll y gestos sin cables).</string>
+    <string name="accessibility_service_name">Remote WiFi Keyboard</string>
+    <string name="accessibility_service_desc">Control remoto de pantalla y ratón desde PC (toques, scroll y auto-foco sin cables).</string>
 </resources>
