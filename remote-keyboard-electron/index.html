@@ -478,30 +478,44 @@
       </div>
     </section>
 
-    <!-- SECTION: Mouse Synergy Jump (Salto de Ratón Continuo) -->
-    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-4 shadow-lg relative overflow-hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+    <!-- SECTION: Mouse Hijack / KDE Connect Mode (Secuestro de Ratón) -->
+    <section class="bg-[#101826] border border-[#1b273b] rounded-2xl p-4 shadow-lg relative overflow-hidden transition-all duration-300" id="mouse-hijack-section">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <!-- Title & Info -->
+        <div class="flex items-start space-x-3">
+          <div id="mouse-hijack-icon-box" class="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 mt-0.5 transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
             </svg>
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">🖱️ Salto Continuo de Ratón (Synergy Mode)</h2>
-              <span id="synergy-status-badge" class="text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-700">DESACTIVADO</span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">🖱️ Secuestro de Ratón (KDE Connect)</h2>
+              <span id="synergy-status-badge" class="text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-700">LIBRE EN WINDOWS</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Mueve el ratón al borde derecho del monitor para saltar al móvil Android. Clic der. = Atrás, Rueda = Scroll.</p>
+            <p id="synergy-status-desc" class="text-[11px] text-slate-400 mt-0.5">Congela el puntero en Windows y toma control del 100% del ratón en Android sin topar con bordes.</p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-3">
-          <span class="text-[11px] text-slate-400 hidden sm:inline-block">Atajo: <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono text-[10px] border border-slate-700">Ctrl + Shift + Rueda</kbd></span>
-          <label class="relative inline-flex items-center cursor-pointer select-none">
-            <input type="checkbox" id="synergy-toggle" onchange="toggleSynergyMode(this.checked)" class="sr-only peer">
-            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
-          </label>
+        <!-- Action Buttons & Shortcuts -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <!-- Botón Capturar Ratón -->
+          <button id="btn-capture-mouse" onclick="toggleSynergyMode(true)" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all active:scale-95 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <span>Capturar Ratón</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-black/30 text-white font-mono text-[9px] border border-white/20">Ctrl+Alt+M</kbd>
+          </button>
+
+          <!-- Botón Liberar Ratón -->
+          <button id="btn-release-mouse" onclick="toggleSynergyMode(false)" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 font-medium text-xs rounded-xl border border-slate-700 transition-all active:scale-95 cursor-pointer opacity-70">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+            </svg>
+            <span>Liberar</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-black/30 text-slate-300 font-mono text-[9px] border border-slate-600">Esc</kbd>
+          </button>
         </div>
       </div>
     </section>
@@ -2239,27 +2253,85 @@
     });
 
     // =========================================================
-    // Mouse Synergy Mode (Salto Continuo de Pantalla)
+    // Mouse Hijack / KDE Connect Mode (Secuestro de Ratón)
     // =========================================================
+    let isMouseHijacked = false;
+
     function toggleSynergyMode(enable) {
+      if (typeof enable !== 'boolean') {
+        enable = !isMouseHijacked;
+      }
       ipcRenderer.send('toggle-synergy', enable);
-      appendLog(`🖱️ Modo Synergy (Salto de Ratón) ${enable ? 'ACTIVADO' : 'DESACTIVADO'}`, 'sys');
+      appendLog(`🖱️ Secuestro de Ratón (KDE Connect) ${enable ? 'ACTIVADO [Capturado]' : 'LIBERADO'}`, 'sys');
     }
 
     ipcRenderer.on('synergy-status-changed', (event, enabled) => {
-      const toggle = document.getElementById('synergy-toggle');
-      if (toggle) toggle.checked = enabled;
+      isMouseHijacked = !!enabled;
+      const section = document.getElementById('mouse-hijack-section');
+      const iconBox = document.getElementById('mouse-hijack-icon-box');
       const statusBadge = document.getElementById('synergy-status-badge');
-      if (statusBadge) {
-        if (enabled) {
-          statusBadge.innerText = 'ACTIVO (Borde Derecho)';
-          statusBadge.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded border border-emerald-500/30';
-        } else {
-          statusBadge.innerText = 'DESACTIVADO';
+      const statusDesc = document.getElementById('synergy-status-desc');
+      const btnCapture = document.getElementById('btn-capture-mouse');
+      const btnRelease = document.getElementById('btn-release-mouse');
+
+      if (enabled) {
+        if (section) {
+          section.classList.add('border-cyan-500/60', 'bg-[#0b162c]');
+          section.classList.remove('border-[#1b273b]', 'bg-[#101826]');
+        }
+        if (iconBox) {
+          iconBox.className = 'w-9 h-9 rounded-xl bg-cyan-500/25 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] shrink-0 mt-0.5 transition-all animate-pulse';
+        }
+        if (statusBadge) {
+          statusBadge.innerText = '🔒 CAPTURADO EN ANDROID';
+          statusBadge.className = 'text-[10px] bg-cyan-500/20 text-cyan-300 font-mono font-bold px-2 py-0.5 rounded border border-cyan-500/40 shadow-[0_0_10px_rgba(0,240,255,0.25)]';
+        }
+        if (statusDesc) {
+          statusDesc.innerText = 'El cursor está activo en la pantalla de tu móvil. Presiona [ESC] o [Ctrl+Alt+M] para devolverlo a Windows.';
+        }
+        if (btnCapture) {
+          btnCapture.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-xs rounded-xl shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all pointer-events-none opacity-80';
+          btnCapture.innerHTML = `<span>🟢 Capturado</span> <kbd class="px-1.5 py-0.5 rounded bg-black/40 text-emerald-300 font-mono text-[9px] border border-emerald-500/30">Ctrl+Alt+M</kbd>`;
+        }
+        if (btnRelease) {
+          btnRelease.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-gradient-to-r from-rose-500 to-amber-600 hover:from-rose-400 hover:to-amber-500 text-white font-bold text-xs rounded-xl shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all active:scale-95 cursor-pointer animate-pulse';
+          btnRelease.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> <span>Liberar Ratón</span> <kbd class="px-1.5 py-0.5 rounded bg-black/40 text-white font-mono text-[9px] border border-white/30">Esc</kbd>`;
+        }
+      } else {
+        if (section) {
+          section.classList.remove('border-cyan-500/60', 'bg-[#0b162c]');
+          section.classList.add('border-[#1b273b]', 'bg-[#101826]');
+        }
+        if (iconBox) {
+          iconBox.className = 'w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 mt-0.5 transition-all';
+        }
+        if (statusBadge) {
+          statusBadge.innerText = 'LIBRE EN WINDOWS';
           statusBadge.className = 'text-[10px] bg-slate-800 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-700';
+        }
+        if (statusDesc) {
+          statusDesc.innerText = 'Congela el puntero en Windows y toma control del 100% del ratón en Android sin topar con bordes.';
+        }
+        if (btnCapture) {
+          btnCapture.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all active:scale-95 cursor-pointer';
+          btnCapture.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> <span>Capturar Ratón</span> <kbd class="px-1.5 py-0.5 rounded bg-black/30 text-white font-mono text-[9px] border border-white/20">Ctrl+Alt+M</kbd>`;
+        }
+        if (btnRelease) {
+          btnRelease.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 font-medium text-xs rounded-xl border border-slate-700 transition-all active:scale-95 cursor-pointer opacity-70';
+          btnRelease.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> <span>Liberar</span> <kbd class="px-1.5 py-0.5 rounded bg-black/30 text-slate-300 font-mono text-[9px] border border-slate-600">Esc</kbd>`;
         }
       }
     });
+
+    // Consultar estado inicial del secuestro de ratón
+    ipcRenderer.invoke('get-synergy-state').then(active => {
+      if (typeof active === 'boolean') {
+        const fakeEvt = null;
+        // invocar callback
+        const listeners = ipcRenderer.listeners('synergy-status-changed');
+        listeners.forEach(fn => fn(fakeEvt, active));
+      }
+    }).catch(() => {});
 
     ipcRenderer.on('synergy-relay-move', (event, { x, y }) => {
       if (ws && ws.readyState === WebSocket.OPEN) {

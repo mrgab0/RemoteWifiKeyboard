@@ -6,11 +6,10 @@ const path = require('path');
 let tray = null;
 let mainWindow = null;
 let isMiniMode = false;
-let isSynergyEnabled = false;
 let isSynergyActive = false;
 let isWritingActive = false;
 let synergyCaptureWindow = null;
-let synergyEdgeInterval = null;
+let widgetWindow = null;
 
 let appSettings = {
   universalShortcut: 'CommandOrControl+Shift+Insert',
@@ -51,47 +50,8 @@ function createSynergyCaptureWindow() {
   synergyCaptureWindow.on('closed', () => {
     synergyCaptureWindow = null;
     isSynergyActive = false;
+    broadcastSynergyStatus(false);
   });
-}
-
-let synergyLastExitTime = 0;
-let synergyNeedsHysteresisReset = false;
-
-function startEdgeDetection() {
-  if (synergyEdgeInterval) clearInterval(synergyEdgeInterval);
-  synergyEdgeInterval = setInterval(() => {
-    if (!isSynergyEnabled || isSynergyActive) return;
-
-    try {
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const pt = screen.getCursorScreenPoint();
-      const bounds = primaryDisplay.bounds;
-
-      // Histéresis: el usuario debe adentrarse en Windows al menos 60px antes de reactivar el salto
-      if (synergyNeedsHysteresisReset) {
-        if (pt.x <= bounds.x + bounds.width - 60) {
-          synergyNeedsHysteresisReset = false;
-        } else {
-          return; // Aún en la zona del borde, no reactivar
-        }
-      }
-
-      // Cooldown de 800ms tras salir de Synergy para evitar bucles instantáneos
-      if (Date.now() - synergyLastExitTime < 800) return;
-
-      // Colisión con el borde derecho del monitor (Salto hacia Android)
-      if (pt.x >= bounds.x + bounds.width - 2) {
-        enterSynergyMode();
-      }
-    } catch (e) {}
-  }, 35);
-}
-
-function stopEdgeDetection() {
-  if (synergyEdgeInterval) {
-    clearInterval(synergyEdgeInterval);
-    synergyEdgeInterval = null;
-  }
 }
 
 function enterSynergyMode() {
@@ -102,19 +62,39 @@ function enterSynergyMode() {
   isSynergyActive = true;
   synergyCaptureWindow.show();
   synergyCaptureWindow.focus();
+  synergyCaptureWindow.webContents.send('capture-start');
+  broadcastSynergyStatus(true);
 }
 
 function exitSynergyMode() {
   if (!isSynergyActive) return;
   isSynergyActive = false;
-  synergyLastExitTime = Date.now();
-  synergyNeedsHysteresisReset = true;
 
   if (synergyCaptureWindow && !synergyCaptureWindow.isDestroyed()) {
+    synergyCaptureWindow.webContents.send('capture-stop');
     synergyCaptureWindow.hide();
   }
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
     mainWindow.webContents.send('synergy-relay-leave');
+  }
+  broadcastSynergyStatus(false);
+}
+
+function toggleSynergyMode(explicitState) {
+  const targetState = (typeof explicitState === 'boolean') ? explicitState : !isSynergyActive;
+  if (targetState) {
+    enterSynergyMode();
+  } else {
+    exitSynergyMode();
+  }
+}
+
+function broadcastSynergyStatus(active) {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    mainWindow.webContents.send('synergy-status-changed', active);
+  }
+  if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+    widgetWindow.webContents.send('synergy-status-changed', active);
   }
 }
 
@@ -157,7 +137,7 @@ app.whenReady().then(() => {
   app.setAppUserModelId("com.mrgab0.remotewifikeyboard");
   createWindow();
 
-  let widgetWindow = null;
+  widgetWindow = null;
 
   function getWidgetPosition(posKey = 'bottom-left', width = 240, height = 200) {
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -264,22 +244,13 @@ app.whenReady().then(() => {
     }
   });
 
-  // Mouse Synergy IPC Handlers
+  // Mouse Synergy / KDE Connect IPC Handlers
   ipcMain.on('toggle-synergy', (event, enable) => {
-    isSynergyEnabled = enable;
-    if (enable) {
-      createSynergyCaptureWindow();
-      startEdgeDetection();
-    } else {
-      stopEdgeDetection();
-      exitSynergyMode();
-    }
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-      mainWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
-    }
-    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
-      widgetWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
-    }
+    toggleSynergyMode(enable);
+  });
+
+  ipcMain.handle('get-synergy-state', () => {
+    return isSynergyActive;
   });
 
   ipcMain.on('synergy-exit', () => {
@@ -304,23 +275,9 @@ app.whenReady().then(() => {
     }
   });
 
-  // Atajo rápido: Ctrl + Shift + Rueda del Ratón para alternar Synergy desde cualquier parte
+  // Atajo rápido: Ctrl + Shift + Rueda del Ratón para alternar secuestro desde cualquier parte
   ipcMain.on('toggle-synergy-shortcut', () => {
-    const newState = !isSynergyEnabled;
-    isSynergyEnabled = newState;
-    if (newState) {
-      createSynergyCaptureWindow();
-      startEdgeDetection();
-    } else {
-      stopEdgeDetection();
-      exitSynergyMode();
-    }
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-      mainWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
-    }
-    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
-      widgetWindow.webContents.send('synergy-status-changed', isSynergyEnabled);
-    }
+    toggleSynergyMode();
   });
 
   // Configuración IPC
@@ -420,6 +377,11 @@ app.whenReady().then(() => {
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
       mainWindow.webContents.send('trigger-voice-typing');
     }
+  });
+
+  // Atajo universal para Secuestro/Liberación de Ratón en Android (Ctrl+Alt+M)
+  globalShortcut.register('CommandOrControl+Alt+M', () => {
+    toggleSynergyMode();
   });
 
   ipcMain.on('relay-voice-typing', () => {
