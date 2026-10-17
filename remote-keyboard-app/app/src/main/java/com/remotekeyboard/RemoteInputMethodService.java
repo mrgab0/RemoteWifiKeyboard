@@ -27,6 +27,14 @@ import com.remotekeyboard.server.RemoteWebServer;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.ClipDescription;
+import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
+import java.util.ArrayList;
 import org.json.JSONObject;
 
 import java.util.concurrent.ExecutorService;
@@ -64,6 +72,10 @@ public class RemoteInputMethodService extends InputMethodService {
     private LinearLayout visualKeyboardContainer;
     private LinearLayout suggestionContainer;
     private Button pastePillButton;
+    private Button btnVoiceMicTop;
+    private Button btnVoiceMicBottom;
+    private SpeechRecognizer speechRecognizer;
+    private boolean isVoiceListening = false;
     private int currentThemeIndex = 0;
     private com.remotekeyboard.theme.Base16Theme currentBase16Theme = null;
     private int currentFeaturedBase16Index = -1;
@@ -210,6 +222,10 @@ public class RemoteInputMethodService extends InputMethodService {
         super.onDestroy();
         instance = null;
         asyncExecutor.shutdownNow();
+        if (speechRecognizer != null) {
+            try { speechRecognizer.destroy(); } catch (Exception ignored) {}
+            speechRecognizer = null;
+        }
         if (clipboardManager != null && clipListener != null) {
             clipboardManager.removePrimaryClipChangedListener(clipListener);
         }
@@ -319,8 +335,22 @@ public class RemoteInputMethodService extends InputMethodService {
             }
         });
         
+        btnVoiceMicTop = new Button(this);
+        btnVoiceMicTop.setText("🎙️");
+        btnVoiceMicTop.setTextSize(14);
+        btnVoiceMicTop.setPadding(0, 0, 0, 0);
+        btnVoiceMicTop.setBackgroundResource(isVoiceListening ? R.drawable.bg_btn_mic_listening : R.drawable.bg_btn_mic_gradient);
+        int micW = (int) (38 * getResources().getDisplayMetrics().density + 0.5f);
+        int micH = (int) (32 * getResources().getDisplayMetrics().density + 0.5f);
+        LinearLayout.LayoutParams micParamsTop = new LinearLayout.LayoutParams(micW, micH);
+        micParamsTop.setMargins(6, 0, 6, 0);
+        btnVoiceMicTop.setLayoutParams(micParamsTop);
+        btnVoiceMicTop.setOnClickListener(v -> toggleVoiceTyping());
+        if (isVoiceListening) startPulseAnimation(btnVoiceMicTop);
+
         suggestionContainer.addView(btnToggleKb);
         suggestionContainer.addView(btnTheme);
+        suggestionContainer.addView(btnVoiceMicTop);
         suggestionContainer.addView(pastePillButton);
         
         layout.addView(suggestionContainer, suggParams);
@@ -376,6 +406,15 @@ public class RemoteInputMethodService extends InputMethodService {
             } catch (Exception ignored) {}
         });
 
+        btnVoiceMicBottom = new Button(this);
+        btnVoiceMicBottom.setText(isVoiceListening ? "🔴 Escuchando..." : "🎙️ Dictar");
+        btnVoiceMicBottom.setTextColor(Color.WHITE);
+        btnVoiceMicBottom.setTextSize(11);
+        btnVoiceMicBottom.setBackgroundResource(isVoiceListening ? R.drawable.bg_btn_mic_listening : R.drawable.bg_btn_mic_gradient);
+        btnVoiceMicBottom.setPadding(20, 0, 20, 0);
+        btnVoiceMicBottom.setOnClickListener(v -> toggleVoiceTyping());
+        if (isVoiceListening) startPulseAnimation(btnVoiceMicBottom);
+
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -383,6 +422,7 @@ public class RemoteInputMethodService extends InputMethodService {
 
         buttonRow.addView(btnSwitch, params);
         buttonRow.addView(btnSettings, params);
+        buttonRow.addView(btnVoiceMicBottom, params);
         layout.addView(buttonRow);
         
         applyTheme(layout);
@@ -390,6 +430,226 @@ public class RemoteInputMethodService extends InputMethodService {
         return layout;
     }
 
+    private void initSpeechRecognizer() {
+        if (speechRecognizer != null) return;
+        try {
+            if (SpeechRecognizer.isRecognitionAvailable(this)) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+                speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                    @Override
+                    public void onReadyForSpeech(Bundle params) {
+                        DebugLogger.log("SpeechRecognizer: onReadyForSpeech");
+                        updateVoiceListeningUI(true);
+                        if (tvLiveFeedback != null) {
+                            tvLiveFeedback.setText("🎙️ Escuchando... Habla ahora");
+                            tvLiveFeedback.setTextColor(Color.parseColor("#00F0FF"));
+                        }
+                    }
+
+                    @Override
+                    public void onBeginningOfSpeech() {
+                        DebugLogger.log("SpeechRecognizer: onBeginningOfSpeech");
+                    }
+
+                    @Override
+                    public void onRmsChanged(float rmsdB) {}
+
+                    @Override
+                    public void onBufferReceived(byte[] buffer) {}
+
+                    @Override
+                    public void onEndOfSpeech() {
+                        DebugLogger.log("SpeechRecognizer: onEndOfSpeech");
+                        if (tvLiveFeedback != null) {
+                            tvLiveFeedback.setText("⏳ Procesando dictado...");
+                        }
+                    }
+
+                    @Override
+                    public void onError(int error) {
+                        DebugLogger.log("SpeechRecognizer onError: " + error);
+                        updateVoiceListeningUI(false);
+                        String errorMsg;
+                        switch (error) {
+                            case SpeechRecognizer.ERROR_AUDIO: errorMsg = "Error de audio"; break;
+                            case SpeechRecognizer.ERROR_CLIENT: errorMsg = "Error de cliente"; break;
+                            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: errorMsg = "Sin permiso de micrófono"; break;
+                            case SpeechRecognizer.ERROR_NETWORK:
+                            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: errorMsg = "Error de red/Google"; break;
+                            case SpeechRecognizer.ERROR_NO_MATCH: errorMsg = "No se detectó voz"; break;
+                            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY: errorMsg = "Reconocedor ocupado"; break;
+                            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: errorMsg = "Tiempo agotado sin voz"; break;
+                            default: errorMsg = "Error mic (" + error + ")"; break;
+                        }
+                        if (tvLiveFeedback != null) {
+                            tvLiveFeedback.setText("⚠️ " + errorMsg);
+                            tvLiveFeedback.setTextColor(Color.parseColor("#FBBF24"));
+                        }
+                    }
+
+                    @Override
+                    public void onResults(Bundle results) {
+                        DebugLogger.log("SpeechRecognizer onResults");
+                        updateVoiceListeningUI(false);
+                        if (results != null) {
+                            ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                            if (matches != null && !matches.isEmpty()) {
+                                String spokenText = matches.get(0);
+                                if (spokenText != null && !spokenText.trim().isEmpty()) {
+                                    typeText(spokenText + " ");
+                                    broadcastVoiceTranscription(spokenText);
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onPartialResults(Bundle partialResults) {
+                        if (partialResults != null) {
+                            ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                            if (matches != null && !matches.isEmpty()) {
+                                String partial = matches.get(0);
+                                if (tvLiveFeedback != null) {
+                                    tvLiveFeedback.setText("🎙️ " + partial);
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onEvent(int eventType, Bundle params) {}
+                });
+            } else {
+                DebugLogger.log("SpeechRecognizer no disponible en el sistema");
+            }
+        } catch (Exception e) {
+            DebugLogger.log("Error inicializando SpeechRecognizer: " + e.getMessage());
+        }
+    }
+
+    public void startVoiceTyping() {
+        mainHandler.post(() -> {
+            pokeWakeLock();
+            performHapticFeedbackAsync();
+            if (isVoiceListening) return;
+
+            if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+                if (tvLiveFeedback != null) {
+                    tvLiveFeedback.setText("⚠️ Dictado de voz no soportado");
+                    tvLiveFeedback.setTextColor(Color.parseColor("#FBBF24"));
+                }
+                return;
+            }
+
+            try {
+                if (speechRecognizer == null) {
+                    initSpeechRecognizer();
+                }
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault());
+                intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+                intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+                speechRecognizer.startListening(intent);
+                updateVoiceListeningUI(true);
+            } catch (Exception e) {
+                DebugLogger.log("Error al iniciar startListening: " + e.getMessage());
+                updateVoiceListeningUI(false);
+            }
+        });
+    }
+
+    public void stopVoiceTyping() {
+        mainHandler.post(() -> {
+            if (speechRecognizer != null && isVoiceListening) {
+                try {
+                    speechRecognizer.stopListening();
+                } catch (Exception ignored) {}
+            }
+            updateVoiceListeningUI(false);
+        });
+    }
+
+    public void toggleVoiceTyping() {
+        mainHandler.post(() -> {
+            if (isVoiceListening) {
+                stopVoiceTyping();
+            } else {
+                startVoiceTyping();
+            }
+        });
+    }
+
+    private void updateVoiceListeningUI(boolean listening) {
+        this.isVoiceListening = listening;
+        mainHandler.post(() -> {
+            int bgRes = listening ? R.drawable.bg_btn_mic_listening : R.drawable.bg_btn_mic_gradient;
+            if (btnVoiceMicTop != null) {
+                btnVoiceMicTop.setBackgroundResource(bgRes);
+                if (listening) {
+                    startPulseAnimation(btnVoiceMicTop);
+                } else {
+                    stopPulseAnimation(btnVoiceMicTop);
+                }
+            }
+            if (btnVoiceMicBottom != null) {
+                btnVoiceMicBottom.setBackgroundResource(bgRes);
+                btnVoiceMicBottom.setText(listening ? "🔴 Escuchando..." : "🎙️ Dictar");
+                if (listening) {
+                    startPulseAnimation(btnVoiceMicBottom);
+                } else {
+                    stopPulseAnimation(btnVoiceMicBottom);
+                }
+            }
+
+            // Notificar a Electron (PC) vía WebSocket
+            try {
+                RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+                if (server != null) {
+                    JSONObject status = new JSONObject();
+                    status.put("type", "voice_status");
+                    status.put("state", listening ? "listening" : "idle");
+                    server.broadcastWebSocket(status.toString());
+                }
+            } catch (Exception ignored) {}
+        });
+    }
+
+    private void broadcastVoiceTranscription(String text) {
+        try {
+            RemoteWebServer server = RemoteWebServerManager.getServerInstance();
+            if (server != null) {
+                JSONObject res = new JSONObject();
+                res.put("type", "voice_transcription");
+                res.put("text", text);
+                server.broadcastWebSocket(res.toString());
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void startPulseAnimation(View v) {
+        if (v == null) return;
+        stopPulseAnimation(v);
+        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 1.18f);
+        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 1.18f);
+        ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(v, pvhX, pvhY);
+        animator.setDuration(450);
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.setRepeatCount(ValueAnimator.INFINITE);
+        animator.start();
+        v.setTag(animator);
+    }
+
+    private void stopPulseAnimation(View v) {
+        if (v == null) return;
+        Object obj = v.getTag();
+        if (obj instanceof ObjectAnimator) {
+            ((ObjectAnimator) obj).cancel();
+        }
+        v.setScaleX(1.0f);
+        v.setScaleY(1.0f);
+        v.setTag(null);
+    }
 
     private void updatePastePill() {
         mainHandler.post(() -> {

@@ -397,6 +397,25 @@ app.whenReady().then(() => {
     }
   });
 
+  // Atajo para activar/alternar Dictado por Voz de Google en Android (Ctrl+Alt+V)
+  globalShortcut.register('CommandOrControl+Alt+V', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('trigger-voice-typing');
+    }
+  });
+
+  ipcMain.on('relay-voice-typing', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.send('trigger-voice-typing');
+    }
+  });
+
+  ipcMain.on('voice-status-broadcast', (event, status) => {
+    if (widgetWindow && !widgetWindow.isDestroyed() && widgetWindow.webContents) {
+      widgetWindow.webContents.send('voice-status-changed', status);
+    }
+  });
+
 // Enable DevTools only when the app is started with a '--dev' flag
 if (process.argv.includes('--dev')) {
   mainWindow.webContents.openDevTools({ mode: 'detach' });

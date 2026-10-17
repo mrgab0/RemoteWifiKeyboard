@@ -302,6 +302,21 @@ public class RemoteWebServer extends NanoHTTPD {
             else if ("mouse_leave".equals(type)) {
                 com.remotekeyboard.mouse.RemoteMouseController.getInstance(context).onMouseLeave();
             }
+            // 🎙️ 11. Dictado por Voz (Google Voice Typing)
+            else if ("toggle_voice_typing".equals(type) || "start_voice_typing".equals(type) || "stop_voice_typing".equals(type)) {
+                RemoteInputMethodService ime = RemoteInputMethodService.getInstance();
+                if (ime != null) {
+                    if ("start_voice_typing".equals(type)) {
+                        ime.startVoiceTyping();
+                    } else if ("stop_voice_typing".equals(type)) {
+                        ime.stopVoiceTyping();
+                    } else {
+                        ime.toggleVoiceTyping();
+                    }
+                } else {
+                    com.remotekeyboard.DebugLogger.log("ERROR WS: RemoteInputMethodService es NULL (VOICE TYPING)");
+                }
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error procesando mensaje WebSocket: " + message, e);
         }

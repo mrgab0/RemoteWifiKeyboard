@@ -140,10 +140,19 @@ public class MainActivity extends Activity {
             setupMonetization();
             updateIpDisplay();
             setupTelemetryLoop();
+            checkAudioPermission();
 
         } catch (Throwable t) {
             Log.e(TAG, "Error durante onCreate: ", t);
             DebugLogger.log("Error en onCreate de MainActivity: " + t.getMessage());
+        }
+    }
+
+    private void checkAudioPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 201);
+            }
         }
     }
 

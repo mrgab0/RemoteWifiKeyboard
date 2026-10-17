@@ -67,7 +67,7 @@ $gradleBin = "$gradleDir\bin\gradle.bat"
 $env:ANDROID_HOME = $sdkDir
 $env:ANDROID_SDK_ROOT = $sdkDir
 
-& $gradleBin assembleDebug --no-daemon
+& $gradleBin -p $PSScriptRoot assembleDebug --no-daemon
 
 if ($LASTEXITCODE -eq 0) {
     $apkPath = "$PSScriptRoot\app\build\outputs\apk\debug\app-debug.apk"

@@ -576,6 +576,12 @@
                 <span class="text-[11px] font-medium">Enfocar Texto</span>
                 <kbd class="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-mono text-[9px] border border-slate-700">F6</kbd>
               </button>
+              <span class="text-slate-700">•</span>
+              <button id="btnVoiceTypingDesktop" type="button" onclick="triggerVoiceTyping()" class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition active:scale-95 cursor-pointer" title="Activar Dictado por Voz de Google en el Teléfono (Ctrl+Alt+V)">
+                <span id="voiceMicIcon">🎙️</span>
+                <span id="voiceMicLabel" class="text-[11px] font-medium">Dictado Voz</span>
+                <kbd class="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-mono text-[9px] border border-slate-700">Ctrl+Alt+V</kbd>
+              </button>
             </div>
             <!-- Last Key Indicator -->
             <div class="flex items-center space-x-1.5 text-[11px] text-slate-400 font-mono">
@@ -969,6 +975,38 @@
       }
     }
 
+    let isVoiceListening = false;
+
+    function triggerVoiceTyping() {
+      sendPayload({ type: 'toggle_voice_typing' });
+      appendLog('🎙️ Señal de dictado de voz Google enviada al teléfono (Ctrl+Alt+V)', 'sys');
+    }
+
+    function updateVoiceStatusUI(listening) {
+      isVoiceListening = !!listening;
+      const btn = document.getElementById('btnVoiceTypingDesktop');
+      const icon = document.getElementById('voiceMicIcon');
+      const label = document.getElementById('voiceMicLabel');
+      if (!btn) return;
+
+      if (listening) {
+        btn.className = "flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-rose-500/25 hover:bg-rose-500/35 text-rose-300 border border-rose-400 animate-pulse transition active:scale-95 cursor-pointer shadow-lg shadow-rose-950/50";
+        if (icon) icon.innerText = "🔴";
+        if (label) label.innerText = "Escuchando...";
+        appendLog('🎙️ Micrófono de Google activo en el teléfono... ¡Habla ahora!', 'sys');
+      } else {
+        btn.className = "flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition active:scale-95 cursor-pointer";
+        if (icon) icon.innerText = "🎙️";
+        if (label) label.innerText = "Dictado Voz";
+      }
+
+      ipcRenderer.send('voice-status-broadcast', listening);
+    }
+
+    ipcRenderer.on('trigger-voice-typing', () => {
+      triggerVoiceTyping();
+    });
+
     // Window Controls
     function windowMinimize() { ipcRenderer.send('window-minimize'); }
     function windowMaximize() { ipcRenderer.send('window-maximize'); }
@@ -1109,6 +1147,10 @@
                 clipboard.writeText(data.content);
                 appendLog('📋 Portapapeles sincronizado desde Android (texto)', 'clip');
               }
+            } else if (data.type === 'voice_status') {
+              updateVoiceStatusUI(data.state === 'listening');
+            } else if (data.type === 'voice_transcription') {
+              appendLog(`🎙️ Voz dictada en teléfono: "${data.text}"`, 'clip');
             }
           } catch(e) {}
         };
@@ -1359,6 +1401,13 @@
       if (e.altKey)   mods.push('ALT');
       if (e.shiftKey) mods.push('SHIFT');
       if (e.metaKey)  mods.push('META');
+
+      if (e.ctrlKey && e.altKey && (code === 'KeyV' || key.toLowerCase() === 'v')) {
+        if (action === 'keydown') {
+          triggerVoiceTyping();
+        }
+        return;
+      }
 
       // Update UI last key display
       if (action === 'keydown') {
