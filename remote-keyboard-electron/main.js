@@ -58,7 +58,8 @@ function createSynergyCaptureWindow() {
     enableLargerThanScreen: true,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      backgroundThrottling: false
     }
   });
 

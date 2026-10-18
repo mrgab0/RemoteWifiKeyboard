@@ -168,7 +168,10 @@
 
       if (!throttleTimer) {
         throttleTimer = requestAnimationFrame(() => {
-          ipcRenderer.send('synergy-mouse-move', { x: virtualX, y: virtualY });
+          ipcRenderer.send('synergy-mouse-move', { 
+            x: Math.round(virtualX * 10000) / 10000, 
+            y: Math.round(virtualY * 10000) / 10000 
+          });
           throttleTimer = null;
         });
       }

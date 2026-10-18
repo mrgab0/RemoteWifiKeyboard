@@ -11,15 +11,21 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.remotekeyboard.DebugLogger;
 import com.remotekeyboard.R;
 import com.remotekeyboard.accessibility.RemoteAccessibilityService;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Controlador de Puntero Flotante y Gestos de Ratón Remoto.
  * Gestiona el overlay visual del cursor en pantalla y coordina los toques con RemoteAccessibilityService.
+ * Optimizado para alta frecuencia (60-120 FPS) con aceleración GPU (RenderNode Translation) y offload asíncrono.
  */
 public class RemoteMouseController {
 
@@ -29,6 +35,7 @@ public class RemoteMouseController {
     private final Context context;
     private final Handler mainHandler;
     private WindowManager windowManager;
+    private FrameLayout overlayContainer;
     private ImageView pointerView;
     private WindowManager.LayoutParams layoutParams;
 
@@ -39,6 +46,11 @@ public class RemoteMouseController {
     private boolean isOverlayAttached = false;
     private int currentOverlayType = 0;
 
+    // Coalescencia atómica de coordenadas para renderizado de alta frecuencia a 60-120 FPS
+    private volatile float targetNormX = -1f;
+    private volatile float targetNormY = -1f;
+    private final AtomicBoolean isMoveScheduled = new AtomicBoolean(false);
+
     // Para soporte de arrastre (drag)
     private float dragStartX = 0;
     private float dragStartY = 0;
@@ -46,6 +58,9 @@ public class RemoteMouseController {
     private boolean isDragging = false;
 
     // Detección de elementos interactivos (icono de mano / pointer)
+    // Se procesa en hilo de fondo para NUNCA bloquear el UI Thread ni el RenderThread de la GPU
+    private final ExecutorService hoverExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean isHoverChecking = new AtomicBoolean(false);
     private long lastHoverCheckTime = 0;
     private boolean isHandCursor = false;
 
@@ -89,10 +104,12 @@ public class RemoteMouseController {
             if (currentOverlayType != WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY 
                     && desiredType == WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY) {
                 try {
-                    if (windowManager != null && pointerView != null) {
-                        windowManager.removeView(pointerView);
+                    if (windowManager != null && overlayContainer != null) {
+                        windowManager.removeView(overlayContainer);
                     }
                 } catch (Exception ignored) {}
+                overlayContainer = null;
+                pointerView = null;
                 isOverlayAttached = false;
             } else {
                 return;
@@ -121,9 +138,10 @@ public class RemoteMouseController {
             }
 
             currentOverlayType = desiredType;
+            // Ventana MATCH_PARENT fija: cero llamadas a updateViewLayout durante el movimiento
             layoutParams = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
                     currentOverlayType,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
@@ -134,17 +152,30 @@ public class RemoteMouseController {
             );
 
             layoutParams.gravity = Gravity.TOP | Gravity.START;
-            layoutParams.x = (int) currentX;
-            layoutParams.y = (int) currentY;
+            layoutParams.x = 0;
+            layoutParams.y = 0;
 
             Context viewContext = accessService != null ? accessService : context;
+            overlayContainer = new FrameLayout(viewContext);
+
             pointerView = new ImageView(viewContext);
             pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
             pointerView.setVisibility(View.GONE);
 
-            windowManager.addView(pointerView, layoutParams);
+            FrameLayout.LayoutParams pParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+            );
+            pParams.gravity = Gravity.TOP | Gravity.START;
+            pointerView.setLayoutParams(pParams);
+
+            pointerView.setTranslationX(currentX);
+            pointerView.setTranslationY(currentY);
+
+            overlayContainer.addView(pointerView);
+            windowManager.addView(overlayContainer, layoutParams);
             isOverlayAttached = true;
-            DebugLogger.log("Overlay de puntero en capa superior absoluta (tipo: " + 
+            DebugLogger.log("Overlay de puntero GPU MATCH_PARENT activo (tipo: " + 
                 (currentOverlayType == WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY ? "ACCESSIBILITY_OVERLAY" : "APPLICATION_OVERLAY") + ")");
         } catch (Exception e) {
             Log.e(TAG, "Error agregando vista de puntero flotante: ", e);
@@ -154,42 +185,68 @@ public class RemoteMouseController {
 
     /**
      * Actualiza la posición del puntero mediante coordenadas normalizadas (0.0 a 1.0).
+     * Renderizado atómico coalescido a 60-120 FPS con traslación directa por GPU (RenderNode).
      */
     public void onMouseMove(final float normX, final float normY) {
-        mainHandler.post(() -> {
+        targetNormX = normX;
+        targetNormY = normY;
+
+        if (isMoveScheduled.compareAndSet(false, true)) {
+            mainHandler.post(moveRunnable);
+        }
+    }
+
+    private final Runnable moveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            isMoveScheduled.set(false);
             ensureOverlayView();
             if (pointerView == null || !isOverlayAttached) return;
 
-            currentX = Math.max(0, Math.min(screenWidth - 1, normX * screenWidth));
-            currentY = Math.max(0, Math.min(screenHeight - 1, normY * screenHeight));
+            float nX = targetNormX;
+            float nY = targetNormY;
+            if (nX < 0 || nY < 0) return;
 
-            layoutParams.x = (int) currentX;
-            layoutParams.y = (int) currentY;
+            currentX = Math.max(0, Math.min(screenWidth - 1, nX * screenWidth));
+            currentY = Math.max(0, Math.min(screenHeight - 1, nY * screenHeight));
 
             if (pointerView.getVisibility() != View.VISIBLE) {
                 pointerView.setVisibility(View.VISIBLE);
             }
 
-            try {
-                windowManager.updateViewLayout(pointerView, layoutParams);
-            } catch (Exception ignored) {}
+            // ⚡ Aceleración GPU pura (RenderNode Translation Matrix - 0ms IPC lag)
+            pointerView.setTranslationX(currentX);
+            pointerView.setTranslationY(currentY);
 
-            // Detección reactiva de elementos interactivos (botones, enlaces, inputs -> manito)
+            // Detección reactiva de interactividad (hover) ejecutada 100% en segundo plano
             long now = System.currentTimeMillis();
-            if (now - lastHoverCheckTime > 75) {
+            if (now - lastHoverCheckTime > 80 && isHoverChecking.compareAndSet(false, true)) {
                 lastHoverCheckTime = now;
-                RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
-                float statusBarThreshold = Math.max(80f, screenHeight * 0.045f);
-                float navBarThreshold = Math.max(120f, screenHeight * 0.065f);
-                boolean inSystemBar = currentY <= statusBarThreshold || currentY >= screenHeight - navBarThreshold;
-                boolean shouldBeHand = (accessService != null && accessService.isInteractiveElementAt(currentX, currentY)) || inSystemBar;
-                if (shouldBeHand != isHandCursor) {
-                    isHandCursor = shouldBeHand;
-                    pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
-                }
+                final float checkX = currentX;
+                final float checkY = currentY;
+                hoverExecutor.execute(() -> {
+                    try {
+                        RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
+                        float statusBarThreshold = Math.max(80f, screenHeight * 0.045f);
+                        float navBarThreshold = Math.max(120f, screenHeight * 0.065f);
+                        boolean inSystemBar = checkY <= statusBarThreshold || checkY >= screenHeight - navBarThreshold;
+                        boolean shouldBeHand = inSystemBar || (accessService != null && accessService.isInteractiveElementAt(checkX, checkY));
+                        if (shouldBeHand != isHandCursor) {
+                            isHandCursor = shouldBeHand;
+                            mainHandler.post(() -> {
+                                if (pointerView != null) {
+                                    pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
+                                }
+                            });
+                        }
+                    } catch (Exception ignored) {
+                    } finally {
+                        isHoverChecking.set(false);
+                    }
+                });
             }
-        });
-    }
+        }
+    };
 
     /**
      * Procesa eventos de clic de ratón (Izquierdo: Tap / Drag, Derecho: Atrás, Central: Home).
@@ -203,6 +260,11 @@ public class RemoteMouseController {
             }
 
             boolean isDown = "down".equalsIgnoreCase(action);
+
+            if (targetNormX >= 0 && targetNormY >= 0) {
+                currentX = Math.max(0, Math.min(screenWidth - 1, targetNormX * screenWidth));
+                currentY = Math.max(0, Math.min(screenHeight - 1, targetNormY * screenHeight));
+            }
 
             // Botón 0: Clic Izquierdo (Toque / Arrastre)
             if (button == 0) {
