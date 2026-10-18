@@ -21,17 +21,33 @@ let appSettings = {
   synergyEnabled: false
 };
 
+function getEntireScreenBounds() {
+  const displays = screen.getAllDisplays();
+  let minX = 0, minY = 0, maxX = 0, maxY = 0;
+  displays.forEach(display => {
+    minX = Math.min(minX, display.bounds.x);
+    minY = Math.min(minY, display.bounds.y);
+    maxX = Math.max(maxX, display.bounds.x + display.bounds.width);
+    maxY = Math.max(maxY, display.bounds.y + display.bounds.height);
+  });
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
 function createSynergyCaptureWindow() {
   if (synergyCaptureWindow && !synergyCaptureWindow.isDestroyed()) return;
 
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.bounds;
+  const bounds = getEntireScreenBounds();
 
   synergyCaptureWindow = new BrowserWindow({
-    width,
-    height,
-    x: 0,
-    y: 0,
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -39,6 +55,7 @@ function createSynergyCaptureWindow() {
     hasShadow: false,
     focusable: true,
     show: false,
+    enableLargerThanScreen: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -46,6 +63,7 @@ function createSynergyCaptureWindow() {
   });
 
   synergyCaptureWindow.loadFile('synergy-capture.html');
+  synergyCaptureWindow.setIgnoreMouseEvents(false);
 
   synergyCaptureWindow.on('closed', () => {
     synergyCaptureWindow = null;
@@ -60,6 +78,7 @@ function enterSynergyMode() {
     createSynergyCaptureWindow();
   }
   isSynergyActive = true;
+  synergyCaptureWindow.setAlwaysOnTop(true, 'screen-saver');
   synergyCaptureWindow.show();
   synergyCaptureWindow.focus();
   synergyCaptureWindow.webContents.send('capture-start');

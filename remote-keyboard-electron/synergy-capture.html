@@ -13,9 +13,18 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: transparent;
+      background: rgba(6, 12, 24, 0.22); /* Superficie hit-test 100% sólida: cero clics traspasan a Windows */
       user-select: none;
-      cursor: none; /* Cursor de Windows totalmente oculto */
+      cursor: none !important;
+    }
+
+    #surface {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      cursor: none !important;
     }
 
     /* HUD Cyberpunk Notificación Flotante Superior */
@@ -25,7 +34,7 @@
       left: 50%;
       transform: translateX(-50%);
       padding: 8px 18px;
-      background: rgba(6, 12, 26, 0.92);
+      background: rgba(6, 12, 26, 0.94);
       border: 1px solid rgba(0, 240, 255, 0.5);
       border-radius: 9999px;
       color: #e2e8f0;
@@ -73,9 +82,10 @@
   </style>
 </head>
 <body>
+  <div id="surface"></div>
   <div id="hud-overlay">
     <div class="pulse-dot"></div>
-    <span>📱 Ratón Secuestrado en Android</span>
+    <span>📱 Ratón Secuestrado en Android (Windows Bloqueado)</span>
     <span style="color: #64748b;">|</span>
     <span>Presiona <span class="key-badge">ESC</span> o <span class="key-badge">Ctrl+Alt+M</span> para liberar</span>
   </div>
@@ -83,20 +93,25 @@
   <script>
     const { ipcRenderer } = require('electron');
 
+    const surface = document.getElementById('surface');
     let isCapturing = false;
-    let virtualX = 0.5; // Comienza en el centro de la pantalla de Android
+    let virtualX = 0.5;
     let virtualY = 0.5;
-    let sensitivity = 0.00085; // Relación ergonómica de desplazamiento relativo
+    let sensitivity = 0.00085;
     let throttleTimer = null;
 
     function requestLock() {
       try {
-        if (document.body.requestPointerLock) {
-          document.body.requestPointerLock();
+        const target = surface || document.body;
+        if (target.requestPointerLock) {
+          const res = target.requestPointerLock();
+          if (res && res.catch) {
+            res.catch(err => {
+              console.warn('Pointer lock catch:', err);
+            });
+          }
         }
-      } catch (err) {
-        console.warn('Pointer lock request error:', err);
-      }
+      } catch (err) {}
     }
 
     function exitLock() {
@@ -109,38 +124,28 @@
       ipcRenderer.send('synergy-exit');
     }
 
-    // Escuchar eventos de cambio de bloqueo de puntero
     document.addEventListener('pointerlockchange', () => {
-      const locked = (document.pointerLockElement === document.body);
+      const locked = (document.pointerLockElement === surface || document.pointerLockElement === document.body);
       if (locked) {
         isCapturing = true;
       } else {
         if (isCapturing) {
-          // El usuario o el sistema liberó el puntero (ej. tecla Escape nativa)
           exitLock();
         }
       }
     });
 
     document.addEventListener('pointerlockerror', (err) => {
-      console.warn('Pointer lock failed:', err);
+      console.warn('Pointer lock error:', err);
     });
 
-    // Re-adquirir bloqueo si el usuario hace clic en el área
-    window.addEventListener('click', () => {
-      if (!document.pointerLockElement) {
-        requestLock();
-      }
-    });
-
-    // Comunicación IPC desde el proceso principal
     ipcRenderer.on('capture-start', (event, currentCoords) => {
       isCapturing = true;
       if (currentCoords && typeof currentCoords.x === 'number') {
         virtualX = currentCoords.x;
         virtualY = currentCoords.y;
       }
-      requestLock();
+      setTimeout(requestLock, 50);
     });
 
     ipcRenderer.on('capture-stop', () => {
@@ -153,58 +158,82 @@
       }
     });
 
-    // Movimiento relativo 100% puro (dx, dy)
+    // Movimiento relativo 100% puro
     window.addEventListener('mousemove', (e) => {
-      if (!isCapturing && document.pointerLockElement !== document.body) return;
-
       const dx = e.movementX || 0;
       const dy = e.movementY || 0;
 
-      // Acumulación con clamp estricto al área [0.0, 1.0] de Android
       virtualX = Math.max(0, Math.min(1, virtualX + dx * sensitivity));
       virtualY = Math.max(0, Math.min(1, virtualY + dy * sensitivity));
 
-      // Stream a 60 FPS sin saturar el bus IPC
       if (!throttleTimer) {
         throttleTimer = requestAnimationFrame(() => {
           ipcRenderer.send('synergy-mouse-move', { x: virtualX, y: virtualY });
           throttleTimer = null;
         });
       }
-    });
+    }, true);
 
-    // Clics físicos: 0 = Izquierdo (Tap / Drag), 1 = Central (Home), 2 = Derecho (Atrás)
+    // Interceptar y aislar 100% de clics en Windows
     window.addEventListener('mousedown', (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      if (!document.pointerLockElement) {
+        requestLock();
+      }
       ipcRenderer.send('synergy-mouse-click', { button: e.button, action: 'down' });
-    });
+    }, true);
 
     window.addEventListener('mouseup', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       ipcRenderer.send('synergy-mouse-click', { button: e.button, action: 'up' });
-    });
+    }, true);
 
-    // Rueda del ratón para scroll vertical en Android
-    window.addEventListener('wheel', (e) => {
+    window.addEventListener('click', (e) => {
       e.preventDefault();
-      const delta = Math.sign(e.deltaY);
-      ipcRenderer.send('synergy-mouse-scroll', { deltaY: delta });
-    }, { passive: false });
+      e.stopPropagation();
+      if (!document.pointerLockElement) {
+        requestLock();
+      }
+    }, true);
 
-    // Desactivar menú contextual nativo de Windows (clic derecho = botón Atrás en Android)
+    window.addEventListener('auxclick', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-    });
+      e.stopPropagation();
+    }, true);
 
-    // Liberación rápida con Escape o Ctrl+Alt+M
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = Math.sign(e.deltaY);
+      ipcRenderer.send('synergy-mouse-scroll', { deltaY: delta });
+    }, { passive: false, capture: true });
+
+    window.addEventListener('dragstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+
+    window.addEventListener('selectstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+
+    // Escape o Ctrl+Alt+M para liberar
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || (e.ctrlKey && e.altKey && (e.code === 'KeyM' || e.key.toLowerCase() === 'm'))) {
         e.preventDefault();
+        e.stopPropagation();
         exitLock();
       }
-    });
+    }, true);
 
-    // Auto-bloquear al cargar
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(requestLock, 100);
     });
