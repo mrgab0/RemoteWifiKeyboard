@@ -7,8 +7,11 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.graphics.Rect;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
+import java.util.List;
 import com.remotekeyboard.DebugLogger;
 
 /**
@@ -121,12 +124,31 @@ public class RemoteAccessibilityService extends AccessibilityService {
      */
     public boolean clickNodeAt(float x, float y) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                List<AccessibilityWindowInfo> windows = getWindows();
+                if (windows != null && !windows.isEmpty()) {
+                    for (AccessibilityWindowInfo window : windows) {
+                        Rect bounds = new Rect();
+                        window.getBoundsInScreen(bounds);
+                        if (bounds.contains((int) x, (int) y)) {
+                            AccessibilityNodeInfo root = window.getRoot();
+                            if (root != null) {
+                                if (clickDeepestNodeAt(root, (int) x, (int) y)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             AccessibilityNodeInfo root = getRootInActiveWindow();
-            if (root == null) return false;
-            return clickDeepestNodeAt(root, (int) x, (int) y);
+            if (root != null) {
+                return clickDeepestNodeAt(root, (int) x, (int) y);
+            }
         } catch (Exception e) {
-            return false;
+            Log.e(TAG, "Error en clickNodeAt: ", e);
         }
+        return false;
     }
 
     private boolean clickDeepestNodeAt(AccessibilityNodeInfo node, int x, int y) {
@@ -150,16 +172,33 @@ public class RemoteAccessibilityService extends AccessibilityService {
 
     /**
      * Comprueba si en las coordenadas (x, y) de la pantalla existe un elemento interactivo
-     * (botón, enlace web, checkbox, editable o vista con acción clic).
+     * en cualquier ventana (sistema, notificaciones, barra de navegación o aplicaciones).
      */
     public boolean isInteractiveElementAt(float x, float y) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                List<AccessibilityWindowInfo> windows = getWindows();
+                if (windows != null && !windows.isEmpty()) {
+                    for (AccessibilityWindowInfo window : windows) {
+                        Rect bounds = new Rect();
+                        window.getBoundsInScreen(bounds);
+                        if (bounds.contains((int) x, (int) y)) {
+                            AccessibilityNodeInfo root = window.getRoot();
+                            if (root != null && checkNodeClickableAt(root, (int) x, (int) y)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
             AccessibilityNodeInfo root = getRootInActiveWindow();
-            if (root == null) return false;
-            return checkNodeClickableAt(root, (int) x, (int) y);
+            if (root != null) {
+                return checkNodeClickableAt(root, (int) x, (int) y);
+            }
         } catch (Exception e) {
             return false;
         }
+        return false;
     }
 
     private boolean checkNodeClickableAt(AccessibilityNodeInfo node, int x, int y) {
@@ -258,6 +297,23 @@ public class RemoteAccessibilityService extends AccessibilityService {
      */
     public boolean performRecents() {
         return performGlobalAction(GLOBAL_ACTION_RECENTS);
+    }
+
+    /**
+     * Despliega la barra y panel de notificaciones de Android.
+     */
+    public boolean performNotifications() {
+        return performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+    }
+
+    /**
+     * Despliega el panel de ajustes rápidos del sistema.
+     */
+    public boolean performQuickSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS);
+        }
+        return performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
     }
 
     /**

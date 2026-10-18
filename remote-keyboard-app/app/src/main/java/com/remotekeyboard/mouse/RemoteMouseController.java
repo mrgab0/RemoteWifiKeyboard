@@ -37,6 +37,7 @@ public class RemoteMouseController {
     private float currentX = 540;
     private float currentY = 1200;
     private boolean isOverlayAttached = false;
+    private int currentOverlayType = 0;
 
     // Para soporte de arrastre (drag)
     private float dragStartX = 0;
@@ -76,9 +77,31 @@ public class RemoteMouseController {
     }
 
     private void ensureOverlayView() {
-        if (isOverlayAttached) return;
+        RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
+        int desiredType = (accessService != null)
+                ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                : (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                        : WindowManager.LayoutParams.TYPE_PHONE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+        if (isOverlayAttached) {
+            // Si ya está adjunto pero podemos ascender a TYPE_ACCESSIBILITY_OVERLAY, re-adjuntamos
+            if (currentOverlayType != WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY 
+                    && desiredType == WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY) {
+                try {
+                    if (windowManager != null && pointerView != null) {
+                        windowManager.removeView(pointerView);
+                    }
+                } catch (Exception ignored) {}
+                isOverlayAttached = false;
+            } else {
+                return;
+            }
+        }
+
+        if (desiredType != WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && !Settings.canDrawOverlays(context)) {
             Log.w(TAG, "No se puede mostrar el puntero: falta permiso SYSTEM_ALERT_WINDOW");
             return;
         }
@@ -86,17 +109,26 @@ public class RemoteMouseController {
         try {
             updateScreenDimensions();
 
-            int overlayType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                    : WindowManager.LayoutParams.TYPE_PHONE;
+            WindowManager wm = null;
+            if (accessService != null) {
+                wm = (WindowManager) accessService.getSystemService(Context.WINDOW_SERVICE);
+            }
+            if (wm == null) {
+                wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            }
+            if (wm != null) {
+                windowManager = wm;
+            }
 
+            currentOverlayType = desiredType;
             layoutParams = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
-                    overlayType,
+                    currentOverlayType,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                             | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                             | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     PixelFormat.TRANSLUCENT
             );
@@ -105,13 +137,15 @@ public class RemoteMouseController {
             layoutParams.x = (int) currentX;
             layoutParams.y = (int) currentY;
 
-            pointerView = new ImageView(context);
-            pointerView.setImageResource(R.drawable.ic_mouse_pointer);
+            Context viewContext = accessService != null ? accessService : context;
+            pointerView = new ImageView(viewContext);
+            pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
             pointerView.setVisibility(View.GONE);
 
             windowManager.addView(pointerView, layoutParams);
             isOverlayAttached = true;
-            DebugLogger.log("Overlay de puntero de ratón inicializado con éxito");
+            DebugLogger.log("Overlay de puntero en capa superior absoluta (tipo: " + 
+                (currentOverlayType == WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY ? "ACCESSIBILITY_OVERLAY" : "APPLICATION_OVERLAY") + ")");
         } catch (Exception e) {
             Log.e(TAG, "Error agregando vista de puntero flotante: ", e);
             isOverlayAttached = false;
@@ -145,7 +179,10 @@ public class RemoteMouseController {
             if (now - lastHoverCheckTime > 75) {
                 lastHoverCheckTime = now;
                 RemoteAccessibilityService accessService = RemoteAccessibilityService.getInstance();
-                boolean shouldBeHand = accessService != null && accessService.isInteractiveElementAt(currentX, currentY);
+                float statusBarThreshold = Math.max(80f, screenHeight * 0.045f);
+                float navBarThreshold = Math.max(120f, screenHeight * 0.065f);
+                boolean inSystemBar = currentY <= statusBarThreshold || currentY >= screenHeight - navBarThreshold;
+                boolean shouldBeHand = (accessService != null && accessService.isInteractiveElementAt(currentX, currentY)) || inSystemBar;
                 if (shouldBeHand != isHandCursor) {
                     isHandCursor = shouldBeHand;
                     pointerView.setImageResource(isHandCursor ? R.drawable.ic_mouse_pointer_hand : R.drawable.ic_mouse_pointer);
@@ -180,19 +217,36 @@ public class RemoteMouseController {
                         long duration = System.currentTimeMillis() - dragStartTime;
                         float distSq = (currentX - dragStartX) * (currentX - dragStartX) + (currentY - dragStartY) * (currentY - dragStartY);
 
+                        float statusBarThreshold = Math.max(80f, screenHeight * 0.045f);
+                        float navBarThreshold = Math.max(120f, screenHeight * 0.065f);
+
                         // Si el ratón no se desplazó significativamente (< 25px), siempre es un Tap
                         if (distSq < 625) {
                             if (duration > 500) {
-                                accessService.dispatchLongClick(currentX, currentY);
+                                if (!accessService.clickNodeAt(currentX, currentY)) {
+                                    accessService.dispatchLongClick(currentX, currentY);
+                                }
                                 DebugLogger.log("Mouse Long Click en (" + (int) currentX + ", " + (int) currentY + ")");
                             } else {
-                                accessService.dispatchTap(currentX, currentY);
-                                DebugLogger.log("Mouse Tap en (" + (int) currentX + ", " + (int) currentY + ")");
+                                executeSmartClick(accessService, currentX, currentY, statusBarThreshold, navBarThreshold);
                             }
                         } else {
                             // Arrastre real (Drag / Swipe con desplazamiento)
-                            accessService.dispatchDrag(dragStartX, dragStartY, currentX, currentY, Math.max(100, duration));
-                            DebugLogger.log("Mouse Drag desde (" + (int) dragStartX + ", " + (int) dragStartY + ") a (" + (int) currentX + ", " + (int) currentY + ")");
+                            if (dragStartY <= statusBarThreshold && (currentY - dragStartY) > 50) {
+                                if ((currentY - dragStartY) > screenHeight * 0.25f) {
+                                    accessService.performQuickSettings();
+                                    DebugLogger.log("Mouse Drag desde barra superior: Ajustes Rápidos");
+                                } else {
+                                    accessService.performNotifications();
+                                    DebugLogger.log("Mouse Drag desde barra superior: Notificaciones");
+                                }
+                            } else if (dragStartY >= screenHeight - navBarThreshold && (dragStartY - currentY) > 50) {
+                                accessService.performHome();
+                                DebugLogger.log("Mouse Drag desde barra inferior: Home");
+                            } else {
+                                accessService.dispatchDrag(dragStartX, dragStartY, currentX, currentY, Math.max(100, duration));
+                                DebugLogger.log("Mouse Drag desde (" + (int) dragStartX + ", " + (int) dragStartY + ") a (" + (int) currentX + ", " + (int) currentY + ")");
+                            }
                         }
                     }
                 }
@@ -212,6 +266,47 @@ public class RemoteMouseController {
                 }
             }
         });
+    }
+
+    /**
+     * Ejecuta un clic inteligente sobre la pantalla de Android:
+     * 1. Primero intenta activar el nodo interactivo de accesibilidad en cualquier ventana (aplicación o sistema).
+     * 2. Si es en la barra superior (status bar), despliega notificaciones.
+     * 3. Si es en la barra inferior (navigation bar), ejecuta Atrás / Home / Recientes según la posición X.
+     * 4. Si es en el cuerpo general, despacha un tap sintético de pantalla táctil.
+     */
+    private void executeSmartClick(RemoteAccessibilityService accessService, float x, float y, float statusBarThreshold, float navBarThreshold) {
+        // 1. Buscar nodo accesible en todas las capas activas (incluyendo SYSTEM windows como botones de UI)
+        if (accessService.clickNodeAt(x, y)) {
+            DebugLogger.log("Mouse Clic directo en nodo accesible en (" + (int) x + ", " + (int) y + ")");
+            return;
+        }
+
+        // 2. Zona de barra de estado superior
+        if (y <= statusBarThreshold) {
+            accessService.performNotifications();
+            DebugLogger.log("Mouse Clic en barra de estado -> Notificaciones");
+            return;
+        }
+
+        // 3. Zona de barra de navegación inferior (3 botones del sistema o pill bar)
+        if (y >= screenHeight - navBarThreshold) {
+            if (x < screenWidth * 0.33f) {
+                accessService.performBack();
+                DebugLogger.log("Mouse Clic en barra navegación (Izquierda) -> Atrás");
+            } else if (x > screenWidth * 0.67f) {
+                accessService.performRecents();
+                DebugLogger.log("Mouse Clic en barra navegación (Derecha) -> Recientes");
+            } else {
+                accessService.performHome();
+                DebugLogger.log("Mouse Clic en barra navegación (Centro) -> Inicio");
+            }
+            return;
+        }
+
+        // 4. Tap táctil estándar
+        accessService.dispatchTap(x, y);
+        DebugLogger.log("Mouse Tap sintético en (" + (int) x + ", " + (int) y + ")");
     }
 
     /**
